@@ -51,11 +51,17 @@ import {
   RemoveSubscribersUseCase,
   RenameTopicCommand,
   RenameTopicUseCase,
+  AddBulkSubscribersUseCase,
+  AddBulkSubscribersCommand,
+  RemoveBulkSubscribersCommand,
+  RemoveBulkSubscribersUseCase,
 } from './use-cases';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
+import { AddBulkSubscribersRequestDto } from './dtos/add-bulk-subscribers.dto';
+import { RemoveBulkSubscribersRequestDto } from './dtos/remove-bulk-subscribers.dto';
 
 @Controller('/topics')
 @ApiTags('Topics')
@@ -63,12 +69,14 @@ import { ApiResponse } from '../shared/framework/response.decorator';
 export class TopicsController {
   constructor(
     private addSubscribersUseCase: AddSubscribersUseCase,
+    private addBulkSubscribersUseCase: AddBulkSubscribersUseCase,
     private createTopicUseCase: CreateTopicUseCase,
     private deleteTopicUseCase: DeleteTopicUseCase,
     private filterTopicsUseCase: FilterTopicsUseCase,
     private getTopicSubscriberUseCase: GetTopicSubscriberUseCase,
     private getTopicUseCase: GetTopicUseCase,
     private removeSubscribersUseCase: RemoveSubscribersUseCase,
+    private removeBulkSubscribersUseCase: RemoveBulkSubscribersUseCase,
     private renameTopicUseCase: RenameTopicUseCase
   ) {}
 
@@ -129,6 +137,24 @@ export class TopicsController {
     };
   }
 
+  @Post('/subscribers/bulk')
+  @ExternalApiAccessible()
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Subscribers addition in bulk', description: 'Add subscribers to a multiple topics by key' })
+  async addBulkSubscribers(@UserSession() user: IJwtPayload, @Body() body: AddBulkSubscribersRequestDto): Promise<any> {
+    const result = await this.addBulkSubscribersUseCase.execute(
+      AddBulkSubscribersCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscribers: body.subscribers,
+        topicKeys: body.topicKeys,
+      })
+    );
+
+    return result;
+  }
+
   @Get('/:topicKey/subscribers/:externalSubscriberId')
   @ExternalApiAccessible()
   @HttpCode(HttpStatus.OK)
@@ -163,6 +189,25 @@ export class TopicsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         topicKey,
+        subscribers: body.subscribers,
+      })
+    );
+  }
+
+  @Post('/subscribers/removal/bulk')
+  @ExternalApiAccessible()
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Subscribers removal in bulk', description: 'Remove subscribers from multpile topics' })
+  async removeBulkSubscribers(
+    @UserSession() user: IJwtPayload,
+    @Body() body: RemoveBulkSubscribersRequestDto
+  ): Promise<void> {
+    await this.removeBulkSubscribersUseCase.execute(
+      RemoveBulkSubscribersCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        topicKeys: body.topicKeys,
         subscribers: body.subscribers,
       })
     );

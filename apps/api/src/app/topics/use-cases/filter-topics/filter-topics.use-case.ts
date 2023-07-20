@@ -6,7 +6,7 @@ import { FilterTopicsCommand } from './filter-topics.command';
 import { TopicDto } from '../../dtos/topic.dto';
 import { ExternalSubscriberId } from '../../types';
 
-const DEFAULT_TOPIC_LIMIT = 10;
+const DEFAULT_TOPIC_LIMIT = 30;
 
 @Injectable()
 export class FilterTopicsUseCase {
@@ -41,12 +41,12 @@ export class FilterTopicsUseCase {
 
   private mapFromCommandToEntity(
     command: FilterTopicsCommand
-  ): Pick<TopicEntity, '_environmentId' | 'key' | '_organizationId'> {
+  ): Pick<TopicEntity, '_environmentId' | ('_organizationId' & { key: { ['$regex']: string } })> {
     return {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      ...(command.key && { key: command.key }),
-    } as Pick<TopicEntity, '_environmentId' | 'key' | '_organizationId'>;
+      ...(command.key && { key: { $regex: command.key } }),
+    } as Pick<TopicEntity, '_environmentId' | ('_organizationId' & { key: { ['$regex']: string } })>;
   }
 
   private mapFromEntityToDto(topic: TopicEntity & { subscribers: ExternalSubscriberId[] }): TopicDto {
