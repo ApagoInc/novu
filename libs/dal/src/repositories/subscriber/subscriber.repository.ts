@@ -10,6 +10,33 @@ import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
 type SubscriberQuery = FilterQuery<SubscriberDBModel> & EnforceEnvOrOrgIds;
 
+const TOPIC_SUBSCRIBERS_COLLECTION = 'topicsubscribers';
+
+const lookup = {
+  $lookup: {
+    from: 'topicsubscribers',
+    localField: 'subscriberId',
+    foreignField: 'externalSubscriberId',
+    as: 'topicSubscribers',
+  },
+};
+
+const lookupPipe = {
+  $lookup: {
+    from: 'topicsubscribers',
+    let: { subscriberId: '$subscriberId' },
+    pipeline: [
+      {
+        $match: {
+          topicKey: { $regex: 'test', $options: 'i' },
+          $expr: { $and: [{ $eq: ['$externalSubscriberId', '$$subscriberId'] }] },
+        },
+      },
+    ],
+    as: 'topicSubscribers',
+  },
+};
+
 export class SubscriberRepository extends BaseRepository<SubscriberDBModel, SubscriberEntity, EnforceEnvOrOrgIds> {
   private subscriber: SoftDeleteModel;
   constructor() {
@@ -30,6 +57,32 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       undefined,
       { readPreference: secondaryRead ? 'secondaryPreferred' : 'primary' }
     );
+  }
+
+  async findBySubscriberIdWithTopics(environmentId: string, subscriberId: string, topicKey?: string) {
+    const subscriber = await this.aggregate([
+      { $match: { $and: [{ _environmentId: this.convertStringToObjectId(environmentId) }, { subscriberId }] } },
+      {
+        $lookup: {
+          from: 'topicsubscribers',
+          let: { subscriberId: '$subscriberId' },
+          pipeline: [
+            {
+              $match: {
+                ...(topicKey && {
+                  topicKey: { $regex: topicKey, $options: 'i' },
+                }),
+                _environmentId: this.convertStringToObjectId(environmentId),
+                $expr: { $and: [{ $eq: ['$externalSubscriberId', '$$subscriberId'] }] },
+              },
+            },
+          ],
+          as: 'topicSubscribers',
+        },
+      },
+      { $limit: 1 },
+    ]);
+    return subscriber[0];
   }
 
   async searchByExternalSubscriberIds(

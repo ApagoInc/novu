@@ -41,12 +41,12 @@ export class FilterTopicsUseCase {
 
   private mapFromCommandToEntity(
     command: FilterTopicsCommand
-  ): Pick<TopicEntity, '_environmentId' | ('_organizationId' & { key: { ['$regex']: string } })> {
+  ): Pick<TopicEntity, '_environmentId' | ('_organizationId' & { key: { ['$regex']: string; $options: 'i' } })> {
     return {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       ...(command.key && { key: { $regex: command.key } }),
-    } as Pick<TopicEntity, '_environmentId' | ('_organizationId' & { key: { ['$regex']: string } })>;
+    } as Pick<TopicEntity, '_environmentId' | ('_organizationId' & { key: { ['$regex']: string; $options: 'i' } })>;
   }
 
   private mapFromEntityToDto(topic: TopicEntity & { subscribers: ExternalSubscriberId[] }): TopicDto {

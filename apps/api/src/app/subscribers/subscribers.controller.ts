@@ -143,6 +143,30 @@ export class SubscribersController {
     );
   }
 
+  @Get('/topics/:subscriberId')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @ApiResponse(SubscriberResponseDto)
+  @ApiOperation({
+    summary: 'Get subscriber',
+    description: 'Get subscriber by your internal id used to identify the subscriber',
+  })
+  async getSubscriberTopics(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Query() query: any
+  ): Promise<SubscriberResponseDto> {
+    return await this.getSubscriberUseCase.execute(
+      GetSubscriberCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId,
+        fetchTopics: true,
+        topic: query.topic,
+      })
+    );
+  }
+
   @Post('/')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
