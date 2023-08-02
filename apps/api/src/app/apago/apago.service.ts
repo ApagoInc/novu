@@ -10,9 +10,9 @@ import validator from 'validator';
 @Injectable()
 export class ApagoService {
   rolesMap = {
-    RESOLVE_PREFLIGHT: ['role1', 'AccountAdmin'],
-    APPROVE_TO_PRINT: ['role1'],
-    APPROVE_CONTENT: ['role1', 'AccountAdmin'],
+    RESOLVE_PREFLIGHT: ['SuperAdmin', 'AccountAdmin'],
+    APPROVE_TO_PRINT: ['SuperAdmin', 'AccountAdmin'],
+    APPROVE_CONTENT: ['SuperAdmin', 'AccountAdmin'],
   };
 
   administrativeEvents: Array<AdministrativeEvent> = ['USER_WAS_CREATED', 'USER_WAS_MODIFIED'];
