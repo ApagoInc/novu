@@ -64,7 +64,7 @@ export class ApagoService {
         event: payload.event,
         channel: payload.channel,
         ...(payload.allTitles && { user: payload.userId }),
-        ...(payload.administrative && { administrative: true }),
+        ...(administrative && { administrative: true }),
       })
     ).toString('base64');
 
