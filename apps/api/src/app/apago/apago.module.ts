@@ -1,4 +1,3 @@
-import * as mongoose from 'mongoose';
 import { MongooseModule } from '@nestjs/mongoose';
 import { USE_CASES } from '../topics/use-cases';
 import { SharedModule } from '../shared/shared.module';

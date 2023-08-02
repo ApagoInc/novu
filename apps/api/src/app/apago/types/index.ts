@@ -11,4 +11,7 @@ export type InformativeEvent =
   | 'CONTENT_APPROVAL_APPROVED'
   | 'APPROVE_TO_PRINT_REQUESTED'
   | 'USER_WAS_CREATED'
-  | 'USER_WAS_MODIFIED';
+  | 'USER_WAS_MODIFIED'
+  | 'USER_WAS_DELETED';
+
+export type AdministrativeEvent = 'USER_WAS_CREATED' | 'USER_WAS_MODIFIED' | 'USER_WAS_DELETED';

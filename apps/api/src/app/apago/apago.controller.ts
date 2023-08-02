@@ -1,30 +1,21 @@
 import {
-  BadRequestException,
   Body,
-  ClassSerializerInterceptor,
   Controller,
   Get,
-  HttpCode,
   NotFoundException,
   Param,
   Post,
-  Query,
-  Req,
-  Res,
   UseGuards,
-  UseInterceptors,
-  Logger,
-  ExecutionContext,
   UnauthorizedException,
   Headers,
 } from '@nestjs/common';
-import { IJwtPayload, ISubscribersDefine, TriggerRecipientSubscriber, TriggerRecipientsTypeEnum } from '@novu/shared';
+import { IJwtPayload } from '@novu/shared';
 import { SubscriberSession, UserSession } from '../shared/framework/user.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ApagoService } from './apago.service';
-import { MessageEntity, SubscriberEntity } from '@novu/dal';
+import { SubscriberEntity } from '@novu/dal';
 import { AddBulkSubscribersCommand, AddBulkSubscribersUseCase } from '../topics/use-cases/add-bulk-subscribers';
 import { GetSubscriberCommand, GetSubscriber } from '../subscribers/usecases/get-subscriber';
 import {
@@ -34,10 +25,9 @@ import {
 import { FilterTopicsUseCase, FilterTopicsCommand } from '../topics/use-cases';
 import { UpdateStakeholdersRequestDTO } from './dtos/update-stakeholders-request.dto';
 import { UpdateInformativeRequestDTO } from './dtos/update-informative-request.dto';
-import { CreateSubscriber, CreateSubscriberCommand, EventsPerformanceService } from '@novu/application-generic';
-import { ParseEventRequest, ParseEventRequestCommand } from '../events/usecases/parse-event-request';
-import validator from 'validator';
+import { CreateSubscriber, CreateSubscriberCommand } from '@novu/application-generic';
 import axios from 'axios';
+import { AdministrativeEvent, InformativeEvent } from './types';
 
 @Controller('/apago')
 export class ApagoController {
@@ -86,13 +76,9 @@ export class ApagoController {
 
         const [type, jobId, payload] = key.split(':');
 
-        if (!validator.isBase64(payload)) continue;
+        const json = this.apagoService.parsePayload(payload);
 
-        const string = Buffer.from(payload, 'base64').toString();
-
-        if (!validator.isJSON(string)) continue;
-
-        const json = JSON.parse(string);
+        if (!json) continue;
 
         for (const subscriber of item.subscribers) {
           if (res[subscriber]) {
@@ -167,7 +153,7 @@ export class ApagoController {
             .filter((item) => {
               try {
                 const [type, jobId, payload] = item.split(':');
-                const json = JSON.parse(Buffer.from(payload, 'base64').toString());
+                const json = this.apagoService.parsePayload(payload);
                 if (json.stage == body.stage) return true;
               } catch (error) {}
               return false;
@@ -212,16 +198,29 @@ export class ApagoController {
 
     if (!user) throw new UnauthorizedException();
 
-    const newTopics = body.parts.map((part) =>
-      this.apagoService.getInformativeKey({
-        accountId: body.accountId,
-        userId: subscriberSession.subscriberId,
-        channel: body.channel,
-        part,
-        allTitles: body.allTitles,
-        event: body.event,
-      })
-    );
+    const administrative = this.apagoService.administrativeEvents.includes(body.event as AdministrativeEvent);
+
+    const newTopics = administrative
+      ? [
+          this.apagoService.getInformativeKey({
+            accountId: body.accountId,
+            userId: subscriberSession.subscriberId,
+            channel: body.channel,
+            administrative: true,
+            allTitles: body.allTitles,
+            event: body.event,
+          }),
+        ]
+      : body.parts.map((part) =>
+          this.apagoService.getInformativeKey({
+            accountId: body.accountId,
+            userId: subscriberSession.subscriberId,
+            channel: body.channel,
+            part,
+            allTitles: body.allTitles,
+            event: body.event,
+          })
+        );
 
     const subscriber = await this.getSubscriberUseCase.execute(
       GetSubscriberCommand.create({
@@ -256,7 +255,7 @@ export class ApagoController {
             .filter((item) => {
               try {
                 const [type, accountId, payload] = item.split(':');
-                const json = JSON.parse(Buffer.from(payload, 'base64').toString());
+                const json = this.apagoService.parsePayload(payload);
                 if (json.event == body.event) return true;
               } catch (error) {}
               return false;
@@ -301,20 +300,22 @@ export class ApagoController {
     for (const topic of (subscriber as any).topicSubscribers) {
       const key = (topic as any).topicKey as string;
       const [type, accountId, payload] = key.split(':');
-      const json = JSON.parse(Buffer.from(payload, 'base64').toString());
-      try {
-        if (res[json.event]) {
-          res[json.event]['parts'] = [...res[json.event]['parts'], json.part];
-          res[json.event]['keys'] = [...res[json.event]['keys'], key];
-        } else {
-          res[json.event] = {
-            parts: [json.part],
-            keys: [key],
-            ...json,
-            type,
-          };
-        }
-      } catch (error) {}
+
+      const json = this.apagoService.parsePayload(payload);
+
+      if (!json) continue;
+
+      if (res[json.event]) {
+        res[json.event]['parts'] = [...res[json.event]['parts'], json.part];
+        res[json.event]['keys'] = [...res[json.event]['keys'], key];
+      } else {
+        res[json.event] = {
+          parts: [json.part],
+          keys: [key],
+          ...json,
+          type,
+        };
+      }
     }
 
     return res;
@@ -389,23 +390,23 @@ export class ApagoController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/identify')
-  async identifyAll(@UserSession() user: IJwtPayload) {
-    const users = await this.apagoService.getAllUsers();
+  async identifyAll(@SubscriberSession() subscriberSession: SubscriberEntity) {
+    const user = await this.apagoService.getUser(subscriberSession.subscriberId);
 
-    for (const item of users) {
-      await this.createSubscriberUsecase.execute(
-        CreateSubscriberCommand.create({
-          environmentId: user.environmentId,
-          organizationId: user.organizationId,
-          subscriberId: item.UserID,
-          email: item.Email,
-          firstName: item.FirstName,
-          lastName: item.LastName,
-        })
-      );
-    }
+    if (!user) return null;
+
+    await this.createSubscriberUsecase.execute(
+      CreateSubscriberCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        email: user.Email,
+        firstName: user.FirstName,
+        lastName: user.LastName,
+      })
+    );
 
     return { success: true };
   }

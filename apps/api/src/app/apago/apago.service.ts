@@ -4,6 +4,8 @@ import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
 import { Account } from './schemas/account.schema';
 import { Connection } from 'mongoose';
+import { AdministrativeEvent } from './types';
+import validator from 'validator';
 
 @Injectable()
 export class ApagoService {
@@ -12,6 +14,8 @@ export class ApagoService {
     APPROVE_TO_PRINT: ['role1'],
     APPROVE_CONTENT: ['role1', 'AccountAdmin'],
   };
+
+  administrativeEvents: Array<AdministrativeEvent> = ['USER_WAS_CREATED', 'USER_WAS_MODIFIED'];
 
   constructor(
     @InjectModel(User.name, 'apago') private userModel: Model<User>,
@@ -31,6 +35,18 @@ export class ApagoService {
     return `stakeholder:${body.jobId}:${key}`;
   }
 
+  parsePayload(payload: string) {
+    if (!payload) return null;
+
+    if (!validator.isBase64(payload)) return null;
+
+    const string = Buffer.from(payload, 'base64').toString();
+
+    if (!validator.isJSON(string)) return null;
+
+    return JSON.parse(string);
+  }
+
   getInformativeKey(payload: {
     part?: string;
     event: string;
@@ -40,9 +56,11 @@ export class ApagoService {
     allTitles?: boolean;
     administrative?: boolean;
   }) {
+    const administrative = this.administrativeEvents.includes(payload.event as AdministrativeEvent);
+
     const key = Buffer.from(
       JSON.stringify({
-        ...(payload.part && !payload.administrative && { part: payload.part }),
+        ...(payload.part && !administrative && { part: payload.part }),
         event: payload.event,
         channel: payload.channel,
         ...(payload.allTitles && { user: payload.userId }),
@@ -89,7 +107,7 @@ export class ApagoService {
     return user;
   }
 
-  async getAllUsers() {
-    return await this.userModel.find();
+  async getUser(userId: string) {
+    return await this.userModel.findOne({ UserID: userId });
   }
 }
