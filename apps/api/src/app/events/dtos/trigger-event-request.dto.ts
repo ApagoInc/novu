@@ -21,6 +21,23 @@ export class BulkTriggerEventDto {
   events: TriggerEventRequestDto[];
 }
 
+export class InformativeEventDto {
+  @IsOptional()
+  part: string;
+
+  @IsDefined()
+  event: string;
+
+  @IsDefined()
+  accountId: string;
+
+  @IsDefined()
+  userId: string;
+
+  @IsOptional()
+  payload?: any;
+}
+
 @ApiExtraModels(SubscriberPayloadDto)
 @ApiExtraModels(TopicPayloadDto)
 export class TriggerEventRequestDto {
@@ -100,4 +117,15 @@ export class TriggerEventRequestDto {
   })
   @IsOptional()
   actor?: TriggerRecipientSubscriber;
+}
+
+export class TriggerStakeholderEventRequestDto {
+  @IsDefined()
+  jobId: string;
+
+  @IsDefined()
+  part: string;
+
+  @IsDefined()
+  stage: string;
 }

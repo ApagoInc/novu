@@ -23,6 +23,7 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { ExecutionDetailsModule } from '../execution-details/execution-details.module';
 import { TopicsModule } from '../topics/topics.module';
 import { LayoutsModule } from '../layouts/layouts.module';
+import { ApagoModule } from '../apago/apago.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { LayoutsModule } from '../layouts/layouts.module';
     ExecutionDetailsModule,
     TopicsModule,
     LayoutsModule,
+    ApagoModule,
   ],
   controllers: [EventsController],
   providers: [

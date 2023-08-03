@@ -1,15 +1,17 @@
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
-import { IJwtPayload, ISubscribersDefine, TriggerRecipientSubscriber } from '@novu/shared';
+import { IJwtPayload, ISubscribersDefine, TriggerRecipientSubscriber, TriggerRecipientsTypeEnum } from '@novu/shared';
 import { EventsPerformanceService, SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
 
 import {
   BulkTriggerEventDto,
+  InformativeEventDto,
   TestSendEmailRequestDto,
   TriggerEventRequestDto,
   TriggerEventResponseDto,
   TriggerEventToAllRequestDto,
+  TriggerStakeholderEventRequestDto,
 } from './dtos';
 import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
 import { MapTriggerRecipients } from './usecases/map-trigger-recipients';
@@ -22,6 +24,7 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
+import { ApagoService } from '../apago/apago.service';
 @Controller({
   path: 'events',
   scope: Scope.REQUEST,
@@ -35,7 +38,8 @@ export class EventsController {
     private sendTestEmail: SendTestEmail,
     private parseEventRequest: ParseEventRequest,
     private processBulkTriggerUsecase: ProcessBulkTrigger,
-    protected performanceService: EventsPerformanceService
+    protected performanceService: EventsPerformanceService,
+    private apagoService: ApagoService
   ) {}
 
   @ExternalApiAccessible()
@@ -77,6 +81,45 @@ export class EventsController {
 
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
+  @Post('/trigger/stakeholder')
+  @ApiResponse(TriggerEventResponseDto, 201)
+  @ApiOperation({
+    summary: 'Trigger event',
+    description: `
+    Trigger event is the main (and only) way to send notifications to subscribers. 
+    The trigger identifier is used to match the particular workflow associated with it. 
+    Additional information can be passed according the body interface below.
+    `,
+  })
+  async trackStakeholderEvent(
+    @UserSession() user: IJwtPayload,
+    @Body() body: TriggerEventRequestDto & TriggerStakeholderEventRequestDto
+  ): Promise<TriggerEventResponseDto> {
+    const mark = this.performanceService.buildEndpointTriggerEventMark(body.transactionId as string);
+
+    const topicKey = this.apagoService.getStakeholderKey(body);
+
+    const result = await this.parseEventRequest.execute(
+      ParseEventRequestCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier: 'all',
+        payload: body.payload || {},
+        overrides: body.overrides || {},
+        to: [{ type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC, topicKey }],
+        actor: body.actor,
+        transactionId: body.transactionId,
+      })
+    );
+
+    this.performanceService.setEnd(mark);
+
+    return result as unknown as TriggerEventResponseDto;
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
   @Post('/trigger/bulk')
   @ApiResponse(TriggerEventResponseDto, 201, true)
   @ApiOperation({
@@ -96,6 +139,33 @@ export class EventsController {
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         events: body.events,
+      })
+    );
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @Post('/trigger/informative')
+  @ApiResponse(TriggerEventResponseDto, 201, true)
+  @ApiOperation({
+    summary: 'Bulk trigger event',
+    description: `
+      Using this endpoint you can trigger multiple events at once, to avoid multiple calls to the API.
+      The bulk API is limited to 100 events per request.
+    `,
+  })
+  async triggerInformativeEvents(
+    @UserSession() user: IJwtPayload,
+    @Body() body: InformativeEventDto
+  ): Promise<TriggerEventResponseDto[]> {
+    const events = this.apagoService.getInformativeEvents(body);
+
+    return this.processBulkTriggerUsecase.execute(
+      ProcessBulkTriggerCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        events: events,
       })
     );
   }

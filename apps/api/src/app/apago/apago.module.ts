@@ -27,6 +27,6 @@ import { SubscribersModule } from '../subscribers/subscribers.module';
   ],
   controllers: [ApagoController],
   providers: [ApagoService, ...USE_CASES],
-  exports: [...USE_CASES],
+  exports: [...USE_CASES, ApagoService],
 })
 export class ApagoModule {}

@@ -9,7 +9,7 @@ import {
   UnauthorizedException,
   Headers,
 } from '@nestjs/common';
-import { IJwtPayload } from '@novu/shared';
+import { IJwtPayload, TriggerRecipientsTypeEnum } from '@novu/shared';
 import { SubscriberSession, UserSession } from '../shared/framework/user.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -318,75 +318,7 @@ export class ApagoController {
       }
     }
 
-    return res;
-  }
-
-  @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
-  @Post('/trigger/stakeholder')
-  async triggerStakeholderNotification(
-    @UserSession() user: IJwtPayload,
-    @Body() body: any,
-    @Headers('Authorization') apiKey: string
-  ) {
-    const topicKey = this.apagoService.getStakeholderKey({ jobId: body.jobId, part: body.part, stage: body.stage });
-
-    await axios.post(
-      'http://localhost:3000/v1/events/trigger',
-      {
-        to: [{ type: 'Topic', topicKey }],
-        name: 'all',
-        payload: body.payload || {},
-      },
-      { headers: { Authorization: apiKey } }
-    );
-
-    return { success: true };
-  }
-
-  @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
-  @Post('/trigger/informative')
-  async triggerInformativeNotification(
-    @UserSession() user: IJwtPayload,
-    @Body() body: any,
-    @Headers('Authorization') apiKey: string
-  ) {
-    const channels = ['email', 'inapp', 'all'];
-    const all = [true, false];
-
-    const allTopicKeys = channels.map((channel) => ({
-      channel,
-      keys: all.map((allTitles) => ({
-        type: 'Topic',
-        topicKey: this.apagoService.getInformativeKey({
-          event: body.event,
-          part: body.part,
-          accountId: body.accountId,
-          userId: body.userId,
-          channel,
-          allTitles,
-        }),
-      })),
-    }));
-
-    for (const keys of allTopicKeys) {
-      for (const key of keys.keys) {
-        try {
-          await axios.post(
-            'http://localhost:3000/v1/events/trigger',
-            {
-              to: [key],
-              name: keys.channel,
-              payload: body.payload || {},
-            },
-            { headers: { Authorization: apiKey } }
-          );
-        } catch (error) {}
-      }
-    }
-
-    return { success: true };
+    return { ...res, subscriberSession };
   }
 
   @ExternalApiAccessible()

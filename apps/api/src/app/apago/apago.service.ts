@@ -6,6 +6,7 @@ import { Account } from './schemas/account.schema';
 import { Connection } from 'mongoose';
 import { AdministrativeEvent } from './types';
 import validator from 'validator';
+import { IJwtPayload, TriggerRecipientsTypeEnum } from '@novu/shared';
 
 @Injectable()
 export class ApagoService {
@@ -109,5 +110,32 @@ export class ApagoService {
 
   async getUser(userId: string) {
     return await this.userModel.findOne({ UserID: userId });
+  }
+
+  getInformativeEvents(body: { part: string; payload?: any; event: string; accountId: string; userId: string }) {
+    const channels = ['email', 'inapp', 'all'];
+    const all = [true, false];
+
+    const events = channels.flatMap((channel) =>
+      all.map((allTitles) => ({
+        name: channel,
+        payload: body.payload || {},
+        to: [
+          {
+            type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC,
+            topicKey: this.getInformativeKey({
+              event: body.event,
+              part: body.part,
+              accountId: body.accountId,
+              userId: body.userId,
+              channel,
+              allTitles,
+            }),
+          },
+        ],
+      }))
+    );
+
+    return events;
   }
 }
