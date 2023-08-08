@@ -15,3 +15,17 @@ export type InformativeEvent =
   | 'USER_WAS_DELETED';
 
 export type AdministrativeEvent = 'USER_WAS_CREATED' | 'USER_WAS_MODIFIED' | 'USER_WAS_DELETED';
+
+export type ApiClientData =
+  | { type: 'check_permission'; userId: string; accountId: string; permissions: Array<string> }
+  | {
+      type: 'edit_stakeholder';
+      jobId: string;
+      userId: string;
+      stakeholderId: string;
+      accountId: string;
+      permissions: Array<string>;
+      stage: StakeholderStage;
+    };
+
+export type User = { Email: string; UserID: string; FirstName: string; LastName: string };

@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { AdministrativeEvent } from './types';
+import { AdministrativeEvent, ApiClientData, User } from './types';
 import validator from 'validator';
-import { IJwtPayload, TriggerRecipientsTypeEnum } from '@novu/shared';
+import { TriggerRecipientsTypeEnum } from '@novu/shared';
 import { ApiService } from './api.service';
 import * as util from 'util';
 
 @Injectable()
 export class ApagoService {
-  queue: Array<{ data: any; cb: (err: any, data: any) => void }> = [];
+  queue: Array<{ data: ApiClientData; cb: (err: any, data: User | null) => void }> = [];
   apiServices: Array<ApiService> = [];
   apiServiceCount = 10;
 
@@ -25,15 +25,7 @@ export class ApagoService {
     }
   }
 
-  getUserAccount(
-    data: { userId: string; accountId: string },
-    cb: (user: { Email: string; FirstName: string; LastName: string; UserId: string }) => void
-  ) {
-    this.queue.push({ data: { ...data, type: 'informative' }, cb });
-    this.processQueue();
-  }
-
-  checkUserPermission(data: { accountId: string; userId: string; permissions: Array<string> }) {
+  checkUserPermission(data: { accountId: string; userId: string; permissions: Array<string> }): Promise<User | null> {
     const queuePromise = util.promisify(this.addToQueue.bind(this));
     return queuePromise({ ...data, type: 'check_permission' });
   }
@@ -44,15 +36,12 @@ export class ApagoService {
     jobId: string;
     stakeholderId: string;
     stage: string;
-  }) {
+  }): Promise<User | null> {
     const queuePromise = util.promisify(this.addToQueue.bind(this));
     return queuePromise({ ...data, type: 'edit_stakeholder' });
   }
 
-  addToQueue(
-    data: { userId: string; accountId: string; type: string; jobId: string; stakeholderId: string },
-    cb: () => void
-  ) {
+  addToQueue(data: ApiClientData, cb: () => void) {
     this.queue.push({ data, cb });
     this.processQueue();
   }

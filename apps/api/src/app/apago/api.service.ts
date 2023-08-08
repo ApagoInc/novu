@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
 import { CookieJar } from 'tough-cookie';
+import { ApiClientData } from './types';
 
 @Injectable()
 export class ApiService {
   instance: AxiosInstance;
-  data: any;
   constructor() {}
 
   async init() {
@@ -22,36 +22,36 @@ export class ApiService {
     this.instance = instance;
   }
 
-  async getStakeholder(data: any) {
+  async getStakeholder(data: ApiClientData) {
     try {
-      this.data = data;
-      await this.setAccount();
-      await this.getJob();
-      await this.getUser(data.userId, ['Stakeholder_Edit', data.stage]);
-      return await this.getUser(data.stakeholderId, [data.stage]);
+      if (data.type !== 'edit_stakeholder') return null;
+      await this.setAccount(data.accountId);
+      await this.getJob(data.jobId);
+      await this.getUser(data.userId, data.accountId, ['Stakeholder_Edit', data.stage]);
+      return await this.getUser(data.stakeholderId, data.accountId, [data.stage]);
     } catch (error) {
       return null;
     }
   }
 
-  async getAccount(data: any) {
+  async getAccount(data: ApiClientData) {
     try {
-      this.data = data;
-      await this.setAccount();
-      return await this.getUser(data.userId, data.permissions);
+      if (data.type !== 'check_permission') return null;
+      await this.setAccount(data.accountId);
+      return await this.getUser(data.userId, data.accountId, data.permissions);
     } catch (error) {
       return null;
     }
   }
 
-  async setAccount() {
+  async setAccount(accountId: string) {
     await this.instance.post('/user/setaccount', {
-      account: this.data.accountId,
+      account: accountId,
     });
   }
 
-  async getJob() {
-    await this.instance.get(`/job/job/${this.data.jobId}`);
+  async getJob(jobId: string) {
+    await this.instance.get(`/job/job/${jobId}`);
   }
 
   async getPermissions(name) {
@@ -61,12 +61,12 @@ export class ApiService {
     return permissions;
   }
 
-  async getUser(id: string, permissions: Array<string>) {
+  async getUser(id: string, accountId: string, permissions: Array<string>) {
     const res = await this.instance.get(`/admin/user/${id}`);
 
     const { Accounts, Roles } = res.data;
 
-    const index = Accounts.indexOf(this.data.accountId);
+    const index = Accounts.indexOf(accountId);
 
     const userPermissions = await this.getPermissions(Roles[index]);
 

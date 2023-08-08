@@ -100,7 +100,7 @@ export class ApagoController {
     @Param('jobId') jobId: string,
     @Param('accountId') accountId: string
   ) {
-    const stakeholderUser: any = await this.apagoService.checkStakeholderPermissions({
+    const stakeholderUser = await this.apagoService.checkStakeholderPermissions({
       userId: subscriberSession.subscriberId,
       jobId,
       accountId,
@@ -181,7 +181,7 @@ export class ApagoController {
     @Body() body: UpdateInformativeRequestDTO,
     @Param('accountId') accountId: string
   ) {
-    const user: any = await this.apagoService.checkUserPermission({
+    const user = await this.apagoService.checkUserPermission({
       accountId,
       userId: subscriberSession.subscriberId,
       permissions: [],
@@ -272,7 +272,7 @@ export class ApagoController {
   @ExternalApiAccessible()
   @UseGuards(AuthGuard('subscriberJwt'))
   async informative(@SubscriberSession() subscriberSession: SubscriberEntity, @Param('accountId') accountId: string) {
-    const user: any = await this.apagoService.checkUserPermission({
+    const user = await this.apagoService.checkUserPermission({
       userId: subscriberSession.subscriberId,
       accountId,
       permissions: [],
@@ -320,7 +320,7 @@ export class ApagoController {
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/:accountId/identify')
   async identifyAll(@SubscriberSession() subscriberSession: SubscriberEntity, @Param('accountId') accountId: string) {
-    const user: any = await this.apagoService.checkUserPermission({
+    const user = await this.apagoService.checkUserPermission({
       userId: subscriberSession.subscriberId,
       accountId,
       permissions: [],
