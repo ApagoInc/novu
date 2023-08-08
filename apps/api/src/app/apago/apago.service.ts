@@ -1,28 +1,83 @@
-import { Model } from 'mongoose';
 import { Injectable } from '@nestjs/common';
-import { InjectModel, InjectConnection } from '@nestjs/mongoose';
-import { User } from './schemas/user.schema';
-import { Account } from './schemas/account.schema';
-import { Connection } from 'mongoose';
 import { AdministrativeEvent } from './types';
 import validator from 'validator';
 import { IJwtPayload, TriggerRecipientsTypeEnum } from '@novu/shared';
+import { ApiService } from './api.service';
+import * as util from 'util';
 
 @Injectable()
 export class ApagoService {
-  rolesMap = {
-    RESOLVE_PREFLIGHT: ['SuperAdmin', 'AccountAdmin'],
-    APPROVE_TO_PRINT: ['SuperAdmin', 'AccountAdmin'],
-    APPROVE_CONTENT: ['SuperAdmin', 'AccountAdmin'],
-  };
+  queue: Array<{ data: any; cb: (err: any, data: any) => void }> = [];
+  apiServices: Array<ApiService> = [];
+  apiServiceCount = 10;
 
-  administrativeEvents: Array<AdministrativeEvent> = ['USER_WAS_CREATED', 'USER_WAS_MODIFIED'];
+  administrativeEvents: Array<AdministrativeEvent> = ['USER_WAS_CREATED', 'USER_WAS_MODIFIED', 'USER_WAS_DELETED'];
 
-  constructor(
-    @InjectModel(User.name, 'apago') private userModel: Model<User>,
-    @InjectModel(Account.name, 'apago') private accountModel: Model<Account>,
-    @InjectConnection('apago') private connection: Connection
-  ) {}
+  constructor() {
+    this.initServices();
+  }
+
+  async initServices() {
+    for (let i = 0; i < this.apiServiceCount; i++) {
+      const apiService = new ApiService();
+      await apiService.init();
+      this.apiServices.push(apiService);
+    }
+  }
+
+  getUserAccount(
+    data: { userId: string; accountId: string },
+    cb: (user: { Email: string; FirstName: string; LastName: string; UserId: string }) => void
+  ) {
+    this.queue.push({ data: { ...data, type: 'informative' }, cb });
+    this.processQueue();
+  }
+
+  checkUserPermission(data: { accountId: string; userId: string; permissions: Array<string> }) {
+    const queuePromise = util.promisify(this.addToQueue.bind(this));
+    return queuePromise({ ...data, type: 'check_permission' });
+  }
+
+  checkStakeholderPermissions(data: {
+    userId: string;
+    accountId: string;
+    jobId: string;
+    stakeholderId: string;
+    stage: string;
+  }) {
+    const queuePromise = util.promisify(this.addToQueue.bind(this));
+    return queuePromise({ ...data, type: 'edit_stakeholder' });
+  }
+
+  addToQueue(
+    data: { userId: string; accountId: string; type: string; jobId: string; stakeholderId: string },
+    cb: () => void
+  ) {
+    this.queue.push({ data, cb });
+    this.processQueue();
+  }
+
+  async processQueue() {
+    if (this.queue.length == 0) return;
+    if (this.apiServices.length == 0) return;
+
+    const apiClient = this.apiServices[0];
+    this.apiServices.shift();
+
+    const job = this.queue[0];
+    this.queue.shift();
+
+    if (job.data.type == 'edit_stakeholder') {
+      const result = await apiClient.getStakeholder(job.data);
+      job.cb(null, result);
+    } else if (job.data.type == 'check_permission') {
+      const result = await apiClient.getAccount(job.data);
+      job.cb(null, result);
+    }
+
+    this.apiServices.push(apiClient);
+    this.processQueue();
+  }
 
   getStakeholderKey(body: { jobId: string; part: string; stage: string }) {
     const key = Buffer.from(
@@ -70,46 +125,6 @@ export class ApagoService {
     ).toString('base64');
 
     return `informative:${payload.accountId}:${key}`;
-  }
-
-  async getJob(JobID: string, accountId: string): Promise<any> {
-    return await this.connection.collection(`jobs-${accountId}`).findOne({ JobID });
-  }
-
-  async checkUserRole(userId: string, accountId: string, stage: string) {
-    const user = await this.userModel.findOne({ Accounts: accountId, UserID: userId });
-
-    if (!user) return null;
-
-    const { Accounts, Roles } = user;
-
-    const index = Accounts.indexOf(accountId);
-
-    if (index == -1) return null;
-
-    const role = Roles[index];
-
-    if (this.rolesMap[stage] && this.rolesMap[stage].includes(role)) return user;
-
-    return null;
-  }
-
-  async checkUserAccount(userId: string, accountId: string) {
-    const user = await this.userModel.findOne({ Accounts: accountId, UserID: userId });
-
-    if (!user) return null;
-
-    const { Accounts } = user;
-
-    const index = Accounts.indexOf(accountId);
-
-    if (index == -1) return null;
-
-    return user;
-  }
-
-  async getUser(userId: string) {
-    return await this.userModel.findOne({ UserID: userId });
   }
 
   getInformativeEvents(body: { part: string; payload?: any; event: string; accountId: string; userId: string }) {

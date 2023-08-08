@@ -1,19 +1,7 @@
-import {
-  Body,
-  Controller,
-  Get,
-  NotFoundException,
-  Param,
-  Post,
-  UseGuards,
-  UnauthorizedException,
-  Headers,
-} from '@nestjs/common';
-import { IJwtPayload, TriggerRecipientsTypeEnum } from '@novu/shared';
-import { SubscriberSession, UserSession } from '../shared/framework/user.decorator';
+import { Body, Controller, Get, Param, Post, UseGuards, UnauthorizedException } from '@nestjs/common';
+import { SubscriberSession } from '../shared/framework/user.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ApagoService } from './apago.service';
 import { SubscriberEntity } from '@novu/dal';
 import { AddBulkSubscribersCommand, AddBulkSubscribersUseCase } from '../topics/use-cases/add-bulk-subscribers';
@@ -26,8 +14,7 @@ import { FilterTopicsUseCase, FilterTopicsCommand } from '../topics/use-cases';
 import { UpdateStakeholdersRequestDTO } from './dtos/update-stakeholders-request.dto';
 import { UpdateInformativeRequestDTO } from './dtos/update-informative-request.dto';
 import { CreateSubscriber, CreateSubscriberCommand } from '@novu/application-generic';
-import axios from 'axios';
-import { AdministrativeEvent, InformativeEvent } from './types';
+import { AdministrativeEvent } from './types';
 
 @Controller('/apago')
 export class ApagoController {
@@ -48,13 +35,13 @@ export class ApagoController {
     @Param('jobId') jobId: string,
     @Param('accountId') accountId: string
   ) {
-    const job = await this.apagoService.getJob(jobId, accountId);
+    const user = await this.apagoService.checkUserPermission({
+      accountId,
+      userId: subscriberSession.subscriberId,
+      permissions: ['Stakeholder_View'],
+    });
 
-    if (!job) throw new NotFoundException(`Job not found for id ${jobId}`);
-
-    const account = await this.apagoService.checkUserAccount(subscriberSession.subscriberId, accountId);
-
-    if (!account) throw new UnauthorizedException();
+    if (user == null) throw new UnauthorizedException();
 
     const res: any = {};
     let page = 0;
@@ -113,15 +100,15 @@ export class ApagoController {
     @Param('jobId') jobId: string,
     @Param('accountId') accountId: string
   ) {
-    const job = await this.apagoService.getJob(jobId, accountId);
+    const stakeholderUser: any = await this.apagoService.checkStakeholderPermissions({
+      userId: subscriberSession.subscriberId,
+      jobId,
+      accountId,
+      stakeholderId: body.userId,
+      stage: body.stage,
+    });
 
-    if (!job) throw new NotFoundException(`Job not found for id ${jobId}`);
-
-    const assignerUser = await this.apagoService.checkUserRole(subscriberSession.subscriberId, accountId, body.stage);
-
-    const stakeholderUser = await this.apagoService.checkUserRole(body.userId, accountId, body.stage);
-
-    if (!assignerUser || !stakeholderUser) throw new UnauthorizedException();
+    if (!stakeholderUser) throw new UnauthorizedException();
 
     const newTopics = body.parts.map((part) =>
       this.apagoService.getStakeholderKey({
@@ -194,7 +181,11 @@ export class ApagoController {
     @Body() body: UpdateInformativeRequestDTO,
     @Param('accountId') accountId: string
   ) {
-    const user = await this.apagoService.checkUserAccount(subscriberSession.subscriberId, accountId);
+    const user: any = await this.apagoService.checkUserPermission({
+      accountId,
+      userId: subscriberSession.subscriberId,
+      permissions: [],
+    });
 
     if (!user) throw new UnauthorizedException();
 
@@ -281,9 +272,13 @@ export class ApagoController {
   @ExternalApiAccessible()
   @UseGuards(AuthGuard('subscriberJwt'))
   async informative(@SubscriberSession() subscriberSession: SubscriberEntity, @Param('accountId') accountId: string) {
-    const checkUserAccount = await this.apagoService.checkUserAccount(subscriberSession.subscriberId, accountId);
+    const user: any = await this.apagoService.checkUserPermission({
+      userId: subscriberSession.subscriberId,
+      accountId,
+      permissions: [],
+    });
 
-    if (!checkUserAccount) throw new UnauthorizedException();
+    if (!user) throw new UnauthorizedException();
 
     const res: any = {};
 
@@ -323,11 +318,15 @@ export class ApagoController {
 
   @ExternalApiAccessible()
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/identify')
-  async identifyAll(@SubscriberSession() subscriberSession: SubscriberEntity) {
-    const user = await this.apagoService.getUser(subscriberSession.subscriberId);
+  @Post('/:accountId/identify')
+  async identifyAll(@SubscriberSession() subscriberSession: SubscriberEntity, @Param('accountId') accountId: string) {
+    const user: any = await this.apagoService.checkUserPermission({
+      userId: subscriberSession.subscriberId,
+      accountId,
+      permissions: [],
+    });
 
-    if (!user) return null;
+    if (!user) throw new UnauthorizedException();
 
     await this.createSubscriberUsecase.execute(
       CreateSubscriberCommand.create({

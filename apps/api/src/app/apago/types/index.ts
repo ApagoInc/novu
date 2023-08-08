@@ -1,4 +1,4 @@
-export type StakeholderStage = 'RESOLVE_PREFLIGHT' | 'APPROVE_CONTENT' | 'APPROVE_TO_PRINT';
+export type StakeholderStage = 'Preflight1_ApplyFix' | 'Preflight1_Signoff' | 'Preflight2_Signoff';
 
 export type InformativeEvent =
   | 'TITLE_CREATED'
