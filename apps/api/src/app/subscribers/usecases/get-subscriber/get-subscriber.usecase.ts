@@ -9,13 +9,23 @@ export class GetSubscriber {
   constructor(private subscriberRepository: SubscriberRepository) {}
 
   async execute(command: GetSubscriberCommand): Promise<SubscriberEntity> {
-    const { environmentId, subscriberId, fetchTopics, topic } = command;
-    const subscriber = await this.fetchSubscriber({ _environmentId: environmentId, subscriberId, fetchTopics, topic });
-    if (!subscriber) {
-      throw new NotFoundException(`Subscriber not found for id ${subscriberId}`);
-    }
+    const { environmentId, subscriberId, topic } = command;
+    if (typeof topic == 'string') {
+      const subscriber = await this.fetchSubscriberWithTopics({ _environmentId: environmentId, subscriberId, topic });
 
-    return subscriber;
+      if (!subscriber) {
+        throw new NotFoundException(`Subscriber not found for id ${subscriberId}`);
+      }
+
+      return subscriber;
+    } else {
+      const subscriber = await this.fetchSubscriber({ _environmentId: environmentId, subscriberId });
+      if (!subscriber) {
+        throw new NotFoundException(`Subscriber not found for id ${subscriberId}`);
+      }
+
+      return subscriber;
+    }
   }
 
   @CachedEntity({
@@ -28,16 +38,21 @@ export class GetSubscriber {
   private async fetchSubscriber({
     subscriberId,
     _environmentId,
-    fetchTopics,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }): Promise<SubscriberEntity | null> {
+    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
+  }
+  private async fetchSubscriberWithTopics({
+    subscriberId,
+    _environmentId,
     topic,
   }: {
     subscriberId: string;
     _environmentId: string;
-    fetchTopics?: boolean;
-    topic?: string;
+    topic: string;
   }): Promise<SubscriberEntity | null> {
-    if (fetchTopics)
-      return await this.subscriberRepository.findBySubscriberIdWithTopics(_environmentId, subscriberId, topic);
-    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
+    return await this.subscriberRepository.findBySubscriberIdWithTopics(_environmentId, subscriberId, topic);
   }
 }

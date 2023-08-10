@@ -69,7 +69,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
+    query: { feedId?: string[]; seen?: boolean; read?: boolean; query?: string } = {},
     options: { limit: number; skip?: number } = { limit: 10 }
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
@@ -83,14 +83,40 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       .populate('subscriber', '_id firstName lastName avatar subscriberId')
       .populate('actorSubscriber', '_id firstName lastName avatar subscriberId');
 
-    return this.mapEntities(messages);
+    const matchQuery = {
+      ...requestQuery,
+      _environmentId: this.convertStringToObjectId(requestQuery._environmentId),
+      _subscriberId: this.convertStringToObjectId(requestQuery._subscriberId),
+    };
+
+    if (query.query) {
+      matchQuery['payloadArray.v'] = { $regex: query.query, $options: 'i' };
+    }
+
+    const aggregate = await this.MongooseModel.aggregate([
+      {
+        $addFields: {
+          payloadArray: {
+            $objectToArray: '$payload',
+          },
+        },
+      },
+      {
+        $match: matchQuery,
+      },
+      { $sort: { createdAt: -1 } },
+      { $skip: options?.skip || 0 },
+      { $limit: options?.limit || 100 },
+    ]);
+
+    return this.mapEntities(aggregate);
   }
 
   async getCount(
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
+    query: { feedId?: string[]; seen?: boolean; read?: boolean; query?: string } = {},
     options: { limit: number; skip?: number } = { limit: 100, skip: 0 }
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, {
@@ -99,7 +125,31 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read: query.read,
     });
 
-    return this.MongooseModel.countDocuments(requestQuery, options).read('secondaryPreferred');
+    if (query.query) {
+      requestQuery['payloadArray.v'] = { $regex: query.query, $options: 'i' };
+    }
+
+    const count = await this.MongooseModel.aggregate([
+      {
+        $addFields: {
+          payloadArray: {
+            $objectToArray: '$payload',
+          },
+        },
+      },
+      {
+        $match: {
+          ...requestQuery,
+          _environmentId: this.convertStringToObjectId(environmentId),
+          _subscriberId: this.convertStringToObjectId(subscriberId),
+        },
+      },
+      { $skip: options?.skip || 0 },
+      { $limit: options?.limit || 100 },
+      { $group: { _id: null, n: { $sum: 1 } } },
+    ]);
+
+    return count[0]?.n as number;
   }
 
   async markAllMessagesAs({

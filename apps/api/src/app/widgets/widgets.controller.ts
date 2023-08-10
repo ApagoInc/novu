@@ -98,7 +98,7 @@ export class WidgetsController {
   async getNotificationsFeed(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query() query: GetNotificationsFeedDto
-  ) {
+  ): Promise<any> {
     let feedsQuery: string[] | undefined;
     if (query.feedIdentifier) {
       feedsQuery = Array.isArray(query.feedIdentifier) ? query.feedIdentifier : [query.feedIdentifier];
@@ -110,11 +110,14 @@ export class WidgetsController {
       environmentId: subscriberSession._environmentId,
       page: query.page != null ? parseInt(query.page) : 0,
       feedId: feedsQuery,
-      query: { seen: query.seen, read: query.read },
+      query: { seen: query.seen, read: query.read, query: query.query },
       limit: query.limit != null ? parseInt(query.limit) : 10,
     });
 
-    return await this.getNotificationsFeedUsecase.execute(command);
+    const data = await this.getNotificationsFeedUsecase.execute(command);
+    console.log(data);
+
+    return data;
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

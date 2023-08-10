@@ -14,12 +14,16 @@ export class ApiService {
 
     const instance = wrapper(axios.create({ jar, baseURL: process.env.LAKESIDE_API }));
 
-    await instance.post('user/login?token=true', {
+    this.instance = instance;
+
+    await this.login();
+  }
+
+  async login() {
+    await this.instance.post('user/login?token=true', {
       email: process.env.LAKESIDE_EMAIL,
       password: process.env.LAKESIDE_PASSWORD,
     });
-
-    this.instance = instance;
   }
 
   async getStakeholder(data: ApiClientData) {
@@ -40,6 +44,7 @@ export class ApiService {
       await this.setAccount(data.accountId);
       return await this.getUser(data.userId, data.accountId, data.permissions);
     } catch (error) {
+      console.log(error);
       return null;
     }
   }
@@ -54,10 +59,10 @@ export class ApiService {
     await this.instance.get(`/job/job/${jobId}`);
   }
 
-  async getPermissions(name) {
-    const res = await this.instance.get(`/admin/rolesets`);
+  async getPermissions(roleName: string, accountId: string) {
+    const res = await this.instance.get(`/admin/account/${accountId}`);
 
-    const permissions = res.data[0].Roles[name].Permissions;
+    const permissions = res.data.Roleset.Roles[roleName].Permissions;
     return permissions;
   }
 
@@ -68,7 +73,7 @@ export class ApiService {
 
     const index = Accounts.indexOf(accountId);
 
-    const userPermissions = await this.getPermissions(Roles[index]);
+    const userPermissions = await this.getPermissions(Roles[index], accountId);
 
     for (let i = 0; i < permissions.length; i++) {
       if (!userPermissions.includes(permissions[i])) throw new Error('Unauthorized');

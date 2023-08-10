@@ -124,7 +124,6 @@ export class ApagoController {
           environmentId: subscriberSession._environmentId,
           organizationId: subscriberSession._organizationId,
           subscriberId: body.userId,
-          fetchTopics: true,
           topic: 'stakeholder:',
         })
       );
@@ -218,7 +217,6 @@ export class ApagoController {
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
-        fetchTopics: true,
         topic: 'informative:',
       })
     );
@@ -281,13 +279,13 @@ export class ApagoController {
     if (!user) throw new UnauthorizedException();
 
     const res: any = {};
+    const data = [];
 
     const subscriber = await this.getSubscriberUseCase.execute(
       GetSubscriberCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
-        fetchTopics: true,
         topic: `informative:${accountId}`,
       })
     );

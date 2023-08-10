@@ -49,7 +49,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     app = await NestFactory.create(AppModule, { bufferLogs: true });
   }
 
-  app.useLogger(app.get(PinoLogger));
+  //app.useLogger(app.get(PinoLogger));
   app.flushLogs();
 
   const server = app.getHttpServer();
