@@ -29,7 +29,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.get('.mantine-Modal-modal button').contains('Delete step').click();
     cy.getByTestId(`node-inAppSelector`).should('not.exist');
     cy.get('.react-flow__node').should('have.length', 3);
-    cy.get('.react-flow__node').first().should('contain', 'Trigger').next().should('contain', 'Email');
+    cy.get('.react-flow__node').first().should('contain', 'Workflow trigger').next().should('contain', 'Email');
     cy.getByTestId('notification-template-submit-btn').click();
 
     cy.visit('/workflows/edit/' + template._id);
@@ -99,7 +99,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.get('.react-flow__node').should('have.length', 5);
     cy.get('.react-flow__node')
       .first()
-      .should('contain', 'Trigger')
+      .should('contain', 'Workflow trigger')
       .next()
       .should('contain', 'In-App')
       .next()
@@ -360,13 +360,15 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
 
     dragAndDrop('sms');
-    cy.waitForNetworkIdle(500);
 
     dragAndDrop('delay');
 
     dragAndDrop('sms');
+
+    cy.waitForNetworkIdle(500);
 
     const firstContent = 'first content for sms';
     const lastContent = 'last content for sms';

@@ -2,11 +2,11 @@ import { Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
 import {
   EventsDistributedLockService,
-  EventsPerformanceService,
   StorageHelperService,
   SendTestEmail,
   QueueService,
   CalculateDelayService,
+  GetNovuProviderCredentials,
 } from '@novu/application-generic';
 
 import { EventsController } from './events.controller';
@@ -50,9 +50,9 @@ import { ApagoModule } from '../apago/apago.module';
     StorageHelperService,
     TriggerHandlerQueueService,
     EventsDistributedLockService,
-    EventsPerformanceService,
     SendTestEmail,
     CalculateDelayService,
+    GetNovuProviderCredentials,
   ],
 })
 export class EventsModule {}

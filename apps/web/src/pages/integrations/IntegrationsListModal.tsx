@@ -31,7 +31,10 @@ type ActionType =
   | { type: ActionsTypeEnum.CLEAR }
   | { type: ActionsTypeEnum.SHOW_SELECT_SIDEBAR; payload: { scrollTo?: ChannelTypeEnum } }
   | { type: ActionsTypeEnum.SHOW_CREATE_SIDEBAR; payload: { provider: IIntegratedProvider } }
-  | { type: ActionsTypeEnum.SHOW_UPDATE_SIDEBAR; payload: { integrationIdToEdit: string } };
+  | {
+      type: ActionsTypeEnum.SHOW_UPDATE_SIDEBAR;
+      payload: { integrationIdToEdit: string };
+    };
 
 interface IModalState {
   scrollTo?: ChannelTypeEnum;
@@ -187,7 +190,6 @@ export function IntegrationsListModal({
         isOpened={sidebarType === SidebarType.UPDATE}
         onClose={onSidebarClose}
         integrationId={integrationIdToEdit}
-        onSuccessDelete={onSidebarClose}
       />
     </Modal>
   );
