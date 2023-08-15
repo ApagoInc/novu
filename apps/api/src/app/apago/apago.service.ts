@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { AdministrativeEvent, ApiClientData, User } from './types';
 import validator from 'validator';
 import { TriggerRecipientsTypeEnum } from '@novu/shared';
@@ -56,12 +56,18 @@ export class ApagoService {
     const job = this.queue[0];
     this.queue.shift();
 
-    if (job.data.type == 'edit_stakeholder') {
-      const result = await apiClient.getStakeholder(job.data);
-      job.cb(null, result);
-    } else if (job.data.type == 'check_permission') {
-      const result = await apiClient.getAccount(job.data);
-      job.cb(null, result);
+    try {
+      if (job.data.type == 'edit_stakeholder') {
+        const result = await apiClient.getStakeholder(job.data);
+        job.cb(null, result);
+      } else if (job.data.type == 'check_permission') {
+        const result = await apiClient.getAccount(job.data);
+        job.cb(null, result);
+      } else {
+        job.cb(new UnauthorizedException('Unkown operation'), null);
+      }
+    } catch (error) {
+      job.cb(error, null);
     }
 
     this.apiServices.push(apiClient);

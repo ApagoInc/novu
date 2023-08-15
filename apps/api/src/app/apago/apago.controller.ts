@@ -3,7 +3,7 @@ import { SubscriberSession } from '../shared/framework/user.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApagoService } from './apago.service';
-import { SubscriberEntity } from '@novu/dal';
+import { SubscriberEntity, TopicSubscribersEntity } from '@novu/dal';
 import { AddBulkSubscribersCommand, AddBulkSubscribersUseCase } from '../topics/use-cases/add-bulk-subscribers';
 import { GetSubscriberCommand, GetSubscriber } from '../subscribers/usecases/get-subscriber';
 import {
@@ -15,6 +15,10 @@ import { UpdateStakeholdersRequestDTO } from './dtos/update-stakeholders-request
 import { UpdateInformativeRequestDTO } from './dtos/update-informative-request.dto';
 import { CreateSubscriber, CreateSubscriberCommand } from '@novu/application-generic';
 import { AdministrativeEvent } from './types';
+import { StakeholdersResponseDTO } from './dtos/stakeholders-response.dto';
+import { InformativeResponseDTO } from './dtos/informative-response.dto';
+
+type SubscriberEntityWithTopics = SubscriberEntity & { topicSubscribers: TopicSubscribersEntity[] };
 
 @Controller('/apago')
 export class ApagoController {
@@ -43,12 +47,12 @@ export class ApagoController {
 
     if (user == null) throw new UnauthorizedException();
 
-    const res: any = {};
+    const data: Array<StakeholdersResponseDTO> = [];
     let page = 0;
     const pageSize = 30;
 
     while (true) {
-      const data = await this.filterTopicsUseCase.execute(
+      const res = await this.filterTopicsUseCase.execute(
         FilterTopicsCommand.create({
           environmentId: subscriberSession._environmentId,
           key: `stakeholder:${jobId}`,
@@ -58,7 +62,7 @@ export class ApagoController {
         })
       );
 
-      for (const item of data.data) {
+      for (const item of res.data) {
         const key = item.key;
 
         const [type, jobId, payload] = key.split(':');
@@ -68,27 +72,24 @@ export class ApagoController {
         if (!json) continue;
 
         for (const subscriber of item.subscribers) {
-          if (res[subscriber]) {
-            const stages = res[subscriber][json.stage] || [];
-            res[subscriber] = {
-              ...res[subscriber],
-              [json.stage]: [...stages, json.part],
-            };
+          const index = data.findIndex((val) => val.subscriberId == subscriber);
+          if (index > -1) {
+            const stageIndex = data[index].stages.findIndex((val) => val.stage == json.stage);
+            if (stageIndex > -1) data[index].stages[stageIndex].parts.push(json.part);
+            else data[index].stages.push({ stage: json.stage, parts: [json.part] });
           } else {
-            res[subscriber] = {
-              [json.stage]: [json.part],
-            };
+            data.push({ subscriberId: subscriber, stages: [{ stage: json.stage, parts: [json.part] }] });
           }
         }
       }
 
-      if (data.totalCount < (page + 1) * pageSize) break;
+      if (res.totalCount < (page + 1) * pageSize) break;
       if (page == 100) break;
 
       page++;
     }
 
-    return res;
+    return data;
   }
 
   @Post('/stakeholders/:accountId/:jobId')
@@ -119,16 +120,16 @@ export class ApagoController {
     );
 
     try {
-      const subscriber = await this.getSubscriberUseCase.execute(
+      const subscriber: SubscriberEntityWithTopics = (await this.getSubscriberUseCase.execute(
         GetSubscriberCommand.create({
           environmentId: subscriberSession._environmentId,
           organizationId: subscriberSession._organizationId,
           subscriberId: body.userId,
           topic: 'stakeholder:',
         })
-      );
+      )) as SubscriberEntityWithTopics;
 
-      const diffrence = (subscriber as any).topicSubscribers.filter((x: any) => !newTopics.includes(x));
+      const diffrence = subscriber.topicSubscribers.filter((x) => !newTopics.includes(x.topicKey));
 
       await this.removeBulkSubscribersUseCase.execute(
         RemoveBulkSubscribersCommand.create({
@@ -212,14 +213,14 @@ export class ApagoController {
           })
         );
 
-    const subscriber = await this.getSubscriberUseCase.execute(
+    const subscriber: SubscriberEntityWithTopics = (await this.getSubscriberUseCase.execute(
       GetSubscriberCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         topic: 'informative:',
       })
-    );
+    )) as SubscriberEntityWithTopics;
 
     if (subscriber == null) {
       await this.createSubscriberUsecase.execute(
@@ -233,7 +234,7 @@ export class ApagoController {
         })
       );
     } else {
-      const diffrence = (subscriber as any).topicSubscribers.filter((x: any) => !newTopics.includes(x));
+      const diffrence = subscriber.topicSubscribers.filter((x) => !newTopics.includes(x.topicKey));
 
       await this.removeBulkSubscribersUseCase.execute(
         RemoveBulkSubscribersCommand.create({
@@ -278,40 +279,35 @@ export class ApagoController {
 
     if (!user) throw new UnauthorizedException();
 
-    const res: any = {};
-    const data = [];
+    const data: Array<InformativeResponseDTO> = [];
 
-    const subscriber = await this.getSubscriberUseCase.execute(
+    const subscriber: SubscriberEntityWithTopics = (await this.getSubscriberUseCase.execute(
       GetSubscriberCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
         topic: `informative:${accountId}`,
       })
-    );
+    )) as SubscriberEntityWithTopics;
 
-    for (const topic of (subscriber as any).topicSubscribers) {
-      const key = (topic as any).topicKey as string;
+    for (const topic of subscriber.topicSubscribers) {
+      const key = topic.topicKey;
+
       const [type, accountId, payload] = key.split(':');
 
       const json = this.apagoService.parsePayload(payload);
 
       if (!json) continue;
 
-      if (res[json.event]) {
-        res[json.event]['parts'] = [...res[json.event]['parts'], json.part];
-        res[json.event]['keys'] = [...res[json.event]['keys'], key];
+      const index = data.findIndex((val) => val.event == json.event);
+      if (index > -1) {
+        data[index].parts.push(json.part);
       } else {
-        res[json.event] = {
-          parts: [json.part],
-          keys: [key],
-          ...json,
-          type,
-        };
+        data.push({ event: json.event, parts: [json.part], channel: json.channel });
       }
     }
 
-    return { ...res, subscriberSession };
+    return data;
   }
 
   @ExternalApiAccessible()
