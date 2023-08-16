@@ -29,3 +29,5 @@ export type ApiClientData =
     };
 
 export type User = { Email: string; UserID: string; FirstName: string; LastName: string };
+
+export type Stage = { stage: string; parts: Array<string> };
