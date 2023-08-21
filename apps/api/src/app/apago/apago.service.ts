@@ -126,25 +126,30 @@ export class ApagoService {
     const channels = ['email', 'inapp', 'all'];
     const all = [true, false];
 
-    const events = channels.flatMap((channel) =>
-      all.map((allTitles) => ({
-        name: channel,
-        payload: body.payload || {},
-        to: [
-          {
-            type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC,
-            topicKey: this.getInformativeKey({
-              event: body.event,
-              part: body.part,
-              accountId: body.accountId,
-              userId: body.userId,
-              channel,
-              allTitles,
-            }),
-          },
-        ],
-      }))
-    );
+    const events = channels.flatMap((channel) => {
+      const subchannels = channel == 'all' ? ['email', 'inapp'] : [channel];
+      return all.flatMap((allTitles) =>
+        subchannels.map((sc) => ({
+          name: this.administrativeEvents.includes(body.event as AdministrativeEvent)
+            ? `administrative-${sc}`
+            : `informative-${sc}`,
+          payload: body.payload || {},
+          to: [
+            {
+              type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC,
+              topicKey: this.getInformativeKey({
+                event: body.event,
+                part: body.part,
+                accountId: body.accountId,
+                userId: body.userId,
+                channel,
+                allTitles,
+              }),
+            },
+          ],
+        }))
+      );
+    });
 
     return events;
   }

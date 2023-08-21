@@ -97,7 +97,7 @@ export class EventsController {
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        identifier: 'all',
+        identifier: 'stakeholder',
         payload: body.payload || {},
         overrides: body.overrides || {},
         to: [{ type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC, topicKey }],

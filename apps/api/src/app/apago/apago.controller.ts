@@ -191,6 +191,8 @@ export class ApagoController {
 
     const administrative = this.apagoService.administrativeEvents.includes(body.event as AdministrativeEvent);
 
+    const parts = body.parts || [];
+
     const newTopics = administrative
       ? [
           this.apagoService.getInformativeKey({
@@ -202,7 +204,8 @@ export class ApagoController {
             event: body.event,
           }),
         ]
-      : body.parts.map((part) =>
+      : parts.length > 0
+      ? body.parts.map((part) =>
           this.apagoService.getInformativeKey({
             accountId: body.accountId,
             userId: subscriberSession.subscriberId,
@@ -211,7 +214,16 @@ export class ApagoController {
             allTitles: body.allTitles,
             event: body.event,
           })
-        );
+        )
+      : [
+          this.apagoService.getInformativeKey({
+            accountId: body.accountId,
+            userId: subscriberSession.subscriberId,
+            channel: body.channel,
+            allTitles: body.allTitles,
+            event: body.event,
+          }),
+        ];
 
     const subscriber: SubscriberEntityWithTopics = (await this.getSubscriberUseCase.execute(
       GetSubscriberCommand.create({
