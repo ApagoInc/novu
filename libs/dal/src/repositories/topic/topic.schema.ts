@@ -18,6 +18,11 @@ const topicSchema = new Schema<TopicDBModel>(
       index: true,
       required: true,
     },
+    _templateId: {
+      type: Schema.Types.ObjectId,
+      ref: 'NotificationTemplate',
+      required: false,
+    },
     key: {
       type: Schema.Types.String,
       required: true,

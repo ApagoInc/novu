@@ -1,9 +1,9 @@
-import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, NotFoundException, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
 import { IJwtPayload, ISubscribersDefine, TriggerRecipientSubscriber, TriggerRecipientsTypeEnum } from '@novu/shared';
 import { SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
-
+import slugify from 'slugify';
 import {
   BulkTriggerEventDto,
   InformativeEventDto,
@@ -25,6 +25,7 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { ApagoService } from '../apago/apago.service';
+import { NotFoundError } from 'rxjs';
 @Controller({
   path: 'events',
   scope: Scope.REQUEST,
@@ -92,12 +93,19 @@ export class EventsController {
   ): Promise<TriggerEventResponseDto> {
     const topicKey = this.apagoService.getStakeholderKey(body);
 
+    const stage = this.apagoService.stakeholderStages.find((val) => val.value == body.stage);
+
+    if (!stage) throw new NotFoundException('Stage not found!');
+
     const result = await this.parseEventRequest.execute(
       ParseEventRequestCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        identifier: 'stakeholder',
+        identifier: `${slugify(stage?.label, {
+          lower: true,
+          strict: true,
+        })}`,
         payload: body.payload || {},
         overrides: body.overrides || {},
         to: [{ type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC, topicKey }],

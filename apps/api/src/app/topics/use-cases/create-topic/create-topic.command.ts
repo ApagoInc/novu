@@ -1,4 +1,4 @@
-import { IsDefined, IsString } from 'class-validator';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 
 import { TopicKey, TopicName } from '../../types';
 
@@ -12,4 +12,8 @@ export class CreateTopicCommand extends EnvironmentCommand {
   @IsString()
   @IsDefined()
   name: TopicName;
+
+  @IsString()
+  @IsOptional()
+  templateId?: string;
 }

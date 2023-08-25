@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsDefined, IsOptional } from 'class-validator';
+import { IsArray, IsDefined, IsOptional, IsString } from 'class-validator';
 import { InformativeEvent } from '../types';
 
 export class UpdateInformativeRequestDTO {
@@ -13,9 +13,6 @@ export class UpdateInformativeRequestDTO {
   @IsDefined()
   accountId: string;
 
-  @IsDefined()
-  channel: string;
-
   @IsOptional()
   allTitles: boolean;
 
@@ -24,4 +21,8 @@ export class UpdateInformativeRequestDTO {
 
   @IsOptional()
   administrative: boolean;
+
+  @IsOptional()
+  @IsString()
+  templateId?: string;
 }

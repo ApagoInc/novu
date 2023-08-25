@@ -1,4 +1,4 @@
-import { IsArray, IsDefined } from 'class-validator';
+import { IsArray, IsDefined, IsOptional, IsString } from 'class-validator';
 
 import { ExternalSubscriberId, TopicKey } from '../../types';
 
@@ -12,4 +12,8 @@ export class AddBulkSubscribersCommand extends EnvironmentCommand {
   @IsArray()
   @IsDefined()
   subscribers: ExternalSubscriberId[];
+
+  @IsString()
+  @IsOptional()
+  templateId?: string;
 }

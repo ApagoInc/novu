@@ -4,12 +4,83 @@ import validator from 'validator';
 import { TriggerRecipientsTypeEnum } from '@novu/shared';
 import { ApiService } from './api.service';
 import * as util from 'util';
+import slugify from 'slugify';
 
 @Injectable()
 export class ApagoService {
   queue: Array<{ data: ApiClientData; cb: (err: any, data: User | null) => void }> = [];
   apiServices: Array<ApiService> = [];
   apiServiceCount = 10;
+
+  informativeEvents = [
+    {
+      title: 'Title Events',
+      events: [
+        { label: 'Title Created', value: 'TITLE_CREATED', no_parts: true },
+        { label: 'Title Deleted', value: 'TITLE_DELETED', no_parts: true },
+        { label: 'Component Created', value: 'COMPONENT_CREATED' },
+        { label: 'File(s) Uploaded', value: 'FILES_UPLOADED' },
+        { label: 'Component Deleted', value: 'COMPONENT_DELETED' },
+        {
+          label: 'Component Approved to Print',
+          value: 'COMPONENT_APPROVED_TO_PRINT',
+        },
+        {
+          label: 'Component Retrieved From Archive',
+          value: 'COMPONENT_RETRIEVED_FROM_ARCHIVE',
+        },
+      ],
+    },
+    {
+      title: 'File Check Event',
+      events: [
+        { label: 'Preflight Warnings/Errors', value: 'PREFLIGHT_WARNING_ERRORS' },
+        {
+          label: 'Specifications Warning/Errors',
+          value: 'SPECIFICATIONS_WARNING_ERRORS',
+        },
+      ],
+    },
+    {
+      title: 'Proofing Events',
+      events: [
+        {
+          label: 'Content Approval Requested',
+          value: 'CONTENT_APPROVAL_REQUESTED',
+        },
+        {
+          label: 'Content Approval Approved',
+          value: 'CONTENT_APPROVAL_APPROVED',
+        },
+        {
+          label: 'Content Approval Rejected',
+          value: 'CONTENT_APPROVAL_REJECTED',
+        },
+        {
+          label: 'Approve to Print Requested',
+          value: 'APPROVE_TO_PRINT_REQUESTED',
+        },
+        {
+          label: 'Approve to Print Approved',
+          value: 'APPROVE_TO_PRINT_APPROVED',
+        },
+      ],
+    },
+    {
+      title: 'Administrative Events',
+      events: [
+        { label: 'User Was Created', value: 'USER_WAS_CREATED', no_parts: true },
+        { label: 'User Was Modified', value: 'USER_WAS_MODIFIED', no_parts: true },
+        { label: 'User Was Deleted', value: 'USER_WAS_DELETED', no_parts: true },
+      ],
+    },
+  ];
+
+  stakeholderStages = [
+    { label: 'Resolve Preflight', value: 'Preflight1_ApplyFix' },
+    { label: 'Approve Content', value: 'Preflight1_Signoff' },
+    { label: 'Approve to Print', value: 'Preflight2_Signoff' },
+  ];
 
   administrativeEvents: Array<AdministrativeEvent> = ['USER_WAS_CREATED', 'USER_WAS_MODIFIED', 'USER_WAS_DELETED'];
 
@@ -103,7 +174,6 @@ export class ApagoService {
     event: string;
     accountId: string;
     userId: string;
-    channel: string;
     allTitles?: boolean;
     administrative?: boolean;
   }) {
@@ -113,7 +183,6 @@ export class ApagoService {
       JSON.stringify({
         ...(payload.part && !administrative && { part: payload.part }),
         event: payload.event,
-        channel: payload.channel,
         ...(payload.allTitles && { user: payload.userId }),
         ...(administrative && { administrative: true }),
       })
@@ -123,33 +192,28 @@ export class ApagoService {
   }
 
   getInformativeEvents(body: { part: string; payload?: any; event: string; accountId: string; userId: string }) {
-    const channels = ['email', 'inapp', 'all'];
     const all = [true, false];
 
-    const events = channels.flatMap((channel) => {
-      const subchannels = channel == 'all' ? ['email', 'inapp'] : [channel];
-      return all.flatMap((allTitles) =>
-        subchannels.map((sc) => ({
-          name: this.administrativeEvents.includes(body.event as AdministrativeEvent)
-            ? `administrative-${sc}`
-            : `informative-${sc}`,
-          payload: body.payload || {},
-          to: [
-            {
-              type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC,
-              topicKey: this.getInformativeKey({
-                event: body.event,
-                part: body.part,
-                accountId: body.accountId,
-                userId: body.userId,
-                channel,
-                allTitles,
-              }),
-            },
-          ],
-        }))
-      );
-    });
+    const event = this.informativeEvents.flatMap((events) => events.events).find((val) => val.value == body.event);
+
+    if (!event?.label) return [];
+
+    const events = all.map((allTitles) => ({
+      name: `${slugify(event?.label, { lower: true, strict: true })}`,
+      payload: body.payload || {},
+      to: [
+        {
+          type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC,
+          topicKey: this.getInformativeKey({
+            event: body.event,
+            ...(!event?.no_parts && { part: body.part }),
+            accountId: body.accountId,
+            userId: body.userId,
+            allTitles,
+          }),
+        },
+      ],
+    }));
 
     return events;
   }

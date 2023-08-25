@@ -84,7 +84,7 @@ export function Table<T extends object>({
   onRowSelect,
   ...props
 }: ITableProps<T>) {
-  const { pageSize, total, onPageChange, current } = pagination;
+  const { pageSize, total, onPageChange, current, query } = pagination;
   const columns = useMemo(() => userColumns?.map((col) => ({ ...col })), [userColumns]);
   const data = useMemo(() => (userData || [])?.map((row) => ({ ...row })), [userData]);
   const fakeData = useMemo(() => Array.from({ length: loadingItems }).map((_, index) => ({ index })), [loadingItems]);
@@ -159,6 +159,10 @@ export function Table<T extends object>({
   useEffect(() => {
     onPageChangeRef.current?.(pageIndex);
   }, [onPageChangeRef, pageIndex]);
+
+  useEffect(() => {
+    gotoPage(0);
+  }, [query]);
 
   const handlePageChange = (pageNumber) => {
     if (pagination?.minimalPagination) {

@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule, Provider, RequestMethod } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, Provider, RequestMethod, forwardRef } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule, PassportStrategy } from '@nestjs/passport';
 import * as passport from 'passport';

@@ -34,14 +34,9 @@ export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, E
   }
 
   async createTopic(entity: Omit<TopicEntity, '_id'>): Promise<TopicEntity> {
-    const { key, name, _environmentId, _organizationId } = entity;
+    const { key, name, _environmentId, _organizationId, _templateId } = entity;
 
-    return await this.create({
-      _environmentId,
-      key,
-      name,
-      _organizationId,
-    });
+    return await this.create({ _templateId, _environmentId, key, name, _organizationId });
   }
 
   async deleteTopic(key: TopicKey, environmentId: EnvironmentId, organizationId: OrganizationId): Promise<void> {

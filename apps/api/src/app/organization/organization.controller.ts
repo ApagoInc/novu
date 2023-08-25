@@ -4,15 +4,17 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   Patch,
   Post,
   Put,
   UseGuards,
   UseInterceptors,
+  forwardRef,
 } from '@nestjs/common';
 import { OrganizationEntity } from '@novu/dal';
-import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { IJwtPayload, MemberRoleEnum, StepTypeEnum } from '@novu/shared';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -39,6 +41,14 @@ import { RenameOrganization } from './usecases/rename-organization/rename-organi
 import { RenameOrganizationDto } from './dtos/rename-organization.dto';
 import { UpdateBrandingDetailsDto } from './dtos/update-branding-details.dto';
 import { UpdateMemberRolesDto } from './dtos/update-member-roles.dto';
+import {
+  CreateNotificationTemplate,
+  CreateNotificationTemplateCommand,
+  NotificationStep,
+} from '../workflows/usecases/create-notification-template';
+import { GetNotificationGroups } from '../notification-groups/usecases/get-notification-groups/get-notification-groups.usecase';
+import { GetNotificationGroupsCommand } from '../notification-groups/usecases/get-notification-groups/get-notification-groups.command';
+import { ApagoService } from '../apago/apago.service';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -54,7 +64,10 @@ export class OrganizationController {
     private updateBrandingDetailsUsecase: UpdateBrandingDetails,
     private getOrganizationsUsecase: GetOrganizations,
     private getMyOrganizationUsecase: GetMyOrganization,
-    private renameOrganizationUsecase: RenameOrganization
+    private renameOrganizationUsecase: RenameOrganization,
+    private createWorkflowUsecase: CreateNotificationTemplate,
+    private getNotificationGroupsUsecase: GetNotificationGroups,
+    private apagoService: ApagoService
   ) {}
 
   @Post('/')
@@ -69,6 +82,65 @@ export class OrganizationController {
     });
 
     return await this.createOrganizationUsecase.execute(command);
+  }
+
+  @Post('/lakeside')
+  async createOrganizationReady(
+    @UserSession() user: IJwtPayload,
+    @Body() body: CreateOrganizationDto
+  ): Promise<OrganizationEntity> {
+    const wData = [
+      ...this.apagoService.informativeEvents.flatMap((arr) => arr.events.map((val) => ({ name: val.label }))),
+      ...this.apagoService.stakeholderStages.map((val) => ({ name: val.label })),
+    ];
+
+    const command = CreateOrganizationCommand.create({
+      userId: user._id,
+      logo: body.logo,
+      name: body.name,
+    });
+
+    const organization: any = await this.createOrganizationUsecase.execute(command);
+
+    const groups = await this.getNotificationGroupsUsecase.execute(
+      GetNotificationGroupsCommand.create({
+        organizationId: organization._id,
+        userId: user._id,
+        environmentId: organization.envs[0] as string,
+      })
+    );
+
+    for (const event of wData) {
+      await this.createWorkflowUsecase.execute(
+        CreateNotificationTemplateCommand.create({
+          organizationId: organization._id,
+          userId: user._id,
+          environmentId: organization.envs[0],
+          name: event.name,
+          tags: [],
+          description: event.name,
+          steps: [
+            {
+              name: 'In-App',
+              active: true,
+              template: { content: event.name, type: StepTypeEnum.IN_APP },
+            },
+            {
+              name: 'Email',
+              active: true,
+              template: { senderName: 'sender', subject: 'subject', content: [], type: StepTypeEnum.EMAIL },
+            },
+          ],
+          notificationGroupId: groups[0]._id,
+          active: true,
+          draft: false,
+          critical: false,
+          preferenceSettings: { email: true, in_app: true },
+        })
+      );
+    }
+
+    return organization;
   }
 
   @Get('/')

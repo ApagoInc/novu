@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Badge, ActionIcon, useMantineTheme, Group } from '@mantine/core';
+import { useEffect, useState } from 'react';
+import { Badge, ActionIcon, useMantineTheme, Group, Input } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
@@ -128,8 +128,9 @@ function WorkflowListPage() {
   const segment = useSegment();
   const { readonly } = useEnvController();
   const [page, setPage] = useState<number>(0);
+  const [query, setQuery] = useState('');
   const { loading: areNotificationGroupLoading } = useNotificationGroup();
-  const { templates, loading, totalCount: totalTemplatesCount, pageSize } = useTemplates(page);
+  const { templates, loading, totalCount: totalTemplatesCount, pageSize } = useTemplates(page, 10, query);
   const isLoading = areNotificationGroupLoading || loading;
   const navigate = useNavigate();
   const { blueprintsGroupedAndPopular: { general, popular } = {}, isLoading: areBlueprintsLoading } =
@@ -201,6 +202,14 @@ function WorkflowListPage() {
             />
           </>
         )}
+        <Input
+          value={query}
+          onChange={(e) => {
+            handleTableChange(0);
+            setQuery(e.target.value);
+          }}
+          placeholder="Search"
+        />
       </Container>
 
       <TemplateListTableWrapper>
@@ -218,6 +227,7 @@ function WorkflowListPage() {
                   current: page,
                   total: totalTemplatesCount,
                   onPageChange: handleTableChange,
+                  query,
                 }}
               />
             </When>
@@ -246,6 +256,7 @@ function WorkflowListPage() {
               current: page,
               total: totalTemplatesCount,
               onPageChange: handleTableChange,
+              query,
             }}
             noDataPlaceholder={
               <TemplatesListNoDataOld

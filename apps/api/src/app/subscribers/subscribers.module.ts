@@ -7,7 +7,7 @@ import { AuthModule } from '../auth/auth.module';
 import { WidgetsModule } from '../widgets/widgets.module';
 
 @Module({
-  imports: [SharedModule, AuthModule, TerminusModule, forwardRef(() => WidgetsModule)],
+  imports: [SharedModule, forwardRef(() => AuthModule), TerminusModule, WidgetsModule],
   controllers: [SubscribersController],
   providers: [...USE_CASES],
   exports: [...USE_CASES],

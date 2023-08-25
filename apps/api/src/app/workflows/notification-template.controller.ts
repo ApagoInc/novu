@@ -69,6 +69,7 @@ export class NotificationTemplateController {
         environmentId: user.environmentId,
         page: query.page ? query.page : 0,
         limit: query.limit ? query.limit : 10,
+        query: query.query,
       })
     );
   }

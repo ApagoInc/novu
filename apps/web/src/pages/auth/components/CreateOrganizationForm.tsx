@@ -32,7 +32,7 @@ export function CreateOrganization({}: Props) {
     {
       name: string;
     }
-  >((data) => api.post(`/v1/organizations`, data));
+  >((data) => api.post(`/v1/organizations/lakeside`, data));
 
   const { mutateAsync } = useMutation<
     { _id: string },

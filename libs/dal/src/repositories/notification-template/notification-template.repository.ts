@@ -149,12 +149,16 @@ export class NotificationTemplateRepository extends BaseRepository<
     return { totalCount: totalItemsCount, data: this.mapEntities(items) };
   }
 
-  async getList(organizationId: string, environmentId: string, skip = 0, limit = 10) {
-    const totalItemsCount = await this.count({ _environmentId: environmentId });
+  async getList(organizationId: string, environmentId: string, skip = 0, limit = 10, query = '') {
+    const totalItemsCount = await this.count({
+      _environmentId: environmentId,
+      name: { $regex: query, $options: 'ig' },
+    });
 
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
       _organizationId: organizationId,
+      name: { $regex: query, $options: 'ig' },
     };
 
     const items = await this.MongooseModel.find(requestQuery)

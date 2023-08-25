@@ -31,6 +31,7 @@ export class CreateTopicUseCase {
 
   private mapToEntity(domainEntity: CreateTopicCommand): Omit<TopicEntity, '_id'> {
     return {
+      ...(domainEntity.templateId && { _templateId: domainEntity.templateId }),
       _environmentId: domainEntity.environmentId,
       _organizationId: domainEntity.organizationId,
       key: domainEntity.key,

@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, forwardRef } from '@nestjs/common';
 import { SharedModule } from '../shared/shared.module';
 import { USE_CASES } from './usecases';
 import { NotificationTemplateController } from './notification-template.controller';
@@ -9,7 +9,7 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { WorkflowController } from './workflow.controller';
 
 @Module({
-  imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, IntegrationModule],
+  imports: [SharedModule, MessageTemplateModule, ChangeModule, forwardRef(() => AuthModule), IntegrationModule],
   controllers: [NotificationTemplateController, WorkflowController],
   providers: [...USE_CASES],
   exports: [...USE_CASES],

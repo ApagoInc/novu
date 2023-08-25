@@ -17,6 +17,11 @@ import { CreateSubscriber, CreateSubscriberCommand } from '@novu/application-gen
 import { AdministrativeEvent } from './types';
 import { StakeholdersResponseDTO } from './dtos/stakeholders-response.dto';
 import { InformativeResponseDTO } from './dtos/informative-response.dto';
+import { GetPreferencesCommand } from '../subscribers/usecases/get-preferences/get-preferences.command';
+import { GetPreferences } from '../subscribers/usecases/get-preferences/get-preferences.usecase';
+import { UpdatePreference } from '../subscribers/usecases/update-preference/update-preference.usecase';
+import { UpdateSubscriberPreferenceCommand } from '../subscribers/usecases/update-subscriber-preference';
+import { ChannelPreference } from '../shared/dtos/channel-preference';
 
 type SubscriberEntityWithTopics = SubscriberEntity & { topicSubscribers: TopicSubscribersEntity[] };
 
@@ -28,7 +33,9 @@ export class ApagoController {
     private addBulkSubscribersUseCase: AddBulkSubscribersUseCase,
     private removeBulkSubscribersUseCase: RemoveBulkSubscribersUseCase,
     private filterTopicsUseCase: FilterTopicsUseCase,
-    private createSubscriberUsecase: CreateSubscriber
+    private createSubscriberUsecase: CreateSubscriber,
+    private updatePreferenceUsecase: UpdatePreference,
+    private getPreferenceUsecase: GetPreferences
   ) {}
 
   @Get('/stakeholders/:accountId/:jobId')
@@ -198,7 +205,6 @@ export class ApagoController {
           this.apagoService.getInformativeKey({
             accountId: body.accountId,
             userId: subscriberSession.subscriberId,
-            channel: body.channel,
             administrative: true,
             allTitles: body.allTitles,
             event: body.event,
@@ -209,7 +215,6 @@ export class ApagoController {
           this.apagoService.getInformativeKey({
             accountId: body.accountId,
             userId: subscriberSession.subscriberId,
-            channel: body.channel,
             part,
             allTitles: body.allTitles,
             event: body.event,
@@ -219,7 +224,6 @@ export class ApagoController {
           this.apagoService.getInformativeKey({
             accountId: body.accountId,
             userId: subscriberSession.subscriberId,
-            channel: body.channel,
             allTitles: body.allTitles,
             event: body.event,
           }),
@@ -273,10 +277,39 @@ export class ApagoController {
         organizationId: subscriberSession._organizationId,
         subscribers: [subscriberSession.subscriberId],
         topicKeys: newTopics,
+        templateId: body.templateId,
       })
     );
 
     return { success: true };
+  }
+
+  @Post('/informative/:accountId/:templateId')
+  @ExternalApiAccessible()
+  @UseGuards(AuthGuard('subscriberJwt'))
+  async updateChannel(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: { channel: ChannelPreference },
+    @Param('accountId') accountId: string,
+    @Param('templateId') templateId: string
+  ) {
+    const user = await this.apagoService.checkUserPermission({
+      userId: subscriberSession.subscriberId,
+      accountId,
+      permissions: [],
+    });
+
+    if (!user) throw new UnauthorizedException();
+
+    return await this.updatePreferenceUsecase.execute(
+      UpdateSubscriberPreferenceCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        templateId: templateId,
+        ...(body.channel && { channel: body.channel }),
+      })
+    );
   }
 
   @Get('/informative/:accountId')
@@ -291,8 +324,6 @@ export class ApagoController {
 
     if (!user) throw new UnauthorizedException();
 
-    const data: Array<InformativeResponseDTO> = [];
-
     const subscriber: SubscriberEntityWithTopics = (await this.getSubscriberUseCase.execute(
       GetSubscriberCommand.create({
         environmentId: subscriberSession._environmentId,
@@ -302,6 +333,15 @@ export class ApagoController {
       })
     )) as SubscriberEntityWithTopics;
 
+    const preferences = await this.getPreferenceUsecase.execute(
+      GetPreferencesCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriber.subscriberId,
+      })
+    );
+
+    const obj: any = {};
     for (const topic of subscriber.topicSubscribers) {
       const key = topic.topicKey;
 
@@ -311,15 +351,30 @@ export class ApagoController {
 
       if (!json) continue;
 
-      const index = data.findIndex((val) => val.event == json.event);
-      if (index > -1) {
-        data[index].parts.push(json.part);
+      if (obj[json.event]) {
+        obj[json.event].parts.push(json.part);
       } else {
-        data.push({ event: json.event, parts: [json.part], channel: json.channel });
+        obj[json.event] = { event: json.event, parts: [json.part] };
       }
     }
 
-    return data;
+    const res = this.apagoService.informativeEvents.map((item) => {
+      return {
+        ...item,
+        events: item.events.map((val) => {
+          const channels = preferences.find((pre) => pre.template.name == val.label);
+          const subscription = obj[val.value];
+          return {
+            ...val,
+            subscription,
+            channels: channels?.preference.channels,
+            templateId: channels?.template._id.toString(),
+          };
+        }),
+      };
+    });
+
+    return res;
   }
 
   @ExternalApiAccessible()

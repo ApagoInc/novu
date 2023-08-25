@@ -10,13 +10,13 @@ export type INotificationTemplateExtended = INotificationTemplate & {
   notificationGroup: { name: string };
 };
 
-export function useTemplates(page = 0, limit = 10) {
+export function useTemplates(page = 0, limit = 10, query = '') {
   const { environment } = useEnvController();
   const { data, isLoading, refetch } = useQuery<{
     data: INotificationTemplateExtended[];
     totalCount: number;
     pageSize: number;
-  }>(['notificationsList', environment?._id, page, limit], () => getNotificationsList(page, limit), {
+  }>(['notificationsList', environment?._id, page, limit, query], () => getNotificationsList(page, limit, query), {
     keepPreviousData: true,
   });
 

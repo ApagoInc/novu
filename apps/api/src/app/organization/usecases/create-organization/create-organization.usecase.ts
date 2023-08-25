@@ -94,6 +94,6 @@ export class CreateOrganization {
       })
     );
 
-    return organizationAfterChanges as OrganizationEntity;
+    return { ...organizationAfterChanges, envs: [devEnv._id, prodEnv._id] } as OrganizationEntity;
   }
 }
