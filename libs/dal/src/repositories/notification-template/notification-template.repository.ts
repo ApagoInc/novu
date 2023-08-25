@@ -152,13 +152,13 @@ export class NotificationTemplateRepository extends BaseRepository<
   async getList(organizationId: string, environmentId: string, skip = 0, limit = 10, query = '') {
     const totalItemsCount = await this.count({
       _environmentId: environmentId,
-      name: { $regex: query, $options: 'ig' },
+      name: { $regex: query, $options: 'i' },
     });
 
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
       _organizationId: organizationId,
-      name: { $regex: query, $options: 'ig' },
+      name: { $regex: query, $options: 'i' },
     };
 
     const items = await this.MongooseModel.find(requestQuery)
