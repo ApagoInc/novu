@@ -1,11 +1,20 @@
-import { Body, Controller, Get, Param, Post, UseGuards, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApagoService } from './apago.service';
-import { SubscriberEntity, TopicSubscribersEntity } from '@novu/dal';
+import { SubscriberEntity } from '@novu/dal';
 import { AddBulkSubscribersCommand, AddBulkSubscribersUseCase } from '../topics/use-cases/add-bulk-subscribers';
-import { GetSubscriberCommand, GetSubscriber } from '../subscribers/usecases/get-subscriber';
+import { GetCreateSubscriberCommand, GetCreateSubscriber } from '../subscribers/usecases/get-create-subscriber';
 import {
   RemoveBulkSubscribersCommand,
   RemoveBulkSubscribersUseCase,
@@ -22,20 +31,21 @@ import { GetPreferences } from '../subscribers/usecases/get-preferences/get-pref
 import { UpdatePreference } from '../subscribers/usecases/update-preference/update-preference.usecase';
 import { UpdateSubscriberPreferenceCommand } from '../subscribers/usecases/update-subscriber-preference';
 import { ChannelPreference } from '../shared/dtos/channel-preference';
-
-type SubscriberEntityWithTopics = SubscriberEntity & { topicSubscribers: TopicSubscribersEntity[] };
+import { GetNotificationTemplateCommand } from '../workflows/usecases/get-notification-template/get-notification-template.command';
+import { GetNotificationTemplate } from '../workflows/usecases/get-notification-template/get-notification-template.usecase';
 
 @Controller('/apago')
 export class ApagoController {
   constructor(
     private apagoService: ApagoService,
-    private getSubscriberUseCase: GetSubscriber,
     private addBulkSubscribersUseCase: AddBulkSubscribersUseCase,
     private removeBulkSubscribersUseCase: RemoveBulkSubscribersUseCase,
     private filterTopicsUseCase: FilterTopicsUseCase,
     private createSubscriberUsecase: CreateSubscriber,
+    private getCreateSubscriberUseCase: GetCreateSubscriber,
     private updatePreferenceUsecase: UpdatePreference,
-    private getPreferenceUsecase: GetPreferences
+    private getPreferenceUsecase: GetPreferences,
+    private getWorkflowUsecase: GetNotificationTemplate
   ) {}
 
   @Get('/stakeholders/:accountId/:jobId')
@@ -126,16 +136,19 @@ export class ApagoController {
       })
     );
 
-    try {
-      const subscriber: SubscriberEntityWithTopics = (await this.getSubscriberUseCase.execute(
-        GetSubscriberCommand.create({
-          environmentId: subscriberSession._environmentId,
-          organizationId: subscriberSession._organizationId,
-          subscriberId: body.userId,
-          topic: 'stakeholder:',
-        })
-      )) as SubscriberEntityWithTopics;
+    const subscriber = await this.getCreateSubscriberUseCase.execute(
+      GetCreateSubscriberCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        subscriberId: stakeholderUser.UserID,
+        email: stakeholderUser.Email,
+        firstName: stakeholderUser.FirstName,
+        lastName: stakeholderUser.LastName,
+        topic: `stakeholder:${jobId}`,
+      })
+    );
 
+    if (subscriber.topicSubscribers) {
       const diffrence = subscriber.topicSubscribers.filter((x) => !newTopics.includes(x.topicKey));
 
       await this.removeBulkSubscribersUseCase.execute(
@@ -153,17 +166,6 @@ export class ApagoController {
               return false;
             }),
           subscribers: [body.userId],
-        })
-      );
-    } catch (error) {
-      await this.createSubscriberUsecase.execute(
-        CreateSubscriberCommand.create({
-          environmentId: subscriberSession._environmentId,
-          organizationId: subscriberSession._organizationId,
-          subscriberId: body.userId,
-          email: stakeholderUser.Email,
-          firstName: stakeholderUser.FirstName,
-          lastName: stakeholderUser.LastName,
         })
       );
     }
@@ -195,6 +197,23 @@ export class ApagoController {
     });
 
     if (!user) throw new UnauthorizedException();
+
+    const find = this.apagoService.informativeEvents
+      .flatMap((val) => val.events)
+      .find((val) => val.value == body.event);
+
+    if (!find) throw new NotFoundException('Event not found!');
+
+    const template = await this.getWorkflowUsecase.execute(
+      GetNotificationTemplateCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        name: find?.label,
+        userId: subscriberSession.subscriberId,
+      })
+    );
+
+    if (!template) throw new NotFoundException('Template not found!');
 
     const administrative = this.apagoService.administrativeEvents.includes(body.event as AdministrativeEvent);
 
@@ -229,27 +248,19 @@ export class ApagoController {
           }),
         ];
 
-    const subscriber: SubscriberEntityWithTopics = (await this.getSubscriberUseCase.execute(
-      GetSubscriberCommand.create({
+    const subscriber = await this.getCreateSubscriberUseCase.execute(
+      GetCreateSubscriberCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
-        topic: 'informative:',
+        topic: `informative:${accountId}`,
+        email: user.Email,
+        firstName: user.FirstName,
+        lastName: user.LastName,
       })
-    )) as SubscriberEntityWithTopics;
+    );
 
-    if (subscriber == null) {
-      await this.createSubscriberUsecase.execute(
-        CreateSubscriberCommand.create({
-          environmentId: subscriberSession._environmentId,
-          organizationId: subscriberSession._organizationId,
-          subscriberId: body.userId,
-          email: user.Email,
-          firstName: user.FirstName,
-          lastName: user.LastName,
-        })
-      );
-    } else {
+    if (subscriber.topicSubscribers) {
       const diffrence = subscriber.topicSubscribers.filter((x) => !newTopics.includes(x.topicKey));
 
       await this.removeBulkSubscribersUseCase.execute(
@@ -277,7 +288,7 @@ export class ApagoController {
         organizationId: subscriberSession._organizationId,
         subscribers: [subscriberSession.subscriberId],
         topicKeys: newTopics,
-        templateId: body.templateId,
+        templateId: template._id,
       })
     );
 
@@ -322,16 +333,19 @@ export class ApagoController {
       permissions: [],
     });
 
-    if (!user) throw new UnauthorizedException();
+    if (!user) throw new UnauthorizedException('User not found!');
 
-    const subscriber: SubscriberEntityWithTopics = (await this.getSubscriberUseCase.execute(
-      GetSubscriberCommand.create({
+    const subscriber = await this.getCreateSubscriberUseCase.execute(
+      GetCreateSubscriberCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
+        email: user.Email,
+        firstName: user.FirstName,
+        lastName: user.LastName,
         topic: `informative:${accountId}`,
       })
-    )) as SubscriberEntityWithTopics;
+    );
 
     const preferences = await this.getPreferenceUsecase.execute(
       GetPreferencesCommand.create({
@@ -342,19 +356,21 @@ export class ApagoController {
     );
 
     const obj: any = {};
-    for (const topic of subscriber.topicSubscribers) {
-      const key = topic.topicKey;
+    if (subscriber.topicSubscribers) {
+      for (const topic of subscriber.topicSubscribers) {
+        const key = topic.topicKey;
 
-      const [type, accountId, payload] = key.split(':');
+        const [type, accountId, payload] = key.split(':');
 
-      const json = this.apagoService.parsePayload(payload);
+        const json = this.apagoService.parsePayload(payload);
 
-      if (!json) continue;
+        if (!json) continue;
 
-      if (obj[json.event]) {
-        obj[json.event].parts.push(json.part);
-      } else {
-        obj[json.event] = { event: json.event, parts: [json.part] };
+        if (obj[json.event]) {
+          obj[json.event].parts.push(json.part);
+        } else {
+          obj[json.event] = { event: json.event, parts: [json.part] };
+        }
       }
     }
 

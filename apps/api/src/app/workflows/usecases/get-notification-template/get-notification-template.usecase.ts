@@ -12,9 +12,14 @@ export class GetNotificationTemplate {
   constructor(private notificationTemplateRepository: NotificationTemplateRepository) {}
 
   async execute(command: GetNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
-    const template = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
+    const template = await this.notificationTemplateRepository.findOne({
+      ...(command.name && { name: command.name }),
+      ...(command.templateId && { _id: command.templateId }),
+      _environmentId: command.environmentId,
+    });
+
     if (!template) {
-      throw new NotFoundException(`Template with id ${command.templateId} not found`);
+      throw new NotFoundException(`Template with id or name ${command.templateId || command.name} not found`);
     }
 
     return template;

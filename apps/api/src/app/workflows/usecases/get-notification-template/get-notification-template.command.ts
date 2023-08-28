@@ -1,4 +1,4 @@
-import { IsDefined, IsMongoId } from 'class-validator';
+import { IsDefined, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 /**
@@ -7,7 +7,11 @@ import { EnvironmentWithUserCommand } from '../../../shared/commands/project.com
  * Please use the GetWorkflowCommand instead.
  */
 export class GetNotificationTemplateCommand extends EnvironmentWithUserCommand {
-  @IsDefined()
+  @IsOptional()
   @IsMongoId()
-  templateId: string;
+  templateId?: string;
+
+  @IsOptional()
+  @IsString()
+  name?: string;
 }

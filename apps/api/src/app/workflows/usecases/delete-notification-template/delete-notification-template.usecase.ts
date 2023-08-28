@@ -43,7 +43,7 @@ export class DeleteNotificationTemplate {
       const parentChangeId: string = await this.changeRepository.getChangeId(
         command.environmentId,
         ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
-        command.templateId
+        command.templateId as string
       );
 
       for (const step of notificationTemplate.steps) {

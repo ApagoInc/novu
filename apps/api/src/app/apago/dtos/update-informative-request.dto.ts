@@ -21,8 +21,4 @@ export class UpdateInformativeRequestDTO {
 
   @IsOptional()
   administrative: boolean;
-
-  @IsOptional()
-  @IsString()
-  templateId?: string;
 }
