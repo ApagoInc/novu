@@ -21,13 +21,18 @@ export class ApagoService {
         { label: 'Component Created', value: 'COMPONENT_CREATED' },
         { label: 'File(s) Uploaded', value: 'FILES_UPLOADED' },
         { label: 'Component Deleted', value: 'COMPONENT_DELETED' },
+        { label: 'Page(s) Deleted', value: 'PAGES_DELETED' },
         {
-          label: 'Component Approved to Print',
-          value: 'COMPONENT_APPROVED_TO_PRINT',
+          label: 'Archive Retrieval Requested',
+          value: 'ARCHIVE_RETRIEVAL_REQUESTED',
         },
         {
           label: 'Component Retrieved From Archive',
           value: 'COMPONENT_RETRIEVED_FROM_ARCHIVE',
+        },
+        {
+          label: 'Component Not Found In Archive',
+          value: 'COMPONENT_NOT_FOUND_IN_ARCHIVE',
         },
       ],
     },
@@ -45,24 +50,52 @@ export class ApagoService {
       title: 'Proofing Events',
       events: [
         {
-          label: 'Content Approval Requested',
-          value: 'CONTENT_APPROVAL_REQUESTED',
+          label: 'Page Review(s) Requested',
+          value: 'PAGE_REVIEWS_REQUESTED',
         },
         {
-          label: 'Content Approval Approved',
-          value: 'CONTENT_APPROVAL_APPROVED',
+          label: 'Component Review Requested',
+          value: 'COMPONENT_REVIEW_REQUESTED',
         },
         {
-          label: 'Content Approval Rejected',
-          value: 'CONTENT_APPROVAL_REJECTED',
+          label: 'Title Review Requested',
+          value: 'TITLE_REVIEW_REQUESTED',
+          no_parts: true,
         },
         {
-          label: 'Approve to Print Requested',
-          value: 'APPROVE_TO_PRINT_REQUESTED',
+          label: 'Page Approval(s) Requested',
+          value: 'PAGE_APPROVALS_REQUESTED',
         },
         {
-          label: 'Approve to Print Approved',
-          value: 'APPROVE_TO_PRINT_APPROVED',
+          label: 'Component Approval Requested',
+          value: 'COMPONENT_APPROVAL_REQUESTED',
+        },
+        {
+          label: 'Title Approval Requested',
+          value: 'TITLE_APPROVAL_REQUESTED',
+          no_parts: true,
+        },
+        {
+          label: 'Page Proof(s) Approved',
+          value: 'PAGE_PROOFS_APPROVED',
+        },
+        {
+          label: 'Page Proof(s) Rejected',
+          value: 'PAGE_PROOFS_REJECTED',
+        },
+        {
+          label: 'Component Proof Approved',
+          value: 'COMPONENT_PROOF_APPROVED',
+        },
+        {
+          label: 'Title Proof Approved',
+          value: 'TITLE_PROOF_APPROVED',
+          no_parts: true,
+        },
+        {
+          label: 'Title Ready for Delivery',
+          value: 'TITLE_READY_FOR_DELIVERY',
+          no_parts: true,
         },
       ],
     },
