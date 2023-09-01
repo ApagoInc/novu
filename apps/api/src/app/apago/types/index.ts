@@ -36,7 +36,7 @@ export type Stage = { stage: string; parts: Array<string> };
 
 export type InformativeEvents = Array<{
   title: string;
-  events: Array<{ label: string; value: string; no_parts?: boolean; variables?: ITemplateVariable[] }>;
+  events: Array<{ label: string; value: string; no_parts?: boolean; variables?: ITemplateVariable[], content?: string }>;
 }>;
 
 export type StakeholderStages = Array<{ label: string; value: string; variables?: ITemplateVariable[] }>;
