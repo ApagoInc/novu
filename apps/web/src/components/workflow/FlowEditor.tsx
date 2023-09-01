@@ -192,6 +192,8 @@ export function FlowEditor({
     i: number
   ): Node {
     const channel = getChannel(step.template?.type);
+    console.log(step);
+    console.log(channel);
 
     return {
       id: newId,
@@ -206,6 +208,10 @@ export function FlowEditor({
         onDelete,
         uuid: step.uuid,
         name: step.name,
+        content: step.template?.content,
+        htmlContent: step.template?.htmlContent,
+        delayMetadata: step.delayMetadata,
+        digestMetadata: step.digestMetadata,
       },
     };
   }
@@ -339,20 +345,19 @@ const Wrapper = styled.div<{ dark: boolean }>`
     width: 280px;
     height: 80px;
     cursor: pointer;
-    svg {
-      stop:first-child {
-        stop-color: #dd2476 !important;
-      }
-      stop:last-child {
-        stop-color: #ff512f !important;
-      }
-    }
+
     [data-blue-gradient-svg] {
       stop:first-child {
         stop-color: #4c6dd4 !important;
       }
       stop:last-child {
         stop-color: #66d9e8 !important;
+      }
+    }
+
+    [data-workflow-node-icon] {
+      stop {
+        stop-color: white !important;
       }
     }
   }
@@ -399,6 +404,15 @@ const Wrapper = styled.div<{ dark: boolean }>`
 
     svg {
       fill: ${colors.B60};
+    }
+  }
+
+  [data-template-store-editor] [data-workflow-node-icon] {
+    stop:first-child {
+      stop-color: #dd2476 !important;
+    }
+    stop:last-child {
+      stop-color: #ff512f !important;
     }
   }
 `;

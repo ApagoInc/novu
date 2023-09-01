@@ -1,3 +1,5 @@
+import { ITemplateVariable } from '../../layouts/types';
+
 export type StakeholderStage = 'Preflight1_ApplyFix' | 'Preflight1_Signoff' | 'Preflight2_Signoff';
 
 export type InformativeEvent =
@@ -31,3 +33,10 @@ export type ApiClientData =
 export type User = { Email: string; UserID: string; FirstName: string; LastName: string };
 
 export type Stage = { stage: string; parts: Array<string> };
+
+export type InformativeEvents = Array<{
+  title: string;
+  events: Array<{ label: string; value: string; no_parts?: boolean; variables?: ITemplateVariable[] }>;
+}>;
+
+export type StakeholderStages = Array<{ label: string; value: string; variables?: ITemplateVariable[] }>;

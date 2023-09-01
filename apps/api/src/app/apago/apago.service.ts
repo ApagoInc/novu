@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { AdministrativeEvent, ApiClientData, User } from './types';
+import { AdministrativeEvent, ApiClientData, InformativeEvents, StakeholderStages, User } from './types';
 import validator from 'validator';
-import { TriggerRecipientsTypeEnum } from '@novu/shared';
+import { TemplateVariableTypeEnum, TriggerRecipientsTypeEnum } from '@novu/shared';
 import { ApiService } from './api.service';
 import * as util from 'util';
 import slugify from 'slugify';
@@ -12,32 +12,85 @@ export class ApagoService {
   apiServices: Array<ApiService> = [];
   apiServiceCount = 10;
 
-  informativeEvents = [
+  baseVariables = [
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'accountName' },
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'accountID' },
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'actorUserID' },
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'actorUserName' },
+    { type: TemplateVariableTypeEnum.STRING, required: false, name: 'href' },
+  ];
+
+  titleVariables = [
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'titleName' },
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'titleID' },
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'titleOwnerUserID' },
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'titleOwnerUserName' },
+  ];
+
+  componentVariables = [
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'componentName' },
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'componentID' },
+  ];
+
+  informativeEvents: InformativeEvents = [
     {
       title: 'Title Events',
       events: [
-        { label: 'Title Created', value: 'TITLE_CREATED', no_parts: true },
-        { label: 'Title Deleted', value: 'TITLE_DELETED', no_parts: true },
-        { label: 'Component Created', value: 'COMPONENT_CREATED' },
-        { label: 'File(s) Uploaded', value: 'FILES_UPLOADED' },
-        { label: 'Component Deleted', value: 'COMPONENT_DELETED' },
+        {
+          label: 'Title Created',
+          value: 'TITLE_CREATED',
+          no_parts: true,
+          variables: [...this.baseVariables, ...this.titleVariables],
+        },
+        {
+          label: 'Title Deleted',
+          value: 'TITLE_DELETED',
+          no_parts: true,
+          variables: [...this.baseVariables, ...this.titleVariables],
+        },
+        {
+          label: 'Component Created',
+          value: 'COMPONENT_CREATED',
+          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
+        },
+        {
+          label: 'File(s) Uploaded',
+          value: 'FILES_UPLOADED',
+          variables: [
+            ...this.baseVariables,
+            ...this.titleVariables,
+            { required: true, type: TemplateVariableTypeEnum.STRING, name: 'files' },
+          ],
+        },
+        {
+          label: 'Component Deleted',
+          value: 'COMPONENT_DELETED',
+          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
+        },
         {
           label: 'Component Approved to Print',
           value: 'COMPONENT_APPROVED_TO_PRINT',
+          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
         },
         {
           label: 'Component Retrieved From Archive',
           value: 'COMPONENT_RETRIEVED_FROM_ARCHIVE',
+          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
         },
       ],
     },
     {
       title: 'File Check Event',
       events: [
-        { label: 'Preflight Warnings/Errors', value: 'PREFLIGHT_WARNING_ERRORS' },
+        {
+          label: 'Preflight Warnings/Errors',
+          value: 'PREFLIGHT_WARNING_ERRORS',
+          variables: [...this.baseVariables, ...this.titleVariables],
+        },
         {
           label: 'Specifications Warning/Errors',
           value: 'SPECIFICATIONS_WARNING_ERRORS',
+          variables: [...this.baseVariables, ...this.titleVariables],
         },
       ],
     },
@@ -47,39 +100,56 @@ export class ApagoService {
         {
           label: 'Content Approval Requested',
           value: 'CONTENT_APPROVAL_REQUESTED',
+          variables: [...this.baseVariables, ...this.titleVariables],
         },
         {
           label: 'Content Approval Approved',
           value: 'CONTENT_APPROVAL_APPROVED',
+          variables: [...this.baseVariables, ...this.titleVariables],
         },
         {
           label: 'Content Approval Rejected',
           value: 'CONTENT_APPROVAL_REJECTED',
+          variables: [...this.baseVariables, ...this.titleVariables],
         },
         {
           label: 'Approve to Print Requested',
           value: 'APPROVE_TO_PRINT_REQUESTED',
+          variables: [...this.baseVariables, ...this.titleVariables],
         },
         {
           label: 'Approve to Print Approved',
           value: 'APPROVE_TO_PRINT_APPROVED',
+          variables: [...this.baseVariables, ...this.titleVariables],
         },
       ],
     },
     {
       title: 'Administrative Events',
       events: [
-        { label: 'User Was Created', value: 'USER_WAS_CREATED', no_parts: true },
-        { label: 'User Was Modified', value: 'USER_WAS_MODIFIED', no_parts: true },
-        { label: 'User Was Deleted', value: 'USER_WAS_DELETED', no_parts: true },
+        { label: 'User Was Created', value: 'USER_WAS_CREATED', no_parts: true, variables: this.baseVariables },
+        { label: 'User Was Modified', value: 'USER_WAS_MODIFIED', no_parts: true, variables: this.baseVariables },
+        { label: 'User Was Deleted', value: 'USER_WAS_DELETED', no_parts: true, variables: this.baseVariables },
       ],
     },
   ];
 
-  stakeholderStages = [
-    { label: 'Resolve Preflight', value: 'Preflight1_ApplyFix' },
-    { label: 'Approve Content', value: 'Preflight1_Signoff' },
-    { label: 'Approve to Print', value: 'Preflight2_Signoff' },
+  stakeholderStages: StakeholderStages = [
+    {
+      label: 'Resolve Preflight',
+      value: 'Preflight1_ApplyFix',
+      variables: [...this.baseVariables, ...this.titleVariables],
+    },
+    {
+      label: 'Approve Content',
+      value: 'Preflight1_Signoff',
+      variables: [...this.baseVariables, ...this.titleVariables],
+    },
+    {
+      label: 'Approve to Print',
+      value: 'Preflight2_Signoff',
+      variables: [...this.baseVariables, ...this.titleVariables],
+    },
   ];
 
   administrativeEvents: Array<AdministrativeEvent> = ['USER_WAS_CREATED', 'USER_WAS_MODIFIED', 'USER_WAS_DELETED'];
