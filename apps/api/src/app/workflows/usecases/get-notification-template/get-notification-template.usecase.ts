@@ -12,11 +12,11 @@ export class GetNotificationTemplate {
   constructor(private notificationTemplateRepository: NotificationTemplateRepository) {}
 
   async execute(command: GetNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
-    const template = await this.notificationTemplateRepository.findOne({
-      ...(command.name && { name: command.name }),
-      ...(command.templateId && { _id: command.templateId }),
-      _environmentId: command.environmentId,
-    });
+    const template = await this.notificationTemplateRepository.findByIdOrName(
+      command.environmentId,
+      command.templateId,
+      command.name
+    );
 
     if (!template) {
       throw new NotFoundException(`Template with id or name ${command.templateId || command.name} not found`);

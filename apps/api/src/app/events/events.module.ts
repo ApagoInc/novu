@@ -24,6 +24,7 @@ import { ExecutionDetailsModule } from '../execution-details/execution-details.m
 import { TopicsModule } from '../topics/topics.module';
 import { LayoutsModule } from '../layouts/layouts.module';
 import { ApagoModule } from '../apago/apago.module';
+import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { ApagoModule } from '../apago/apago.module';
     TopicsModule,
     LayoutsModule,
     ApagoModule,
+    TenantModule,
   ],
   controllers: [EventsController],
   providers: [

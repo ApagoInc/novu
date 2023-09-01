@@ -14,7 +14,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { OrganizationEntity } from '@novu/dal';
-import { IJwtPayload, MemberRoleEnum, StepTypeEnum } from '@novu/shared';
+import { IJwtPayload, ITemplateVariable, MemberRoleEnum, StepTypeEnum } from '@novu/shared';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -90,8 +90,14 @@ export class OrganizationController {
     @Body() body: CreateOrganizationDto
   ): Promise<OrganizationEntity> {
     const wData = [
-      ...this.apagoService.informativeEvents.flatMap((arr) => arr.events.map((val) => ({ name: val.label }))),
-      ...this.apagoService.stakeholderStages.map((val) => ({ name: val.label })),
+      ...this.apagoService.informativeEvents.flatMap((arr) =>
+        arr.events.map((val) => ({ name: val.label, variables: val.variables, critical: false }))
+      ),
+      ...this.apagoService.stakeholderStages.map((val) => ({
+        name: val.label,
+        variables: val.variables,
+        critical: true,
+      })),
     ];
 
     const command = CreateOrganizationCommand.create({
@@ -110,6 +116,17 @@ export class OrganizationController {
       })
     );
 
+    const getContent = (name: string, variables?: ITemplateVariable[]) => {
+      if (!variables) return name;
+      let content = `<!-- Variable list for ${name}\n`;
+
+      for (const variable of variables) {
+        content += `{{${variable.name}}}\n`;
+      }
+
+      return content + '-->';
+    };
+
     for (const event of wData) {
       await this.createWorkflowUsecase.execute(
         CreateNotificationTemplateCommand.create({
@@ -123,18 +140,28 @@ export class OrganizationController {
             {
               name: 'In-App',
               active: true,
-              template: { content: event.name, type: StepTypeEnum.IN_APP },
+              template: {
+                content: getContent(event.name, event.variables),
+                type: StepTypeEnum.IN_APP,
+                variables: event.variables,
+              },
             },
             {
               name: 'Email',
               active: true,
-              template: { senderName: 'sender', subject: 'subject', content: [], type: StepTypeEnum.EMAIL },
+              template: {
+                senderName: 'sender',
+                subject: 'subject',
+                content: [],
+                type: StepTypeEnum.EMAIL,
+                variables: event.variables,
+              },
             },
           ],
           notificationGroupId: groups[0]._id,
           active: true,
           draft: false,
-          critical: false,
+          critical: event.critical,
           preferenceSettings: { email: true, in_app: true },
         })
       );

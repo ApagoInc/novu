@@ -80,7 +80,7 @@ export function getFormattedStepErrors(index: number, errors?: FieldErrors<IForm
 
 export function formatErrorMessage(errorsArray: string[]): string {
   const uniqueErrors = Array.from(new Set(errorsArray));
-  const arr1 = uniqueErrors.map((errMessage) => errMessage.replace('Required - ', ''));
+  const arr1 = uniqueErrors.filter(Boolean).map((errMessage) => errMessage.replace('Required - ', ''));
 
   return arr1.length ? 'Required - ' + arr1.join(', ') : '';
 }

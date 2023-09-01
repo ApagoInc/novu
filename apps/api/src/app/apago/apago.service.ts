@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { AdministrativeEvent, ApiClientData, User } from './types';
+import { AdministrativeEvent, ApiClientData, InformativeEvents, StakeholderStages, User } from './types';
 import validator from 'validator';
-import { TriggerRecipientsTypeEnum } from '@novu/shared';
+import { TemplateVariableTypeEnum, TriggerRecipientsTypeEnum } from '@novu/shared';
 import { ApiService } from './api.service';
 import * as util from 'util';
 import slugify from 'slugify';
@@ -12,37 +12,102 @@ export class ApagoService {
   apiServices: Array<ApiService> = [];
   apiServiceCount = 10;
 
-  informativeEvents = [
+  baseVariables = [
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'accountName' },
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'accountID' },
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'actorUserID' },
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'actorUserName' },
+    { type: TemplateVariableTypeEnum.STRING, required: false, name: 'href' },
+  ];
+
+  titleVariables = [
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'titleName' },
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'titleID' },
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'titleOwnerUserID' },
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'titleOwnerUserName' },
+  ];
+
+  componentVariables = [
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'componentName' },
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'componentID' },
+  ];
+
+  pageVariables = [
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'pageID' },
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'pageOrdinal' },
+    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'pageCount' }
+  ]
+
+  informativeEvents: InformativeEvents = [
     {
       title: 'Title Events',
       events: [
-        { label: 'Title Created', value: 'TITLE_CREATED', no_parts: true },
-        { label: 'Title Deleted', value: 'TITLE_DELETED', no_parts: true },
-        { label: 'Component Created', value: 'COMPONENT_CREATED' },
-        { label: 'File(s) Uploaded', value: 'FILES_UPLOADED' },
-        { label: 'Component Deleted', value: 'COMPONENT_DELETED' },
-        { label: 'Page(s) Deleted', value: 'PAGES_DELETED' },
         {
-          label: 'Archive Retrieval Requested',
-          value: 'ARCHIVE_RETRIEVAL_REQUESTED',
+          label: 'Title Created',
+          value: 'TITLE_CREATED',
+          no_parts: true,
+          variables: [...this.baseVariables, ...this.titleVariables]
         },
         {
-          label: 'Component Retrieved From Archive',
-          value: 'COMPONENT_RETRIEVED_FROM_ARCHIVE',
+          label: 'Title Deleted',
+          value: 'TITLE_DELETED',
+          no_parts: true,
+          variables: [...this.baseVariables, ...this.titleVariables],
         },
         {
-          label: 'Component Not Found In Archive',
-          value: 'COMPONENT_NOT_FOUND_IN_ARCHIVE',
+          label: 'Component Created',
+          value: 'COMPONENT_CREATED',
+          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
+        },
+        {
+          label: 'File(s) Uploaded',
+          value: 'FILES_UPLOADED',
+          variables: [
+            ...this.baseVariables,
+            ...this.titleVariables,
+            ...this.componentVariables,
+            { required: true, type: TemplateVariableTypeEnum.STRING, name: 'files' },
+          ],
+        },
+        {
+          label: 'Component Deleted',
+          value: 'COMPONENT_DELETED',
+          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
+        },
+        {
+          label: 'Page(s) Deleted',
+          value: 'PAGES_DELETED',
+          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables, ...this.pageVariables]
+        },
+        {
+          label: 'Title Archive Retrieval Requested',
+          value: 'TITLE_ARCHIVE_RETRIEVAL_REQUESTED',
+          variables: [...this.baseVariables, ...this.titleVariables],
+        },
+        {
+          label: 'Title Retrieved From Archive',
+          value: 'TITLE_RETRIEVED_FROM_ARCHIVE',
+          variables: [...this.baseVariables, ...this.titleVariables],
+        },
+        {
+          label: 'Title Not Found In Archive',
+          value: 'TITLE_NOT_FOUND_IN_ARCHIVE',
+          variables: [...this.baseVariables, ...this.titleVariables],
         },
       ],
     },
     {
       title: 'File Check Event',
       events: [
-        { label: 'Preflight Warnings/Errors', value: 'PREFLIGHT_WARNING_ERRORS' },
+        {
+          label: 'Preflight Warnings/Errors',
+          value: 'PREFLIGHT_WARNINGS_ERRORS',
+          variables: [...this.baseVariables, ...this.titleVariables],
+        },
         {
           label: 'Specifications Warning/Errors',
-          value: 'SPECIFICATIONS_WARNING_ERRORS',
+          value: 'SPECIFICATIONS_WARNINGS_ERRORS',
+          variables: [...this.baseVariables, ...this.titleVariables],
         },
       ],
     },
@@ -52,67 +117,105 @@ export class ApagoService {
         {
           label: 'Page Review(s) Requested',
           value: 'PAGE_REVIEWS_REQUESTED',
+          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables, ...this.pageVariables]
         },
         {
           label: 'Component Review Requested',
           value: 'COMPONENT_REVIEW_REQUESTED',
+          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
         },
         {
           label: 'Title Review Requested',
           value: 'TITLE_REVIEW_REQUESTED',
           no_parts: true,
+          variables: [...this.baseVariables, ...this.titleVariables],
         },
         {
           label: 'Page Approval(s) Requested',
           value: 'PAGE_APPROVALS_REQUESTED',
+          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables, ...this.pageVariables]
         },
         {
           label: 'Component Approval Requested',
           value: 'COMPONENT_APPROVAL_REQUESTED',
+          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
         },
         {
           label: 'Title Approval Requested',
           value: 'TITLE_APPROVAL_REQUESTED',
           no_parts: true,
+          variables: [...this.baseVariables, ...this.titleVariables],
         },
         {
           label: 'Page Proof(s) Approved',
           value: 'PAGE_PROOFS_APPROVED',
+          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables, ...this.pageVariables]
         },
         {
           label: 'Page Proof(s) Rejected',
           value: 'PAGE_PROOFS_REJECTED',
+          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables, ...this.pageVariables]
         },
         {
           label: 'Component Proof Approved',
           value: 'COMPONENT_PROOF_APPROVED',
+          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
         },
         {
           label: 'Title Proof Approved',
           value: 'TITLE_PROOF_APPROVED',
           no_parts: true,
+          variables: [...this.baseVariables, ...this.titleVariables],
         },
         {
           label: 'Title Ready for Delivery',
           value: 'TITLE_READY_FOR_DELIVERY',
           no_parts: true,
+          variables: [...this.baseVariables, ...this.titleVariables],
         },
       ],
     },
     {
       title: 'Administrative Events',
       events: [
-        { label: 'User Was Created', value: 'USER_WAS_CREATED', no_parts: true },
-        { label: 'User Was Modified', value: 'USER_WAS_MODIFIED', no_parts: true },
-        { label: 'User Was Deleted', value: 'USER_WAS_DELETED', no_parts: true },
+        {
+          label: 'User Was Created',
+          value: 'USER_WAS_CREATED',
+          no_parts: true,
+          variables: this.baseVariables
+        },
+        {
+          label: 'User Was Modified',
+          value: 'USER_WAS_MODIFIED',
+          no_parts: true,
+          variables: this.baseVariables
+        },
+        {
+          label: 'User Was Deleted',
+          value: 'USER_WAS_DELETED',
+          no_parts: true,
+          variables: this.baseVariables
+        },
       ],
     },
   ];
 
-  stakeholderStages = [
-    { label: 'Resolve Preflight', value: 'Preflight1_ApplyFix' },
-    { label: 'Approve Content', value: 'Preflight1_Signoff' },
-    { label: 'Approve to Print', value: 'Preflight2_Signoff' },
+  stakeholderStages: StakeholderStages = [
+    {
+      label: 'Resolve Preflight',
+      value: 'Preflight1_ApplyFix',
+      variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
+    },
+    {
+      label: 'Approve Content',
+      value: 'Preflight1_Signoff',
+      variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
+    },
+    {
+      label: 'Approve to Print',
+      value: 'Preflight2_Signoff',
+      variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
+    },
   ];
 
   administrativeEvents: Array<AdministrativeEvent> = ['USER_WAS_CREATED', 'USER_WAS_MODIFIED', 'USER_WAS_DELETED'];
