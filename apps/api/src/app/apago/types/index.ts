@@ -39,4 +39,4 @@ export type InformativeEvents = Array<{
   events: Array<{ label: string; value: string; no_parts?: boolean; variables?: ITemplateVariable[], content?: string }>;
 }>;
 
-export type StakeholderStages = Array<{ label: string; value: string; variables?: ITemplateVariable[] }>;
+export type StakeholderStages = Array<{ label: string; value: string; variables?: ITemplateVariable[], content?: string }>;

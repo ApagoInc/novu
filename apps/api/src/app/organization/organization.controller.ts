@@ -91,12 +91,13 @@ export class OrganizationController {
   ): Promise<OrganizationEntity> {
     const wData = [
       ...this.apagoService.informativeEvents.flatMap((arr) =>
-        arr.events.map((val) => ({ name: val.label, variables: val.variables, critical: false }))
+        arr.events.map((val) => ({ name: val.label, variables: val.variables, critical: false, initialContent: val.content }))
       ),
       ...this.apagoService.stakeholderStages.map((val) => ({
         name: val.label,
         variables: val.variables,
         critical: true,
+        initialContent: val.content
       })),
     ];
 
@@ -116,15 +117,33 @@ export class OrganizationController {
       })
     );
 
-    const getContent = (name: string, variables?: ITemplateVariable[]) => {
-      if (!variables) return name;
-      let content = `<!-- Variable list for ${name}\n`;
+    const getContent = (event: {
+      name: string;
+      variables: ITemplateVariable[] | undefined;
+      critical: boolean;
+      initialContent?: string;
+  }) => {
+      const name = event.name
+      const variables = event.variables
+      const initialContent = event.initialContent || ""
+      
+      let content = '';
 
-      for (const variable of variables) {
-        content += `{{${variable.name}}}\n`;
+      if (variables) {
+        content += `<!-- Variable list for ${name}\n`
+        for (const variable of variables) {
+          content += `{{${variable.name}}}\n`;
+        }  
+        content += '-->\n'
+      } else {
+        content = `${name}\n`
       }
 
-      return content + '-->';
+      if (initialContent) {
+        content += initialContent
+      }
+
+      return content;
     };
 
     for (const event of wData) {
@@ -141,7 +160,7 @@ export class OrganizationController {
               name: 'In-App',
               active: true,
               template: {
-                content: getContent(event.name, event.variables),
+                content: getContent(event),
                 type: StepTypeEnum.IN_APP,
                 variables: event.variables,
               },
@@ -152,7 +171,7 @@ export class OrganizationController {
               template: {
                 senderName: 'sender',
                 subject: 'subject',
-                content: [],
+                content: getContent(event),
                 type: StepTypeEnum.EMAIL,
                 variables: event.variables,
               },

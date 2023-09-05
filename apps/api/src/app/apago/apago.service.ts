@@ -20,6 +20,14 @@ export class ApagoService {
     { type: TemplateVariableTypeEnum.STRING, required: false, name: 'href' },
   ];
 
+  // not requiring actor data on stakeholder notifs
+  stakeholderBaseVariables = [...this.baseVariables].map(item => {
+    if (['actorUserID', 'actorUserName'].includes(item.name)) {
+      item.required = false;
+    }
+    return item;
+  })
+
   titleVariables = [
     { type: TemplateVariableTypeEnum.STRING, required: true, name: 'titleName' },
     { type: TemplateVariableTypeEnum.STRING, required: true, name: 'titleID' },
@@ -230,17 +238,20 @@ export class ApagoService {
     {
       label: 'Resolve Preflight',
       value: 'Preflight1_ApplyFix',
-      variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
+      variables: [...this.stakeholderBaseVariables, ...this.titleVariables, ...this.componentVariables],
+      content: defaultTemplates['Preflight1_ApplyFix']
     },
     {
       label: 'Approve Content',
       value: 'Preflight1_Signoff',
-      variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
+      variables: [...this.stakeholderBaseVariables, ...this.titleVariables, ...this.componentVariables],
+      content: defaultTemplates['Preflight1_Signoff']
     },
     {
       label: 'Approve to Print',
       value: 'Preflight2_Signoff',
-      variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
+      variables: [...this.stakeholderBaseVariables, ...this.titleVariables, ...this.componentVariables],
+      content: defaultTemplates['Preflight2_Signoff']
     },
   ];
 
@@ -383,6 +394,7 @@ export class ApagoService {
 
 
 const defaultTemplates = {
+  // Informative event default templates:
   TITLE_CREATED: `[{{accountName}}] New <a href="{{href}}">Title</a> created: {{titleName}} ({{titleID}})`,
   TITLE_DELETED: `[{{accountName}}] Title deleted: {{titleName}} ({{titleID}})`,
   COMPONENT_CREATED: `[{{accountName}}] {{componentName}} component added to title {{titleName}} ({{titleID}})`,
@@ -408,4 +420,9 @@ const defaultTemplates = {
   USER_WAS_CREATED: `[{{accountName}}] New user created`,
   USER_WAS_MODIFIED: `[{{accountName}}] User updated`,
   USER_WAS_DELETED: `[{{accountName}}] User deleted`,
+  // Stakeholder event default templates:
+  Preflight1_ApplyFix: `[{{accountName}}] {{titleName}} ({{titleID}}) - {{componentName}} component has Preflight 1 issues that need to be resolved`,
+  Preflight1_Signoff: `[{{accountName}}] {{titleName}} ({{titleID}}) - {{componentName}} component page proofs are ready to be reviewed`,
+  // TODO - is the wording misleading to say "ready to be approved?" - a job could still fail preflight 2.
+  Preflight2_Signoff: `[{{accountName}}] {{titleName}} ({{titleID}}) - {{componentName}} component is ready to be approved to print`
 }
