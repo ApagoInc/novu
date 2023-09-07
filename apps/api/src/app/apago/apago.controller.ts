@@ -284,7 +284,10 @@ export class ApagoController {
             event: event,
             parts: [part],
             templateId: topic._templateId,
-            channels: topic?.preferences?.channels || { in_app: true, email: true },
+            channels: {
+              in_app: topic?.preferences?.channels?.in_app || true,
+              email: topic?.preferences?.channels?.email || true,
+            },
             userId,
           };
         }

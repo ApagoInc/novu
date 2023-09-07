@@ -6,7 +6,6 @@ import { FilterTopicsUseCase } from './filter-topics';
 import { GetTopicUseCase } from './get-topic';
 import { GetTopicSubscriberUseCase } from './get-topic-subscriber';
 import { GetTopicSubscribersUseCase } from './get-topic-subscribers';
-import { RemoveBulkSubscribersUseCase } from './remove-bulk-subscribers';
 import { RemoveSubscribersUseCase } from './remove-subscribers';
 import { RenameTopicUseCase } from './rename-topic';
 
@@ -19,7 +18,6 @@ export * from './get-topic';
 export * from './get-topic-subscriber';
 export * from './get-topic-subscribers';
 export * from './remove-subscribers';
-export * from './remove-bulk-subscribers';
 export * from './rename-topic';
 
 export const USE_CASES = [
@@ -32,6 +30,5 @@ export const USE_CASES = [
   GetTopicSubscriberUseCase,
   GetTopicSubscribersUseCase,
   RemoveSubscribersUseCase,
-  RemoveBulkSubscribersUseCase,
   RenameTopicUseCase,
 ];

@@ -168,7 +168,6 @@ export class SubscribersController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscriberId,
-        fetchTopics: true,
       })
     );
   }
