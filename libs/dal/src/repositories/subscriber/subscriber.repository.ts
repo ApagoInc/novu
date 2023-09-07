@@ -8,35 +8,13 @@ import { BaseRepository } from '../base-repository';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { EnvironmentId, ISubscribersDefine, OrganizationId } from '@novu/shared';
+import { TopicEntity } from '../topic';
 
 type SubscriberQuery = FilterQuery<SubscriberDBModel> & EnforceEnvOrOrgIds;
 
+type SubscriberWithTopics = SubscriberEntity & { subscriptions: Array<TopicEntity & { preferences: any }> };
+
 const TOPIC_SUBSCRIBERS_COLLECTION = 'topicsubscribers';
-
-const lookup = {
-  $lookup: {
-    from: 'topicsubscribers',
-    localField: 'subscriberId',
-    foreignField: 'externalSubscriberId',
-    as: 'topicSubscribers',
-  },
-};
-
-const lookupPipe = {
-  $lookup: {
-    from: 'topicsubscribers',
-    let: { subscriberId: '$subscriberId' },
-    pipeline: [
-      {
-        $match: {
-          topicKey: { $regex: 'test', $options: 'i' },
-          $expr: { $and: [{ $eq: ['$externalSubscriberId', '$$subscriberId'] }] },
-        },
-      },
-    ],
-    as: 'topicSubscribers',
-  },
-};
 
 export class SubscriberRepository extends BaseRepository<SubscriberDBModel, SubscriberEntity, EnforceEnvOrOrgIds> {
   private subscriber: SoftDeleteModel;
@@ -60,9 +38,24 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     );
   }
 
-  async findBySubscriberIdWithTopics(environmentId: string, subscriberId: string, topicKey?: string) {
+  async findSubscriberTopics(
+    environmentId: string,
+    subscriberId: string,
+    topicKey: string
+  ): Promise<SubscriberWithTopics> {
     const subscriber = await this.aggregate([
-      { $match: { $and: [{ _environmentId: this.convertStringToObjectId(environmentId) }, { subscriberId }] } },
+      {
+        $match: {
+          $and: [
+            {
+              _environmentId: this.convertStringToObjectId(environmentId),
+            },
+            {
+              subscriberId,
+            },
+          ],
+        },
+      },
       {
         $lookup: {
           from: 'topicsubscribers',
@@ -70,19 +63,60 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
           pipeline: [
             {
               $match: {
-                ...(topicKey && {
-                  topicKey: { $regex: topicKey, $options: 'i' },
-                }),
+                topicKey: {
+                  $regex: topicKey,
+                  $options: 'i',
+                },
                 _environmentId: this.convertStringToObjectId(environmentId),
-                $expr: { $and: [{ $eq: ['$externalSubscriberId', '$$subscriberId'] }] },
+                $expr: {
+                  $and: [
+                    {
+                      $eq: ['$externalSubscriberId', '$$subscriberId'],
+                    },
+                  ],
+                },
               },
             },
+            {
+              $lookup: {
+                from: 'topics',
+                localField: '_topicId',
+                foreignField: '_id',
+                pipeline: [
+                  {
+                    $lookup: {
+                      from: 'subscriberpreferences',
+                      localField: '_templateId',
+                      foreignField: '_templateId',
+                      as: 'preferences',
+                    },
+                  },
+                  {
+                    $set: {
+                      preferences: {
+                        $first: '$preferences',
+                      },
+                    },
+                  },
+                ],
+                as: 'topic',
+              },
+            },
+            {
+              $set: { topic: { $first: '$topic' } },
+            },
           ],
-          as: 'topicSubscribers',
+          as: 'subscriptions',
+        },
+      },
+      {
+        $set: {
+          subscriptions: '$subscriptions.topic',
         },
       },
       { $limit: 1 },
     ]);
+
     return subscriber[0];
   }
 

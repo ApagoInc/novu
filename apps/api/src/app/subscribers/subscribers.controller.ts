@@ -161,8 +161,7 @@ export class SubscribersController {
   })
   async getSubscriberTopics(
     @UserSession() user: IJwtPayload,
-    @Param('subscriberId') subscriberId: string,
-    @Query() query: any
+    @Param('subscriberId') subscriberId: string
   ): Promise<SubscriberResponseDto> {
     return await this.getSubscriberUseCase.execute(
       GetSubscriberCommand.create({
@@ -170,7 +169,6 @@ export class SubscribersController {
         organizationId: user.organizationId,
         subscriberId,
         fetchTopics: true,
-        topic: query.topic,
       })
     );
   }

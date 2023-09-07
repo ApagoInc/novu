@@ -14,7 +14,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { OrganizationEntity } from '@novu/dal';
-import { IJwtPayload, ITemplateVariable, MemberRoleEnum, StepTypeEnum } from '@novu/shared';
+import { EmailBlockTypeEnum, IJwtPayload, ITemplateVariable, MemberRoleEnum, StepTypeEnum } from '@novu/shared';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -89,18 +89,6 @@ export class OrganizationController {
     @UserSession() user: IJwtPayload,
     @Body() body: CreateOrganizationDto
   ): Promise<OrganizationEntity> {
-    const wData = [
-      ...this.apagoService.informativeEvents.flatMap((arr) =>
-        arr.events.map((val) => ({ name: val.label, variables: val.variables, critical: false, initialContent: val.content }))
-      ),
-      ...this.apagoService.stakeholderStages.map((val) => ({
-        name: val.label,
-        variables: val.variables,
-        critical: true,
-        initialContent: val.content
-      })),
-    ];
-
     const command = CreateOrganizationCommand.create({
       userId: user._id,
       logo: body.logo,
@@ -117,36 +105,7 @@ export class OrganizationController {
       })
     );
 
-    const getContent = (event: {
-      name: string;
-      variables: ITemplateVariable[] | undefined;
-      critical: boolean;
-      initialContent?: string;
-  }) => {
-      const name = event.name
-      const variables = event.variables
-      const initialContent = event.initialContent || ""
-      
-      let content = '';
-
-      if (variables) {
-        content += `<!-- Variable list for ${name}\n`
-        for (const variable of variables) {
-          content += `{{${variable.name}}}\n`;
-        }  
-        content += '-->\n'
-      } else {
-        content = `${name}\n`
-      }
-
-      if (initialContent) {
-        content += initialContent
-      }
-
-      return content;
-    };
-
-    for (const event of wData) {
+    for (const event of this.apagoService.getTemplates()) {
       await this.createWorkflowUsecase.execute(
         CreateNotificationTemplateCommand.create({
           organizationId: organization._id,
@@ -160,9 +119,8 @@ export class OrganizationController {
               name: 'In-App',
               active: true,
               template: {
-                content: getContent(event),
+                content: event.initialContent || '',
                 type: StepTypeEnum.IN_APP,
-                variables: event.variables,
               },
             },
             {
@@ -171,9 +129,9 @@ export class OrganizationController {
               template: {
                 senderName: 'sender',
                 subject: 'subject',
-                content: getContent(event),
+                content: [{ content: event.initialContent || '', type: EmailBlockTypeEnum.TEXT }],
                 type: StepTypeEnum.EMAIL,
-                variables: event.variables,
+                contentType: 'editor',
               },
             },
           ],

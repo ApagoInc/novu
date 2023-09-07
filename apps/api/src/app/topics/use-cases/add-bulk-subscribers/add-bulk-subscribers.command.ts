@@ -11,6 +11,10 @@ export class AddBulkSubscribersCommand extends EnvironmentCommand {
 
   @IsArray()
   @IsDefined()
+  removeKeys: TopicKey[];
+
+  @IsArray()
+  @IsDefined()
   subscribers: ExternalSubscriberId[];
 
   @IsString()

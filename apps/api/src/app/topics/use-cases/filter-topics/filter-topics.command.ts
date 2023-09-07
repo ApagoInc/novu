@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 
 import { TopicKey } from '../../types';
 
@@ -16,4 +16,8 @@ export class FilterTopicsCommand extends EnvironmentCommand {
   @IsNumber()
   @IsOptional()
   pageSize?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  noPagination?: boolean;
 }

@@ -11,8 +11,8 @@ export class GetCreateSubscriberCommand extends EnvironmentCommand {
   fetchTopics?: boolean;
 
   @IsString()
-  @IsOptional()
-  topic?: string;
+  @IsDefined()
+  topic: string;
 
   @IsString()
   @IsOptional()

@@ -5,12 +5,4 @@ export class GetSubscriberCommand extends EnvironmentCommand {
   @IsString()
   @IsDefined()
   subscriberId: string;
-
-  @IsBoolean()
-  @IsOptional()
-  fetchTopics?: boolean;
-
-  @IsString()
-  @IsOptional()
-  topic?: string;
 }

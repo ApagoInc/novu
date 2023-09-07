@@ -9,23 +9,14 @@ export class GetSubscriber {
   constructor(private subscriberRepository: SubscriberRepository) {}
 
   async execute(command: GetSubscriberCommand): Promise<SubscriberEntity> {
-    const { environmentId, subscriberId, topic } = command;
-    if (typeof topic == 'string') {
-      const subscriber = await this.fetchSubscriberWithTopics({ _environmentId: environmentId, subscriberId, topic });
+    const { environmentId, subscriberId } = command;
 
-      if (!subscriber) {
-        throw new NotFoundException(`Subscriber not found for id ${subscriberId}`);
-      }
-
-      return subscriber;
-    } else {
-      const subscriber = await this.fetchSubscriber({ _environmentId: environmentId, subscriberId });
-      if (!subscriber) {
-        throw new NotFoundException(`Subscriber not found for id ${subscriberId}`);
-      }
-
-      return subscriber;
+    const subscriber = await this.fetchSubscriber({ _environmentId: environmentId, subscriberId });
+    if (!subscriber) {
+      throw new NotFoundException(`Subscriber not found for id ${subscriberId}`);
     }
+
+    return subscriber;
   }
 
   @CachedEntity({
@@ -43,16 +34,5 @@ export class GetSubscriber {
     _environmentId: string;
   }): Promise<SubscriberEntity | null> {
     return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
-  }
-  private async fetchSubscriberWithTopics({
-    subscriberId,
-    _environmentId,
-    topic,
-  }: {
-    subscriberId: string;
-    _environmentId: string;
-    topic: string;
-  }): Promise<SubscriberEntity | null> {
-    return await this.subscriberRepository.findBySubscriberIdWithTopics(_environmentId, subscriberId, topic);
   }
 }

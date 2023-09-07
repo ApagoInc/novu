@@ -13,7 +13,7 @@ export class FilterTopicsUseCase {
   constructor(private topicRepository: TopicRepository) {}
 
   async execute(command: FilterTopicsCommand) {
-    const { pageSize = DEFAULT_TOPIC_LIMIT, page = 0 } = command;
+    const { pageSize = DEFAULT_TOPIC_LIMIT, page = 0, noPagination = false } = command;
 
     if (pageSize > DEFAULT_TOPIC_LIMIT) {
       throw new BadRequestException(`Page size can not be larger then ${DEFAULT_TOPIC_LIMIT}`);
@@ -29,12 +29,12 @@ export class FilterTopicsUseCase {
       skip: skipTimes * pageSize,
     };
 
-    const filteredTopics = await this.topicRepository.filterTopics(query, pagination);
+    const filteredTopics = await this.topicRepository.filterTopics(query, pagination, noPagination);
 
     return {
       page,
+      pageSize: noPagination ? totalCount : pageSize,
       totalCount,
-      pageSize,
       data: filteredTopics.map(this.mapFromEntityToDto),
     };
   }

@@ -49,7 +49,8 @@ export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, E
 
   async filterTopics(
     query: FilterQuery<TopicDBModel>,
-    pagination: { limit: number; skip: number }
+    pagination: { limit: number; skip: number },
+    noPagination?: boolean
   ): Promise<TopicEntity & { subscribers: ExternalSubscriberId[] }[]> {
     const parsedQuery = { ...query };
     if (query._id) {
@@ -59,19 +60,26 @@ export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, E
     parsedQuery._environmentId = this.convertStringToObjectId(query._environmentId);
     parsedQuery._organizationId = this.convertStringToObjectId(query._organizationId);
 
-    const data = await this.aggregate([
+    const aggregation: any[] = [
       {
         $match: parsedQuery,
       },
       lookup,
       topicWithSubscribersProjection,
-      {
-        $skip: pagination.skip,
-      },
-      {
-        $limit: pagination.limit,
-      },
-    ]);
+    ];
+
+    if (!noPagination) {
+      aggregation.push(
+        {
+          $skip: pagination.skip,
+        },
+        {
+          $limit: pagination.limit,
+        }
+      );
+    }
+
+    const data = await this.aggregate(aggregation);
 
     return data;
   }

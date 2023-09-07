@@ -1,264 +1,40 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { AdministrativeEvent, ApiClientData, InformativeEvents, StakeholderStages, User } from './types';
-import validator from 'validator';
-import { TemplateVariableTypeEnum, TriggerRecipientsTypeEnum } from '@novu/shared';
+import { ApiClientData, User } from './types';
+import { TriggerRecipientsTypeEnum } from '@novu/shared';
 import { ApiService } from './api.service';
 import * as util from 'util';
 import slugify from 'slugify';
+import * as INFORMATİVE_EVENTS from './data/informativeEvents.json';
+import * as STAKEHOLDER_STAGES from './data/stakeholderStages.json';
+import * as DEFAULT_TEMPLATES from './data/defaultTemplates.json';
 
 @Injectable()
 export class ApagoService {
   queue: Array<{ data: ApiClientData; cb: (err: any, data: User | null) => void }> = [];
   apiServices: Array<ApiService> = [];
   apiServiceCount = 10;
-
-  baseVariables = [
-    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'accountName' },
-    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'accountID' },
-    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'actorUserID' },
-    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'actorUserName' },
-    { type: TemplateVariableTypeEnum.STRING, required: false, name: 'href' },
-  ];
-
-  // not requiring actor data on stakeholder notifs
-  stakeholderBaseVariables = [...this.baseVariables].map(item => {
-    if (['actorUserID', 'actorUserName'].includes(item.name)) {
-      item.required = false;
-    }
-    return item;
-  })
-
-  titleVariables = [
-    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'titleName' },
-    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'titleID' },
-    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'titleOwnerUserID' },
-    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'titleOwnerUserName' },
-  ];
-
-  componentVariables = [
-    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'componentName' },
-    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'componentID' },
-  ];
-
-  pageVariables = [
-    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'pageID' },
-    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'pageOrdinal' },
-    { type: TemplateVariableTypeEnum.STRING, required: true, name: 'pageCount' }
-  ]
-
-  informativeEvents: InformativeEvents = [
-    {
-      title: 'Title Events',
-      events: [
-        {
-          label: 'Title Created',
-          value: 'TITLE_CREATED',
-          no_parts: true,
-          variables: [...this.baseVariables, ...this.titleVariables],
-          content: defaultTemplates['TITLE_CREATED']
-        },
-        {
-          label: 'Title Deleted',
-          value: 'TITLE_DELETED',
-          no_parts: true,
-          variables: [...this.baseVariables, ...this.titleVariables],
-          content: defaultTemplates['TITLE_DELETED']
-        },
-        {
-          label: 'Component Created',
-          value: 'COMPONENT_CREATED',
-          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
-          content: defaultTemplates['COMPONENT_CREATED']
-        },
-        
-        {
-          label: 'File(s) Uploaded',
-          value: 'FILES_UPLOADED',
-          variables: [
-            ...this.baseVariables,
-            ...this.titleVariables,
-            ...this.componentVariables,
-            { required: true, type: TemplateVariableTypeEnum.STRING, name: 'files' },
-          ],
-          content: defaultTemplates['FILES_UPLOADED']
-        },
-        {
-          label: 'Component Deleted',
-          value: 'COMPONENT_DELETED',
-          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
-          content: defaultTemplates['COMPONENT_DELETED']
-        },
-        {
-          label: 'Page(s) Deleted',
-          value: 'PAGES_DELETED',
-          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables, ...this.pageVariables],
-          content: defaultTemplates['PAGES_DELETED']
-        },
-        {
-          label: 'Title Archive Retrieval Requested',
-          value: 'TITLE_ARCHIVE_RETRIEVAL_REQUESTED',
-          variables: [...this.baseVariables, ...this.titleVariables],
-          content: defaultTemplates['TITLE_ARCHIVE_RETRIEVAL_REQUESTED']
-        },
-        {
-          label: 'Title Retrieved From Archive',
-          value: 'TITLE_RETRIEVED_FROM_ARCHIVE',
-          variables: [...this.baseVariables, ...this.titleVariables],
-          content: defaultTemplates['TITLE_RETRIEVED_FROM_ARCHIVE']
-        },
-        {
-          label: 'Title Not Found In Archive',
-          value: 'TITLE_NOT_FOUND_IN_ARCHIVE',
-          variables: [...this.baseVariables, ...this.titleVariables],
-          content: defaultTemplates['TITLE_NOT_FOUND_IN_ARCHIVE']
-        },
-      ],
-    },
-    {
-      title: 'File Check Event',
-      events: [
-        {
-          label: 'Preflight Warnings/Errors',
-          value: 'PREFLIGHT_WARNINGS_ERRORS',
-          variables: [...this.baseVariables, ...this.titleVariables],
-          content: defaultTemplates['PREFLIGHT_WARNINGS_ERRORS']
-        },
-        {
-          label: 'Specifications Warning/Errors',
-          value: 'SPECIFICATIONS_WARNINGS_ERRORS',
-          variables: [...this.baseVariables, ...this.titleVariables],
-          content: defaultTemplates['SPECIFICATIONS_WARNINGS_ERRORS']
-        },
-      ],
-    },
-    {
-      title: 'Proofing Events',
-      events: [
-        {
-          label: 'Page Review(s) Requested',
-          value: 'PAGE_REVIEWS_REQUESTED',
-          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables, ...this.pageVariables],
-          content: defaultTemplates['PAGE_REVIEWS_REQUESTED']
-        },
-        {
-          label: 'Component Review Requested',
-          value: 'COMPONENT_REVIEW_REQUESTED',
-          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
-          content: defaultTemplates['COMPONENT_REVIEW_REQUESTED']
-        },
-        {
-          label: 'Title Review Requested',
-          value: 'TITLE_REVIEW_REQUESTED',
-          no_parts: true,
-          variables: [...this.baseVariables, ...this.titleVariables],
-          content: defaultTemplates['TITLE_REVIEW_REQUESTED']
-        },
-        {
-          label: 'Page Approval(s) Requested',
-          value: 'PAGE_APPROVALS_REQUESTED',
-          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables, ...this.pageVariables],
-          content: defaultTemplates['PAGE_APPROVALS_REQUESTED']
-        },
-        {
-          label: 'Component Approval Requested',
-          value: 'COMPONENT_APPROVAL_REQUESTED',
-          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
-          content: defaultTemplates['COMPONENT_APPROVAL_REQUESTED']
-        },
-        {
-          label: 'Title Approval Requested',
-          value: 'TITLE_APPROVAL_REQUESTED',
-          no_parts: true,
-          variables: [...this.baseVariables, ...this.titleVariables],
-          content: defaultTemplates['TITLE_APPROVAL_REQUESTED']
-        },
-        {
-          label: 'Page Proof(s) Approved',
-          value: 'PAGE_PROOFS_APPROVED',
-          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables, ...this.pageVariables],
-          content: defaultTemplates['PAGE_PROOFS_APPROVED']
-        },
-        {
-          label: 'Page Proof(s) Rejected',
-          value: 'PAGE_PROOFS_REJECTED',
-          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables, ...this.pageVariables],
-          content: defaultTemplates['PAGE_PROOFS_REJECTED']
-        },
-        {
-          label: 'Component Proof Approved',
-          value: 'COMPONENT_PROOF_APPROVED',
-          variables: [...this.baseVariables, ...this.titleVariables, ...this.componentVariables],
-          content: defaultTemplates['COMPONENT_PROOF_APPROVED']
-        },
-        {
-          label: 'Title Proof Approved',
-          value: 'TITLE_PROOF_APPROVED',
-          no_parts: true,
-          variables: [...this.baseVariables, ...this.titleVariables],
-          content: defaultTemplates['TITLE_PROOF_APPROVED']
-        },
-        {
-          label: 'Title Ready for Delivery',
-          value: 'TITLE_READY_FOR_DELIVERY',
-          no_parts: true,
-          variables: [...this.baseVariables, ...this.titleVariables],
-          content: defaultTemplates['TITLE_READY_FOR_DELIVERY']
-        },
-      ],
-    },
-    {
-      title: 'Administrative Events',
-      events: [
-        {
-          label: 'User Was Created',
-          value: 'USER_WAS_CREATED',
-          no_parts: true,
-          variables: this.baseVariables,
-          content: defaultTemplates['USER_WAS_CREATED']
-        },
-        {
-          label: 'User Was Modified',
-          value: 'USER_WAS_MODIFIED',
-          no_parts: true,
-          variables: this.baseVariables,
-          content: defaultTemplates['USER_WAS_MODIFIED']
-        },
-        {
-          label: 'User Was Deleted',
-          value: 'USER_WAS_DELETED',
-          no_parts: true,
-          variables: this.baseVariables,
-          content: defaultTemplates['USER_WAS_DELETED']
-        },
-      ],
-    },
-  ];
-
-  stakeholderStages: StakeholderStages = [
-    {
-      label: 'Resolve Preflight',
-      value: 'Preflight1_ApplyFix',
-      variables: [...this.stakeholderBaseVariables, ...this.titleVariables, ...this.componentVariables],
-      content: defaultTemplates['Preflight1_ApplyFix']
-    },
-    {
-      label: 'Approve Content',
-      value: 'Preflight1_Signoff',
-      variables: [...this.stakeholderBaseVariables, ...this.titleVariables, ...this.componentVariables],
-      content: defaultTemplates['Preflight1_Signoff']
-    },
-    {
-      label: 'Approve to Print',
-      value: 'Preflight2_Signoff',
-      variables: [...this.stakeholderBaseVariables, ...this.titleVariables, ...this.componentVariables],
-      content: defaultTemplates['Preflight2_Signoff']
-    },
-  ];
-
-  administrativeEvents: Array<AdministrativeEvent> = ['USER_WAS_CREATED', 'USER_WAS_MODIFIED', 'USER_WAS_DELETED'];
+  informativeEvents = INFORMATİVE_EVENTS;
+  stakeholderStages = STAKEHOLDER_STAGES;
 
   constructor() {
     this.initServices();
+  }
+
+  getTemplates() {
+    return [
+      ...INFORMATİVE_EVENTS.flatMap((arr) =>
+        arr.events.map((val) => ({
+          name: val.label,
+          critical: false,
+          initialContent: DEFAULT_TEMPLATES[val.value],
+        }))
+      ),
+      ...STAKEHOLDER_STAGES.map((val) => ({
+        name: val.label,
+        critical: true,
+        initialContent: DEFAULT_TEMPLATES[val.value],
+      })),
+    ];
   }
 
   async initServices() {
@@ -319,27 +95,7 @@ export class ApagoService {
   }
 
   getStakeholderKey(body: { jobId: string; part: string; stage: string }) {
-    const key = Buffer.from(
-      JSON.stringify({
-        part: body.part,
-        stage: body.stage,
-        jobId: body.jobId,
-      })
-    ).toString('base64');
-
-    return `stakeholder:${body.jobId}:${key}`;
-  }
-
-  parsePayload(payload: string) {
-    if (!payload) return null;
-
-    if (!validator.isBase64(payload)) return null;
-
-    const string = Buffer.from(payload, 'base64').toString();
-
-    if (!validator.isJSON(string)) return null;
-
-    return JSON.parse(string);
+    return `stakeholder:${body.jobId}:${body.stage}:${body.part}`;
   }
 
   getInformativeKey(payload: {
@@ -350,18 +106,21 @@ export class ApagoService {
     allTitles?: boolean;
     administrative?: boolean;
   }) {
-    const administrative = this.administrativeEvents.includes(payload.event as AdministrativeEvent);
+    const event: any = this.informativeEvents
+      .flatMap((events) => events.events)
+      .find((val) => val.value == payload.event);
 
-    const key = Buffer.from(
-      JSON.stringify({
-        ...(payload.part && !administrative && { part: payload.part }),
-        event: payload.event,
-        ...(payload.allTitles && { user: payload.userId }),
-        ...(administrative && { administrative: true }),
-      })
-    ).toString('base64');
+    const key = ['informative', payload.accountId, payload.event];
 
-    return `informative:${payload.accountId}:${key}`;
+    if (payload.part && !event?.no_parts) {
+      key.push(payload.part);
+    }
+
+    if (!payload.allTitles && !event?.administrative) {
+      key.push(payload.userId);
+    }
+
+    return key.join(':');
   }
 
   getInformativeEvents(body: { part: string; payload?: any; event: string; accountId: string; userId: string }) {
@@ -379,7 +138,7 @@ export class ApagoService {
           type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC,
           topicKey: this.getInformativeKey({
             event: body.event,
-            ...(!event?.no_parts && { part: body.part }),
+            part: body.part,
             accountId: body.accountId,
             userId: body.userId,
             allTitles,
@@ -390,39 +149,4 @@ export class ApagoService {
 
     return events;
   }
-}
-
-
-const defaultTemplates = {
-  // Informative event default templates:
-  TITLE_CREATED: `[{{accountName}}] New <a href="{{href}}">Title</a> created: {{titleName}} ({{titleID}})`,
-  TITLE_DELETED: `[{{accountName}}] Title deleted: {{titleName}} ({{titleID}})`,
-  COMPONENT_CREATED: `[{{accountName}}] {{componentName}} component added to title {{titleName}} ({{titleID}})`,
-  FILES_UPLOADED: `[{{accountName}}] Files uploaded to {{componentName}} component for title {{titleName}} ({{titleID}})`,
-  COMPONENT_DELETED: `[{{accountName}}] {{componentName}} component deleted from title {{titleName}} ({{titleID}})`,
-  PAGES_DELETED: `[{{accountName}}] Pages deleted from {{componentName}} component of title {{titleName}} ({{titleID}})`,
-  TITLE_ARCHIVE_RETRIEVAL_REQUESTED: `[{{accountName}}] Archive retrieval requested for title {{titleName}} ({{titleID}})`,
-  TITLE_RETRIEVED_FROM_ARCHIVE: `[{{accountName}}] Title successfully retrieved from archive: {{titleName}} ({{titleID}})`,
-  TITLE_NOT_FOUND_IN_ARCHIVE: `[{{accountName}}] Title could not be found in archive: {{titleName}} ({{titleID}})`,
-  PREFLIGHT_WARNINGS_ERRORS: `[{{accountName}}] Preflight 1 warnings and/or errors have been detected for title {{titleName}} ({{titleID}})`,
-  SPECIFICATIONS_WARNINGS_ERRORS: `[{{accountName}}] Preflight 2 warnings and/or errors have been detected for title {{titleName}} ({{titleID}})`,
-  PAGE_REVIEWS_REQUESTED: `[{{accountName}}] Page review requested for page(s) of {{componentName}} component for title {{titleName}} ({{titleID}}) - requested by {{actorUserName}}`,
-  COMPONENT_REVIEW_REQUESTED: `[{{accountName}}] Review requested for {{componentName}} component for title {{titleName}} ({{titleID}}) - requested by {{actorUserName}}`,
-  TITLE_REVIEW_REQUESTED: `[{{accountName}}] Review requested for title {{titleName}} ({{titleID}}) -  requested by {{actorUserName}}`,
-  PAGE_APPROVALS_REQUESTED: `[{{accountName}}] Page approval requested for page(s) of {{componentName}} component for title {{titleName}} ({{titleID}}) - requested by {{actorUserName}}`,
-  COMPONENT_APPROVAL_REQUESTED: `[{{accountName}}] Approval requested for {{componentName}} component for title {{titleName}} ({{titleID}}) - requested by {{actorUserName}}`,
-  TITLE_APPROVAL_REQUESTED: `[{{accountName}}] Approval requested for title {{titleName}} ({{titleID}}) -  requested by {{actorUserName}}`,
-  PAGE_PROOFS_APPROVED: `[{{accountName}}] Page proof(s) approved for {{componentName}} component for title {{titleName}} ({{titleID}})`,
-  PAGE_PROOFS_REJECTED: `[{{accountName}}] Page proof(s) rejected for {{componentName}} component for title {{titleName}} ({{titleID}})`,
-  COMPONENT_PROOF_APPROVED: `[{{accountName}}] {{componentName}} component proof approved to print for title {{titleName}} ({{titleID}})`,
-  TITLE_PROOF_APPROVED: `[{{accountName}}] Title proof approved to print for title {{titleName}} ({{titleID}})`,
-  TITLE_READY_FOR_DELIVERY: `[{{accountName}}] Title ready for delivery: {{titleName}} ({{titleID}})`,
-  USER_WAS_CREATED: `[{{accountName}}] New user created`,
-  USER_WAS_MODIFIED: `[{{accountName}}] User updated`,
-  USER_WAS_DELETED: `[{{accountName}}] User deleted`,
-  // Stakeholder event default templates:
-  Preflight1_ApplyFix: `[{{accountName}}] {{titleName}} ({{titleID}}) - {{componentName}} component has Preflight 1 issues that need to be resolved`,
-  Preflight1_Signoff: `[{{accountName}}] {{titleName}} ({{titleID}}) - {{componentName}} component page proofs are ready to be reviewed`,
-  // TODO - is the wording misleading to say "ready to be approved?" - a job could still fail preflight 2.
-  Preflight2_Signoff: `[{{accountName}}] {{titleName}} ({{titleID}}) - {{componentName}} component is ready to be approved to print`
 }

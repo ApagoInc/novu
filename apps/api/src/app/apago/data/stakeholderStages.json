@@ -1,0 +1,14 @@
+[
+  {
+    "label": "Resolve Preflight",
+    "value": "Preflight1_ApplyFix"
+  },
+  {
+    "label": "Approve Content",
+    "value": "Preflight1_Signoff"
+  },
+  {
+    "label": "Approve to Print",
+    "value": "Preflight2_Signoff"
+  }
+]

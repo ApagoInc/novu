@@ -1,31 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { SubscriberEntity, SubscriberRepository, TopicSubscribersEntity } from '@novu/dal';
-import { CachedEntity, buildSubscriberKey } from '@novu/application-generic';
+import { SubscriberRepository } from '@novu/dal';
 
 import { GetCreateSubscriberCommand } from './get-create-subscriber.command';
-
-type SubscriberEntityWithTopics = SubscriberEntity & { topicSubscribers: TopicSubscribersEntity[] };
 
 @Injectable()
 export class GetCreateSubscriber {
   constructor(private subscriberRepository: SubscriberRepository) {}
 
-  async execute(command: GetCreateSubscriberCommand): Promise<SubscriberEntityWithTopics> {
+  async execute(command: GetCreateSubscriberCommand) {
     const { environmentId, subscriberId, topic } = command;
 
     const subscriber = await this.fetchSubscriberWithTopics({ _environmentId: environmentId, subscriberId, topic });
-    if (subscriber) return subscriber;
 
-    const createSubscriber = await this.subscriberRepository.create({
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      firstName: command.firstName,
-      lastName: command.lastName,
-      subscriberId: command.subscriberId,
-      email: command.email,
-    });
+    if (!subscriber) {
+      throw new NotFoundException(`Subscriber not found for id ${subscriberId}`);
+    }
 
-    return { ...createSubscriber, topicSubscribers: [] };
+    return subscriber;
   }
 
   private async fetchSubscriberWithTopics({
@@ -35,8 +26,8 @@ export class GetCreateSubscriber {
   }: {
     subscriberId: string;
     _environmentId: string;
-    topic?: string;
-  }): Promise<SubscriberEntityWithTopics | null> {
-    return await this.subscriberRepository.findBySubscriberIdWithTopics(_environmentId, subscriberId, topic);
+    topic: string;
+  }) {
+    return await this.subscriberRepository.findSubscriberTopics(_environmentId, subscriberId, topic);
   }
 }
