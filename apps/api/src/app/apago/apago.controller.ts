@@ -111,19 +111,33 @@ export class ApagoController {
       })
     );
 
-    const subscriber = await this.getCreateSubscriberUseCase.execute(
-      GetCreateSubscriberCommand.create({
-        environmentId: subscriberSession._environmentId,
-        organizationId: subscriberSession._organizationId,
-        subscriberId: stakeholderUser.UserID,
-        email: stakeholderUser.Email,
-        firstName: stakeholderUser.FirstName,
-        lastName: stakeholderUser.LastName,
-        topic: `stakeholder:${jobId}:${body.stage}`,
-      })
-    );
+    let diffrence: any[] = [];
+    try {
+      const subscriber = await this.getCreateSubscriberUseCase.execute(
+        GetCreateSubscriberCommand.create({
+          environmentId: subscriberSession._environmentId,
+          organizationId: subscriberSession._organizationId,
+          subscriberId: stakeholderUser.UserID,
+          email: stakeholderUser.Email,
+          firstName: stakeholderUser.FirstName,
+          lastName: stakeholderUser.LastName,
+          topic: `stakeholder:${jobId}:${body.stage}`,
+        })
+      );
 
-    const diffrence = subscriber.subscriptions.filter((x) => !newTopics.includes(x.key)).map((item) => item.key);
+      diffrence = subscriber.subscriptions.filter((x) => !newTopics.includes(x.key)).map((item) => item.key);
+    } catch (error) {
+      await this.createSubscriberUsecase.execute(
+        CreateSubscriberCommand.create({
+          environmentId: subscriberSession._environmentId,
+          organizationId: subscriberSession._organizationId,
+          subscriberId: stakeholderUser.UserID,
+          email: stakeholderUser.Email,
+          firstName: stakeholderUser.FirstName,
+          lastName: stakeholderUser.LastName,
+        })
+      );
+    }
 
     await this.addBulkSubscribersUseCase.execute(
       AddBulkSubscribersCommand.create({
@@ -171,24 +185,25 @@ export class ApagoController {
 
     if (!template) throw new NotFoundException('Template not found!');
 
-    const newTopics = body.parts
-      ? body.parts.map((part) =>
-          this.apagoService.getInformativeKey({
-            accountId,
-            userId: subscriberSession.subscriberId,
-            part,
-            allTitles: body.allTitles,
-            event: body.event,
-          })
-        )
-      : [
-          this.apagoService.getInformativeKey({
-            accountId,
-            userId: subscriberSession.subscriberId,
-            allTitles: body.allTitles,
-            event: body.event,
-          }),
-        ];
+    const newTopics =
+      body?.parts && body.parts.length > 0
+        ? body.parts.map((part) =>
+            this.apagoService.getInformativeKey({
+              accountId,
+              userId: subscriberSession.subscriberId,
+              part,
+              allTitles: body.allTitles,
+              event: body.event,
+            })
+          )
+        : [
+            this.apagoService.getInformativeKey({
+              accountId,
+              userId: subscriberSession.subscriberId,
+              allTitles: body.allTitles,
+              event: body.event,
+            }),
+          ];
 
     const subscriber = await this.getCreateSubscriberUseCase.execute(
       GetCreateSubscriberCommand.create({
@@ -275,20 +290,27 @@ export class ApagoController {
       for (const topic of subscriber.subscriptions) {
         const key = topic.key;
 
-        const [type, accountId, event, part, userId] = key.split(':');
+        const [type, accountId, event, ...rest] = key.split(':');
 
-        if (obj[event]) {
-          obj[event].parts.push(part);
+        const find: any = this.apagoService.informativeEvents
+          .flatMap((val) => val.events)
+          .find((val) => val.value == event);
+
+        const in_app = topic?.preferences?.channels?.in_app;
+        const email = topic?.preferences?.channels?.email;
+
+        if (obj[event] && !find?.no_parts && !find.administrative) {
+          obj[event].parts.push(rest[0]);
         } else {
           obj[event] = {
             event: event,
-            parts: [part],
+            ...(!find?.no_parts && !find.administrative && { parts: [rest[0]] }),
             templateId: topic._templateId,
             channels: {
-              in_app: topic?.preferences?.channels?.in_app || true,
-              email: topic?.preferences?.channels?.email || true,
+              in_app: typeof in_app === 'undefined' ? true : in_app,
+              email: typeof email === 'undefined' ? true : email,
             },
-            userId,
+            userId: rest[find.no_parts ? 0 : 1],
           };
         }
       }

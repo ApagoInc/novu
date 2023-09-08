@@ -112,7 +112,7 @@ export class ApagoService {
 
     const key = ['informative', payload.accountId, payload.event];
 
-    if (payload.part && !event?.no_parts) {
+    if (payload.part && !event?.no_parts && !event.administrative) {
       key.push(payload.part);
     }
 
@@ -126,7 +126,7 @@ export class ApagoService {
   getInformativeEvents(body: { part: string; payload?: any; event: string; accountId: string; userId: string }) {
     const all = [true, false];
 
-    const event = this.informativeEvents.flatMap((events) => events.events).find((val) => val.value == body.event);
+    const event: any = this.informativeEvents.flatMap((events) => events.events).find((val) => val.value == body.event);
 
     if (!event?.label) return [];
 
@@ -147,6 +147,6 @@ export class ApagoService {
       ],
     }));
 
-    return events;
+    return event.administrative ? [events[0]] : events;
   }
 }

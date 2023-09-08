@@ -18,7 +18,7 @@ export class InformativeBodyDto {
   @IsArray()
   @IsString({ each: true })
   @ArrayMinSize(1)
-  parts: string[];
+  parts?: string[];
 
   @IsDefined()
   @IsIn(events.map((val) => val.value))
