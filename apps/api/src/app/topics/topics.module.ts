@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 
 import { USE_CASES } from './use-cases';
 import { TopicsController } from './topics.controller';
@@ -8,7 +8,7 @@ import { AuthModule } from '../auth/auth.module';
 import { SubscribersModule } from '../subscribers/subscribers.module';
 
 @Module({
-  imports: [SharedModule, AuthModule, SubscribersModule],
+  imports: [SharedModule, forwardRef(() => AuthModule), SubscribersModule],
   providers: [...USE_CASES],
   exports: [...USE_CASES],
   controllers: [TopicsController],

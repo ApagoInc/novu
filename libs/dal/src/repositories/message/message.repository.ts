@@ -32,7 +32,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean; payload?: object } = {}
+    query: { feedId?: string[]; seen?: boolean; read?: boolean; payload?: object; content?: string } = {}
   ): Promise<MessageQuery & EnforceEnvId> {
     let requestQuery: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
@@ -78,6 +78,10 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       };
     }
 
+    if (query.content) {
+      requestQuery = { ...requestQuery, content: { $regex: query.content, $options: 'i' } };
+    }
+
     return requestQuery;
   }
 
@@ -85,7 +89,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean; payload?: object; query?: string } = {},
+    query: { feedId?: string[]; seen?: boolean; read?: boolean; payload?: object; content?: string } = {},
     options: { limit: number; skip?: number } = { limit: 10 }
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
@@ -99,40 +103,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       .populate('subscriber', '_id firstName lastName avatar subscriberId')
       .populate('actorSubscriber', '_id firstName lastName avatar subscriberId');
 
-    const matchQuery = {
-      ...requestQuery,
-      _environmentId: this.convertStringToObjectId(requestQuery._environmentId),
-      _subscriberId: this.convertStringToObjectId(requestQuery._subscriberId),
-    };
-
-    if (query.query) {
-      matchQuery['payloadArray.v'] = { $regex: query.query, $options: 'i' };
-    }
-
-    const aggregate = await this.MongooseModel.aggregate([
-      {
-        $addFields: {
-          payloadArray: {
-            $objectToArray: '$payload',
-          },
-        },
-      },
-      {
-        $match: matchQuery,
-      },
-      { $sort: { createdAt: -1 } },
-      { $skip: options?.skip || 0 },
-      { $limit: options?.limit || 100 },
-    ]);
-
-    return this.mapEntities(aggregate);
+    return this.mapEntities(messages);
   }
 
   async getCount(
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean; payload?: object; query?: string } = {},
+    query: { feedId?: string[]; seen?: boolean; read?: boolean; payload?: object; content?: string } = {},
     options: { limit: number; skip?: number } = { limit: 100, skip: 0 }
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, {
@@ -140,33 +118,10 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       seen: query.seen,
       read: query.read,
       payload: query.payload,
+      content: query.content,
     });
 
-    if (query.query) {
-      requestQuery['payloadArray.v'] = { $regex: query.query, $options: 'i' };
-    }
-
-    const count = await this.MongooseModel.aggregate([
-      {
-        $addFields: {
-          payloadArray: {
-            $objectToArray: '$payload',
-          },
-        },
-      },
-      {
-        $match: {
-          ...requestQuery,
-          _environmentId: this.convertStringToObjectId(environmentId),
-          _subscriberId: this.convertStringToObjectId(subscriberId),
-        },
-      },
-      { $skip: options?.skip || 0 },
-      { $limit: options?.limit || 100 },
-      { $group: { _id: null, n: { $sum: 1 } } },
-    ]);
-
-    return count[0]?.n as number;
+    return this.MongooseModel.countDocuments(requestQuery, options).read('secondaryPreferred');
   }
 
   private getReadSeenUpdateQuery(

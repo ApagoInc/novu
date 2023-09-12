@@ -14,7 +14,7 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { ApagoService } from './apago.service';
 import { SubscriberEntity } from '@novu/dal';
 import { AddBulkSubscribersCommand, AddBulkSubscribersUseCase } from '../topics/use-cases/add-bulk-subscribers';
-import { GetCreateSubscriberCommand, GetCreateSubscriber } from '../subscribers/usecases/get-create-subscriber';
+import { GetTopicsCommand, GetTopics } from '../subscribers/usecases/get-topics';
 import { FilterTopicsUseCase, FilterTopicsCommand } from '../topics/use-cases';
 import { CreateSubscriber, CreateSubscriberCommand } from '@novu/application-generic';
 import { UpdatePreference } from '../subscribers/usecases/update-preference/update-preference.usecase';
@@ -22,7 +22,7 @@ import { UpdateSubscriberPreferenceCommand } from '../subscribers/usecases/updat
 import { ChannelPreference } from '../shared/dtos/channel-preference';
 import { GetNotificationTemplateCommand } from '../workflows/usecases/get-notification-template/get-notification-template.command';
 import { GetNotificationTemplate } from '../workflows/usecases/get-notification-template/get-notification-template.usecase';
-import { StakeholderBodyDto } from './dtos/stakeholders.dto';
+import { StakeholderBodyDto, StakeholdersResponseDto } from './dtos/stakeholders.dto';
 import { InformativeBodyDto } from './dtos/informative.dto';
 
 @Controller('/apago')
@@ -32,7 +32,7 @@ export class ApagoController {
     private addBulkSubscribersUseCase: AddBulkSubscribersUseCase,
     private filterTopicsUseCase: FilterTopicsUseCase,
     private createSubscriberUsecase: CreateSubscriber,
-    private getCreateSubscriberUseCase: GetCreateSubscriber,
+    private getSubscriberTopics: GetTopics,
     private updatePreferenceUsecase: UpdatePreference,
     private getWorkflowUsecase: GetNotificationTemplate
   ) {}
@@ -53,7 +53,7 @@ export class ApagoController {
 
     if (user == null) throw new UnauthorizedException();
 
-    const data: any[] = [];
+    const data: StakeholdersResponseDto[] = [];
 
     const res = await this.filterTopicsUseCase.execute(
       FilterTopicsCommand.create({
@@ -111,10 +111,11 @@ export class ApagoController {
       })
     );
 
-    let diffrence: any[] = [];
+    let diffrence: string[] = [];
+
     try {
-      const subscriber = await this.getCreateSubscriberUseCase.execute(
-        GetCreateSubscriberCommand.create({
+      const subscriber = await this.getSubscriberTopics.execute(
+        GetTopicsCommand.create({
           environmentId: subscriberSession._environmentId,
           organizationId: subscriberSession._organizationId,
           subscriberId: stakeholderUser.UserID,
@@ -205,8 +206,8 @@ export class ApagoController {
             }),
           ];
 
-    const subscriber = await this.getCreateSubscriberUseCase.execute(
-      GetCreateSubscriberCommand.create({
+    const subscriber = await this.getSubscriberTopics.execute(
+      GetTopicsCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
@@ -273,8 +274,8 @@ export class ApagoController {
 
     if (!user) throw new UnauthorizedException('User not found!');
 
-    const subscriber = await this.getCreateSubscriberUseCase.execute(
-      GetCreateSubscriberCommand.create({
+    const subscriber = await this.getSubscriberTopics.execute(
+      GetTopicsCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
         subscriberId: subscriberSession.subscriberId,
@@ -285,32 +286,32 @@ export class ApagoController {
       })
     );
 
-    const obj: any = {};
+    const obj = {};
     if (subscriber.subscriptions) {
       for (const topic of subscriber.subscriptions) {
         const key = topic.key;
 
         const [type, accountId, event, ...rest] = key.split(':');
 
-        const find: any = this.apagoService.informativeEvents
-          .flatMap((val) => val.events)
-          .find((val) => val.value == event);
+        const find = this.apagoService.informativeEvents.flatMap((val) => val.events).find((val) => val.value == event);
+
+        if (!find) continue;
 
         const in_app = topic?.preferences?.channels?.in_app;
         const email = topic?.preferences?.channels?.email;
 
-        if (obj[event] && !find?.no_parts && !find.administrative) {
+        if (obj[event] && find?.has_parts) {
           obj[event].parts.push(rest[0]);
         } else {
           obj[event] = {
             event: event,
-            ...(!find?.no_parts && !find.administrative && { parts: [rest[0]] }),
+            ...(find?.has_parts && { parts: [rest[0]] }),
             templateId: topic._templateId,
             channels: {
-              in_app: typeof in_app === 'undefined' ? true : in_app,
-              email: typeof email === 'undefined' ? true : email,
+              in_app: typeof in_app === 'undefined' ? false : true,
+              email: typeof email === 'undefined' ? false : true,
             },
-            userId: rest[find.no_parts ? 0 : 1],
+            userId: rest[find.has_parts ? 0 : 1],
           };
         }
       }

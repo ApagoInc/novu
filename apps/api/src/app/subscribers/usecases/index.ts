@@ -7,7 +7,7 @@ import {
 
 import { GetSubscribers } from './get-subscribers';
 import { GetSubscriber } from './get-subscriber';
-import { GetCreateSubscriber } from './get-create-subscriber';
+import { GetTopics } from './get-topics';
 import { GetPreferences } from './get-preferences/get-preferences.usecase';
 import { RemoveSubscriber } from './remove-subscriber';
 import { SearchByExternalSubscriberIds } from './search-by-external-subscriber-ids';
@@ -42,6 +42,6 @@ export const USE_CASES = [
   ChatOauthCallback,
   ChatOauth,
   DeleteSubscriberCredentials,
-  GetCreateSubscriber,
+  GetTopics,
   BulkCreateSubscribers,
 ];

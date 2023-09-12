@@ -1,5 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { ApiClientData, User } from './types';
+import { ApiClientData, User, informativeEvents, stakeholderStages } from './types';
 import { TriggerRecipientsTypeEnum } from '@novu/shared';
 import { ApiService } from './api.service';
 import * as util from 'util';
@@ -13,8 +13,8 @@ export class ApagoService {
   queue: Array<{ data: ApiClientData; cb: (err: any, data: User | null) => void }> = [];
   apiServices: Array<ApiService> = [];
   apiServiceCount = 10;
-  informativeEvents = INFORMATİVE_EVENTS;
-  stakeholderStages = STAKEHOLDER_STAGES;
+  informativeEvents: informativeEvents = INFORMATİVE_EVENTS;
+  stakeholderStages: stakeholderStages = STAKEHOLDER_STAGES;
 
   constructor() {
     this.initServices();
@@ -27,12 +27,16 @@ export class ApagoService {
           name: val.label,
           critical: false,
           initialContent: DEFAULT_TEMPLATES[val.value],
+          email: false,
+          in_app: false,
         }))
       ),
       ...STAKEHOLDER_STAGES.map((val) => ({
         name: val.label,
         critical: true,
         initialContent: DEFAULT_TEMPLATES[val.value],
+        email: true,
+        in_app: true,
       })),
     ];
   }
@@ -106,13 +110,11 @@ export class ApagoService {
     allTitles?: boolean;
     administrative?: boolean;
   }) {
-    const event: any = this.informativeEvents
-      .flatMap((events) => events.events)
-      .find((val) => val.value == payload.event);
+    const event = this.informativeEvents.flatMap((events) => events.events).find((val) => val.value == payload.event);
 
     const key = ['informative', payload.accountId, payload.event];
 
-    if (payload.part && !event?.no_parts && !event.administrative) {
+    if (payload.part && event?.has_parts) {
       key.push(payload.part);
     }
 
@@ -126,7 +128,7 @@ export class ApagoService {
   getInformativeEvents(body: { part: string; payload?: any; event: string; accountId: string; userId: string }) {
     const all = [true, false];
 
-    const event: any = this.informativeEvents.flatMap((events) => events.events).find((val) => val.value == body.event);
+    const event = this.informativeEvents.flatMap((events) => events.events).find((val) => val.value == body.event);
 
     if (!event?.label) return [];
 

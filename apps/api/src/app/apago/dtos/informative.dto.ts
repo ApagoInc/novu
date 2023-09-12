@@ -5,7 +5,7 @@ const events = INFORMATİVE_EVENTS.flatMap((arr) => arr.events);
 
 const administrativeEvents = events.filter((val: any) => val.administrative);
 
-const partEvents = events.filter((val: any) => val.administrative || !val.no_parts);
+const partEvents = events.filter((val: any) => !val.has_parts);
 
 export class InformativeBodyDto {
   @ValidateIf((o) => !administrativeEvents.includes(o.event))

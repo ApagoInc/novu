@@ -15,6 +15,8 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 
+type OrganizationEntityWithEnvs = OrganizationEntity & { devEnv: string; prodEnv: string };
+
 @Injectable({
   scope: Scope.REQUEST,
 })
@@ -29,7 +31,7 @@ export class CreateOrganization {
     private analyticsService: AnalyticsService
   ) {}
 
-  async execute(command: CreateOrganizationCommand): Promise<OrganizationEntity> {
+  async execute(command: CreateOrganizationCommand): Promise<OrganizationEntityWithEnvs> {
     const organization = new OrganizationEntity();
 
     organization.logo = command.logo;
@@ -94,6 +96,6 @@ export class CreateOrganization {
       })
     );
 
-    return { ...organizationAfterChanges, envs: [devEnv._id, prodEnv._id] } as OrganizationEntity;
+    return { ...organizationAfterChanges, devEnv: devEnv._id, prodEnv: prodEnv._id } as OrganizationEntityWithEnvs;
   }
 }

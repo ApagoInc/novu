@@ -11,3 +11,13 @@ export type ApiClientData =
     };
 
 export type User = { Email: string; UserID: string; FirstName: string; LastName: string };
+
+export type informativeEvents = {
+  title: string;
+  events: { label: string; value: string; has_parts?: boolean; administrative?: boolean }[];
+}[];
+
+export type stakeholderStages = {
+  label: string;
+  value: string;
+}[];

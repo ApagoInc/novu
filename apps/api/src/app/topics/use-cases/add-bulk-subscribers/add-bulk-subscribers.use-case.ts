@@ -55,14 +55,15 @@ export class AddBulkSubscribersUseCase {
       results.push({ key: topicKey, existingExternalSubscribers, nonExistingExternalSubscribers });
     }
 
-    for (const topicKey of command.removeKeys) {
-      await this.topicSubscribersRepository.removeSubscribers(
-        command.environmentId,
-        command.organizationId,
-        topicKey,
-        command.subscribers
-      );
-    }
+    if (command.removeKeys)
+      for (const topicKey of command.removeKeys) {
+        await this.topicSubscribersRepository.removeSubscribers(
+          command.environmentId,
+          command.organizationId,
+          topicKey,
+          command.subscribers
+        );
+      }
 
     return results;
   }

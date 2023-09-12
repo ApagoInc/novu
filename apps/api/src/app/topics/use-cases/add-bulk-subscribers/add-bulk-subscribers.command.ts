@@ -10,8 +10,8 @@ export class AddBulkSubscribersCommand extends EnvironmentCommand {
   topicKeys: TopicKey[];
 
   @IsArray()
-  @IsDefined()
-  removeKeys: TopicKey[];
+  @IsOptional()
+  removeKeys?: TopicKey[];
 
   @IsArray()
   @IsDefined()

@@ -1,4 +1,3 @@
-import { USE_CASES } from '../topics/use-cases';
 import { SharedModule } from '../shared/shared.module';
 import { Module, forwardRef } from '@nestjs/common';
 import { ApagoController } from './apago.controller';
@@ -7,11 +6,12 @@ import { ApagoService } from './apago.service';
 import { SubscribersModule } from '../subscribers/subscribers.module';
 import { ApiService } from './api.service';
 import { WorkflowModule } from '../workflows/workflow.module';
+import { TopicsModule } from '../topics/topics.module';
 
 @Module({
-  imports: [SubscribersModule, forwardRef(() => AuthModule), SharedModule, WorkflowModule],
+  imports: [SubscribersModule, TopicsModule, forwardRef(() => AuthModule), SharedModule, WorkflowModule],
   controllers: [ApagoController],
-  providers: [ApagoService, ...USE_CASES, ApiService],
-  exports: [...USE_CASES, ApagoService],
+  providers: [ApagoService, ApiService],
+  exports: [ApagoService],
 })
 export class ApagoModule {}

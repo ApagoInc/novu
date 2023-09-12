@@ -95,13 +95,13 @@ export class OrganizationController {
       name: body.name,
     });
 
-    const organization: any = await this.createOrganizationUsecase.execute(command);
+    const organization = await this.createOrganizationUsecase.execute(command);
 
     const groups = await this.getNotificationGroupsUsecase.execute(
       GetNotificationGroupsCommand.create({
         organizationId: organization._id,
         userId: user._id,
-        environmentId: organization.envs[0] as string,
+        environmentId: organization.devEnv,
       })
     );
 
@@ -110,7 +110,7 @@ export class OrganizationController {
         CreateNotificationTemplateCommand.create({
           organizationId: organization._id,
           userId: user._id,
-          environmentId: organization.envs[0],
+          environmentId: organization.devEnv,
           name: event.name,
           tags: [],
           description: event.name,
@@ -139,7 +139,7 @@ export class OrganizationController {
           active: true,
           draft: false,
           critical: event.critical,
-          preferenceSettings: { email: true, in_app: true },
+          preferenceSettings: { email: event.email, in_app: event.in_app },
         })
       );
     }

@@ -18,3 +18,12 @@ export class StakeholderBodyDto {
   @IsIn(stages)
   stage: string;
 }
+
+export class StakeholdersResponseDto {
+  @IsString()
+  @IsDefined()
+  subscriberId: string;
+
+  @IsArray()
+  stages: { stage: string; parts: string[] }[];
+}

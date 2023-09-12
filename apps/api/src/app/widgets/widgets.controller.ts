@@ -110,13 +110,12 @@ export class WidgetsController {
       environmentId: subscriberSession._environmentId,
       page: query.page != null ? parseInt(query.page) : 0,
       feedId: feedsQuery,
-      query: { seen: query.seen, read: query.read, query: query.query },
+      query: { seen: query.seen, read: query.read, content: query.content },
       limit: query.limit != null ? parseInt(query.limit) : 10,
       payload: query.payload,
     });
 
     const data = await this.getNotificationsFeedUsecase.execute(command);
-    console.log(data);
 
     return data;
   }

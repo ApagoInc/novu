@@ -33,14 +33,14 @@ export class GetNotificationsFeed {
     }
   }
 
-  @CachedQuery({
+  /*  @CachedQuery({
     builder: ({ environmentId, subscriberId, ...command }: GetNotificationsFeedCommand) =>
       buildFeedKey().cache({
         environmentId: environmentId,
         subscriberId: subscriberId,
         ...command,
       }),
-  })
+  })*/
   async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {
     const payload = this.getPayloadObject(command.payload);
 
@@ -66,7 +66,7 @@ export class GetNotificationsFeed {
         seen: command.query.seen,
         read: command.query.read,
         payload,
-        query: command.query.query,
+        content: command.query.content,
       },
       {
         limit: command.limit,
@@ -100,7 +100,7 @@ export class GetNotificationsFeed {
           feedId: command.feedId,
           seen: command.query.seen,
           read: command.query.read,
-          query: command.query.query,
+          content: command.query.content,
           payload,
         },
         { limit: command.limit + 1, skip }

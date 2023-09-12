@@ -4,41 +4,46 @@
     "events": [
       {
         "label": "Title Created",
-        "value": "TITLE_CREATED",
-        "no_parts": true
+        "value": "TITLE_CREATED"
       },
       {
         "label": "Title Deleted",
-        "value": "TITLE_DELETED",
-        "no_parts": true
+        "value": "TITLE_DELETED"
       },
       {
         "label": "Component Created",
-        "value": "COMPONENT_CREATED"
+        "value": "COMPONENT_CREATED",
+        "has_parts": true
       },
       {
         "label": "File(s) Uploaded",
-        "value": "FILES_UPLOADED"
+        "value": "FILES_UPLOADED",
+        "has_parts": true
       },
       {
         "label": "Component Deleted",
-        "value": "COMPONENT_DELETED"
+        "value": "COMPONENT_DELETED",
+        "has_parts": true
       },
       {
         "label": "Page(s) Deleted",
-        "value": "PAGES_DELETED"
+        "value": "PAGES_DELETED",
+        "has_parts": true
       },
       {
         "label": "Title Archive Retrieval Requested",
-        "value": "TITLE_ARCHIVE_RETRIEVAL_REQUESTED"
+        "value": "TITLE_ARCHIVE_RETRIEVAL_REQUESTED",
+        "has_parts": true
       },
       {
         "label": "Title Retrieved From Archive",
-        "value": "TITLE_RETRIEVED_FROM_ARCHIVE"
+        "value": "TITLE_RETRIEVED_FROM_ARCHIVE",
+        "has_parts": true
       },
       {
         "label": "Title Not Found In Archive",
-        "value": "TITLE_NOT_FOUND_IN_ARCHIVE"
+        "value": "TITLE_NOT_FOUND_IN_ARCHIVE",
+        "has_parts": true
       }
     ]
   },
@@ -47,11 +52,13 @@
     "events": [
       {
         "label": "Preflight Warnings/Errors",
-        "value": "PREFLIGHT_WARNINGS_ERRORS"
+        "value": "PREFLIGHT_WARNINGS_ERRORS",
+        "has_parts": true
       },
       {
         "label": "Specifications Warning/Errors",
-        "value": "SPECIFICATIONS_WARNINGS_ERRORS"
+        "value": "SPECIFICATIONS_WARNINGS_ERRORS",
+        "has_parts": true
       }
     ]
   },
@@ -60,51 +67,54 @@
     "events": [
       {
         "label": "Page Review(s) Requested",
-        "value": "PAGE_REVIEWS_REQUESTED"
+        "value": "PAGE_REVIEWS_REQUESTED",
+        "has_parts": true
       },
       {
         "label": "Component Review Requested",
-        "value": "COMPONENT_REVIEW_REQUESTED"
+        "value": "COMPONENT_REVIEW_REQUESTED",
+        "has_parts": true
       },
       {
         "label": "Title Review Requested",
-        "value": "TITLE_REVIEW_REQUESTED",
-        "no_parts": true
+        "value": "TITLE_REVIEW_REQUESTED"
       },
       {
         "label": "Page Approval(s) Requested",
-        "value": "PAGE_APPROVALS_REQUESTED"
+        "value": "PAGE_APPROVALS_REQUESTED",
+        "has_parts": true
       },
       {
         "label": "Component Approval Requested",
-        "value": "COMPONENT_APPROVAL_REQUESTED"
+        "value": "COMPONENT_APPROVAL_REQUESTED",
+        "has_parts": true
       },
       {
         "label": "Title Approval Requested",
-        "value": "TITLE_APPROVAL_REQUESTED",
-        "no_parts": true
+        "value": "TITLE_APPROVAL_REQUESTED"
       },
       {
         "label": "Page Proof(s) Approved",
-        "value": "PAGE_PROOFS_APPROVED"
+        "value": "PAGE_PROOFS_APPROVED",
+        "has_parts": true
       },
       {
         "label": "Page Proof(s) Rejected",
-        "value": "PAGE_PROOFS_REJECTED"
+        "value": "PAGE_PROOFS_REJECTED",
+        "has_parts": true
       },
       {
         "label": "Component Proof Approved",
-        "value": "COMPONENT_PROOF_APPROVED"
+        "value": "COMPONENT_PROOF_APPROVED",
+        "has_parts": true
       },
       {
         "label": "Title Proof Approved",
-        "value": "TITLE_PROOF_APPROVED",
-        "no_parts": true
+        "value": "TITLE_PROOF_APPROVED"
       },
       {
         "label": "Title Ready for Delivery",
-        "value": "TITLE_READY_FOR_DELIVERY",
-        "no_parts": true
+        "value": "TITLE_READY_FOR_DELIVERY"
       }
     ]
   },
