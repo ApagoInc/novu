@@ -191,17 +191,15 @@ export class ApagoController {
         ? body.parts.map((part) =>
             this.apagoService.getInformativeKey({
               accountId,
-              userId: subscriberSession.subscriberId,
               part,
-              allTitles: body.allTitles,
+              titles: body.titles,
               event: body.event,
             })
           )
         : [
             this.apagoService.getInformativeKey({
               accountId,
-              userId: subscriberSession.subscriberId,
-              allTitles: body.allTitles,
+              titles: body.titles,
               event: body.event,
             }),
           ];
@@ -311,7 +309,7 @@ export class ApagoController {
               in_app: typeof in_app === 'undefined' ? false : true,
               email: typeof email === 'undefined' ? false : true,
             },
-            userId: rest[find.has_parts ? 1 : 0],
+            titles: rest[find.has_parts ? 1 : 0],
           };
         }
       }

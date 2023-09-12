@@ -46,8 +46,12 @@ export class InformativeEventDto {
   accountId: string;
 
   @IsString()
+  @IsDefined()
+  jobAccountId?: string;
+
+  @IsString()
   @IsOptional()
-  userId?: string;
+  jobId?: string;
 
   @IsOptional()
   payload?: any;

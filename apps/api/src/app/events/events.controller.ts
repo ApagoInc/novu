@@ -33,6 +33,8 @@ import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { ApagoService } from '../apago/apago.service';
 import { NotFoundError } from 'rxjs';
+import { GetTopicCommand, GetTopicUseCase } from '../topics/use-cases';
+import { ApiService } from '../apago/api.service';
 @Controller({
   path: 'events',
   scope: Scope.REQUEST,
@@ -46,7 +48,8 @@ export class EventsController {
     private sendTestEmail: SendTestEmail,
     private parseEventRequest: ParseEventRequest,
     private processBulkTriggerUsecase: ProcessBulkTrigger,
-    private apagoService: ApagoService
+    private apagoService: ApagoService,
+    private getTopicUseCase: GetTopicUseCase
   ) {}
 
   @ExternalApiAccessible()
@@ -166,17 +169,100 @@ export class EventsController {
   async triggerInformativeEvents(
     @UserSession() user: IJwtPayload,
     @Body() body: InformativeEventDto
-  ): Promise<TriggerEventResponseDto[]> {
-    const events = this.apagoService.getInformativeEvents(body);
+  ): Promise<{ success: boolean }> {
+    const event = this.apagoService.informativeEvents
+      .flatMap((val) => val.events)
+      .find((val) => val.value == body.event);
 
-    return this.processBulkTriggerUsecase.execute(
-      ProcessBulkTriggerCommand.create({
-        userId: user._id,
-        organizationId: user.organizationId,
-        environmentId: user.environmentId,
-        events: events,
-      })
-    );
+    if (!event) throw new NotFoundException('');
+
+    if (!event?.administrative) {
+      const allTitles = this.apagoService.getInformativeEvents({ ...body, titles: 'allTitles' });
+
+      try {
+        await this.parseEventRequest.execute(
+          ParseEventRequestCommand.create({
+            userId: user._id,
+            environmentId: user.environmentId,
+            organizationId: user.organizationId,
+            identifier: `${slugify(event?.label, {
+              lower: true,
+              strict: true,
+            })}`,
+            payload: body.payload || {},
+            overrides: {},
+            to: [{ type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC, topicKey: allTitles }],
+          })
+        );
+      } catch (error) {}
+
+      const myTitles = this.apagoService.getInformativeEvents({ ...body, titles: 'myTitles' });
+
+      const topic = await this.getTopicUseCase.execute(
+        GetTopicCommand.create({
+          environmentId: user.environmentId,
+          topicKey: myTitles,
+          organizationId: user.organizationId,
+        })
+      );
+
+      if (topic.subscribers.length > 0) {
+        const apiService = new ApiService();
+        await apiService.init();
+        await apiService.setAccount(body.accountId);
+        const users = await apiService.getUsers();
+        const toList: string[] = [];
+
+        for (const subscriber of topic.subscribers) {
+          const user = users.find((val) => val.UserID == subscriber);
+          if (!user?.JobsList) continue;
+          const jobList = user.JobsList[body.jobAccountId as string] || [];
+
+          if (!jobList.includes(body.jobId)) continue;
+          toList.push(subscriber);
+        }
+
+        try {
+          await this.parseEventRequest.execute(
+            ParseEventRequestCommand.create({
+              userId: user._id,
+              environmentId: user.environmentId,
+              organizationId: user.organizationId,
+              identifier: `${slugify(event?.label, {
+                lower: true,
+                strict: true,
+              })}`,
+              payload: body.payload || {},
+              overrides: {},
+              to: toList,
+            })
+          );
+        } catch (error) {}
+      }
+
+      return { success: true };
+    }
+
+    const topicKey = this.apagoService.getInformativeEvents(body);
+
+    try {
+      await this.parseEventRequest.execute(
+        ParseEventRequestCommand.create({
+          userId: user._id,
+          environmentId: user.environmentId,
+          organizationId: user.organizationId,
+          identifier: `${slugify(event?.label, {
+            lower: true,
+            strict: true,
+          })}`,
+          payload: body.payload || {},
+          overrides: {},
+          to: [{ type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC, topicKey }],
+        })
+      );
+    } catch (error) {}
+
+    return { success: true };
   }
 
   @ExternalApiAccessible()

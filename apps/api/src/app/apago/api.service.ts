@@ -85,4 +85,14 @@ export class ApiService {
       throw new UnauthorizedException('Insufficient permissions');
     }
   }
+
+  async getUsers() {
+    try {
+      const res = await this.instance.get(`/admin/users`);
+
+      return res.data;
+    } catch (error) {
+      throw new UnauthorizedException('Insufficient permissions');
+    }
+  }
 }

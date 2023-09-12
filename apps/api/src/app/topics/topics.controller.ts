@@ -56,8 +56,6 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
-import { AddBulkSubscribersRequestDto } from './dtos/add-bulk-subscribers.dto';
-import { RemoveBulkSubscribersRequestDto } from './dtos/remove-bulk-subscribers.dto';
 
 @Controller('/topics')
 @ApiTags('Topics')

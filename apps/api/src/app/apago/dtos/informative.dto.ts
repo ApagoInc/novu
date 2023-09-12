@@ -10,8 +10,8 @@ const partEvents = events.filter((val: any) => !val.has_parts);
 export class InformativeBodyDto {
   @ValidateIf((o) => !administrativeEvents.includes(o.event))
   @IsOptional()
-  @IsBoolean()
-  allTitles?: boolean;
+  @IsString()
+  titles?: string;
 
   @ValidateIf((o) => partEvents.includes(o.event))
   @IsDefined()

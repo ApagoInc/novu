@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { ApiClientData, User, informativeEvents, stakeholderStages } from './types';
 import { TriggerRecipientsTypeEnum } from '@novu/shared';
 import { ApiService } from './api.service';
@@ -106,8 +106,7 @@ export class ApagoService {
     part?: string;
     event: string;
     accountId: string;
-    userId?: string;
-    allTitles?: boolean;
+    titles?: string;
     administrative?: boolean;
   }) {
     const event = this.informativeEvents.flatMap((events) => events.events).find((val) => val.value == payload.event);
@@ -118,37 +117,23 @@ export class ApagoService {
       key.push(payload.part);
     }
 
-    if (!payload.allTitles && !event?.administrative && payload.userId) {
-      key.push(payload.userId);
+    if (payload.titles && !event?.administrative) {
+      key.push(payload.titles);
     }
 
     return key.join(':');
   }
 
-  getInformativeEvents(body: { part: string; payload?: any; event: string; accountId: string; userId?: string }) {
-    const all = [true, false];
-
+  getInformativeEvents(body: { part: string; payload?: any; event: string; accountId: string; titles?: string }) {
     const event = this.informativeEvents.flatMap((events) => events.events).find((val) => val.value == body.event);
 
-    if (!event?.label) return [];
+    if (!event?.label) throw new NotFoundException('');
 
-    const events = all.map((allTitles) => ({
-      name: `${slugify(event?.label, { lower: true, strict: true })}`,
-      payload: body.payload || {},
-      to: [
-        {
-          type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC,
-          topicKey: this.getInformativeKey({
-            event: body.event,
-            part: body.part,
-            accountId: body.accountId,
-            userId: body.userId,
-            allTitles,
-          }),
-        },
-      ],
-    }));
-
-    return event.administrative ? [events[0]] : events;
+    return this.getInformativeKey({
+      event: body.event,
+      part: body.part,
+      accountId: body.accountId,
+      titles: body.titles,
+    });
   }
 }
