@@ -311,7 +311,7 @@ export class ApagoController {
               in_app: typeof in_app === 'undefined' ? false : true,
               email: typeof email === 'undefined' ? false : true,
             },
-            userId: rest[find.has_parts ? 0 : 1],
+            userId: rest[find.has_parts ? 1 : 0],
           };
         }
       }
