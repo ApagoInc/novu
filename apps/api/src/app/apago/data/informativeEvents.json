@@ -32,18 +32,15 @@
       },
       {
         "label": "Title Archive Retrieval Requested",
-        "value": "TITLE_ARCHIVE_RETRIEVAL_REQUESTED",
-        "has_parts": true
+        "value": "TITLE_ARCHIVE_RETRIEVAL_REQUESTED"
       },
       {
         "label": "Title Retrieved From Archive",
-        "value": "TITLE_RETRIEVED_FROM_ARCHIVE",
-        "has_parts": true
+        "value": "TITLE_RETRIEVED_FROM_ARCHIVE"
       },
       {
         "label": "Title Not Found In Archive",
-        "value": "TITLE_NOT_FOUND_IN_ARCHIVE",
-        "has_parts": true
+        "value": "TITLE_NOT_FOUND_IN_ARCHIVE"
       }
     ]
   },
@@ -52,13 +49,11 @@
     "events": [
       {
         "label": "Preflight Warnings/Errors",
-        "value": "PREFLIGHT_WARNINGS_ERRORS",
-        "has_parts": true
+        "value": "PREFLIGHT_WARNINGS_ERRORS"
       },
       {
         "label": "Specifications Warning/Errors",
-        "value": "SPECIFICATIONS_WARNINGS_ERRORS",
-        "has_parts": true
+        "value": "SPECIFICATIONS_WARNINGS_ERRORS"
       }
     ]
   },
