@@ -33,17 +33,21 @@ export class TopicPayloadDto {
 }
 
 export class InformativeEventDto {
+  @IsString()
   @IsOptional()
   part: string;
 
+  @IsString()
   @IsDefined()
   event: string;
 
+  @IsString()
   @IsDefined()
   accountId: string;
 
-  @IsDefined()
-  userId: string;
+  @IsString()
+  @IsOptional()
+  userId?: string;
 
   @IsOptional()
   payload?: any;

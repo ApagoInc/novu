@@ -106,7 +106,7 @@ export class ApagoService {
     part?: string;
     event: string;
     accountId: string;
-    userId: string;
+    userId?: string;
     allTitles?: boolean;
     administrative?: boolean;
   }) {
@@ -118,14 +118,14 @@ export class ApagoService {
       key.push(payload.part);
     }
 
-    if (!payload.allTitles && !event?.administrative) {
+    if (!payload.allTitles && !event?.administrative && payload.userId) {
       key.push(payload.userId);
     }
 
     return key.join(':');
   }
 
-  getInformativeEvents(body: { part: string; payload?: any; event: string; accountId: string; userId: string }) {
+  getInformativeEvents(body: { part: string; payload?: any; event: string; accountId: string; userId?: string }) {
     const all = [true, false];
 
     const event = this.informativeEvents.flatMap((events) => events.events).find((val) => val.value == body.event);
