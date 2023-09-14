@@ -124,7 +124,7 @@ export class ApagoService {
     return key.join(':');
   }
 
-  getInformativeEvents(body: { part: string; payload?: any; event: string; accountId: string; titles?: string }) {
+  getInformativeEvents(body: { part?: string; payload?: any; event: string; accountId: string; titles?: string }) {
     const event = this.informativeEvents.flatMap((events) => events.events).find((val) => val.value == body.event);
 
     if (!event?.label) throw new NotFoundException('');

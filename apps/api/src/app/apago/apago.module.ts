@@ -7,9 +7,10 @@ import { SubscribersModule } from '../subscribers/subscribers.module';
 import { ApiService } from './api.service';
 import { WorkflowModule } from '../workflows/workflow.module';
 import { TopicsModule } from '../topics/topics.module';
+import { EventsModule } from '../events/events.module';
 
 @Module({
-  imports: [SubscribersModule, TopicsModule, forwardRef(() => AuthModule), SharedModule, WorkflowModule],
+  imports: [EventsModule, SubscribersModule, TopicsModule, forwardRef(() => AuthModule), SharedModule, WorkflowModule],
   controllers: [ApagoController],
   providers: [ApagoService, ApiService],
   exports: [ApagoService],

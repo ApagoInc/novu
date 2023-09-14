@@ -1,4 +1,4 @@
-import { ArrayMinSize, IsArray, IsDefined, IsString, IsIn } from 'class-validator';
+import { IsArray, IsDefined, IsString, IsIn, IsJSON, IsOptional } from 'class-validator';
 import * as STAKEHOLDER_STAGES from '../data/stakeholderStages.json';
 
 const stages = STAKEHOLDER_STAGES.map((val) => val.value);
@@ -10,11 +10,11 @@ export class StakeholderBodyDto {
 
   @IsDefined()
   @IsArray()
-  @IsString({ each: true })
-  @ArrayMinSize(1)
+  @IsString()
   parts: string[];
 
   @IsDefined()
+  @IsString()
   @IsIn(stages)
   stage: string;
 }
@@ -26,4 +26,23 @@ export class StakeholdersResponseDto {
 
   @IsArray()
   stages: { stage: string; parts: string[] }[];
+}
+
+export class StakeholderEventTriggerBodyDto {
+  @IsDefined()
+  @IsString()
+  jobId: string;
+
+  @IsDefined()
+  @IsString()
+  part: string;
+
+  @IsDefined()
+  @IsString()
+  @IsIn(stages)
+  stage: string;
+
+  @IsJSON()
+  @IsOptional()
+  payload?: any;
 }

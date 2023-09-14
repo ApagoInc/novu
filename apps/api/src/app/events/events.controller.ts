@@ -32,9 +32,9 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { ApagoService } from '../apago/apago.service';
-import { NotFoundError } from 'rxjs';
 import { GetTopicCommand, GetTopicUseCase } from '../topics/use-cases';
 import { ApiService } from '../apago/api.service';
+
 @Controller({
   path: 'events',
   scope: Scope.REQUEST,

@@ -8,22 +8,27 @@ import {
   UnauthorizedException,
   NotFoundException,
 } from '@nestjs/common';
-import { SubscriberSession } from '../shared/framework/user.decorator';
+import { SubscriberSession, UserSession } from '../shared/framework/user.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApagoService } from './apago.service';
 import { SubscriberEntity } from '@novu/dal';
 import { AddBulkSubscribersCommand, AddBulkSubscribersUseCase } from '../topics/use-cases/add-bulk-subscribers';
 import { GetTopicsCommand, GetTopics } from '../subscribers/usecases/get-topics';
-import { FilterTopicsUseCase, FilterTopicsCommand } from '../topics/use-cases';
+import { FilterTopicsUseCase, FilterTopicsCommand, GetTopicCommand, GetTopicUseCase } from '../topics/use-cases';
 import { CreateSubscriber, CreateSubscriberCommand } from '@novu/application-generic';
 import { UpdatePreference } from '../subscribers/usecases/update-preference/update-preference.usecase';
 import { UpdateSubscriberPreferenceCommand } from '../subscribers/usecases/update-subscriber-preference';
 import { ChannelPreference } from '../shared/dtos/channel-preference';
 import { GetNotificationTemplateCommand } from '../workflows/usecases/get-notification-template/get-notification-template.command';
 import { GetNotificationTemplate } from '../workflows/usecases/get-notification-template/get-notification-template.usecase';
-import { StakeholderBodyDto, StakeholdersResponseDto } from './dtos/stakeholders.dto';
-import { InformativeBodyDto } from './dtos/informative.dto';
+import slugify from 'slugify';
+import { IJwtPayload, TriggerRecipientsTypeEnum } from '@novu/shared';
+import { StakeholderBodyDto, StakeholderEventTriggerBodyDto, StakeholdersResponseDto } from './dtos/stakeholders.dto';
+import { InformativeBodyDto, InformativeEventTriggerBodyDto } from './dtos/informative.dto';
+import { ParseEventRequest, ParseEventRequestCommand } from '../events/usecases/parse-event-request';
+import { ApiService } from './api.service';
+import { JwtAuthGuard } from '../auth/framework/auth.guard';
 
 @Controller('/apago')
 export class ApagoController {
@@ -34,7 +39,9 @@ export class ApagoController {
     private createSubscriberUsecase: CreateSubscriber,
     private getSubscriberTopics: GetTopics,
     private updatePreferenceUsecase: UpdatePreference,
-    private getWorkflowUsecase: GetNotificationTemplate
+    private getWorkflowUsecase: GetNotificationTemplate,
+    private parseEventRequest: ParseEventRequest,
+    private getTopicUseCase: GetTopicUseCase
   ) {}
 
   @Get('/stakeholders/:accountId/:jobId')
@@ -351,6 +358,139 @@ export class ApagoController {
         email: user.Email,
         firstName: user.FirstName,
         lastName: user.LastName,
+      })
+    );
+
+    return { success: true };
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @Post('/trigger/informative')
+  async triggerInformativeEvents(
+    @UserSession() user: IJwtPayload,
+    @Body() body: InformativeEventTriggerBodyDto
+  ): Promise<{ success: boolean }> {
+    const event = this.apagoService.informativeEvents
+      .flatMap((val) => val.events)
+      .find((val) => val.value == body.event);
+
+    if (!event) throw new NotFoundException(`Event ${body.event} not found!`);
+
+    if (!event?.administrative) {
+      const allTitles = this.apagoService.getInformativeEvents({ ...body, titles: 'allTitles' });
+
+      try {
+        await this.parseEventRequest.execute(
+          ParseEventRequestCommand.create({
+            userId: user._id,
+            environmentId: user.environmentId,
+            organizationId: user.organizationId,
+            identifier: `${slugify(event?.label, {
+              lower: true,
+              strict: true,
+            })}`,
+            payload: body.payload || {},
+            overrides: {},
+            to: [{ type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC, topicKey: allTitles }],
+          })
+        );
+      } catch (error) {}
+
+      const myTitles = this.apagoService.getInformativeEvents({ ...body, titles: 'myTitles' });
+
+      const topic = await this.getTopicUseCase.execute(
+        GetTopicCommand.create({
+          environmentId: user.environmentId,
+          topicKey: myTitles,
+          organizationId: user.organizationId,
+        })
+      );
+
+      if (topic.subscribers.length > 0) {
+        const apiService = new ApiService();
+        await apiService.init();
+        await apiService.setAccount(body.accountId);
+        const users = await apiService.getUsers();
+        const toList: string[] = [];
+
+        for (const subscriber of topic.subscribers) {
+          const user = users.find((val) => val.UserID == subscriber);
+          if (!user?.JobsList) continue;
+          const jobList = user.JobsList[body.jobAccountId as string] || [];
+
+          if (!jobList.includes(body.jobId)) continue;
+          toList.push(subscriber);
+        }
+
+        try {
+          await this.parseEventRequest.execute(
+            ParseEventRequestCommand.create({
+              userId: user._id,
+              environmentId: user.environmentId,
+              organizationId: user.organizationId,
+              identifier: `${slugify(event?.label, {
+                lower: true,
+                strict: true,
+              })}`,
+              payload: body.payload || {},
+              overrides: {},
+              to: toList,
+            })
+          );
+        } catch (error) {}
+      }
+
+      return { success: true };
+    }
+
+    const topicKey = this.apagoService.getInformativeEvents(body);
+
+    try {
+      await this.parseEventRequest.execute(
+        ParseEventRequestCommand.create({
+          userId: user._id,
+          environmentId: user.environmentId,
+          organizationId: user.organizationId,
+          identifier: `${slugify(event?.label, {
+            lower: true,
+            strict: true,
+          })}`,
+          payload: body.payload || {},
+          overrides: {},
+          to: [{ type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC, topicKey }],
+        })
+      );
+    } catch (error) {}
+
+    return { success: true };
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @Post('/trigger/stakeholder')
+  async trackStakeholderEvent(
+    @UserSession() user: IJwtPayload,
+    @Body() body: StakeholderEventTriggerBodyDto
+  ): Promise<{ success: boolean }> {
+    const topicKey = this.apagoService.getStakeholderKey(body);
+
+    const stage = this.apagoService.stakeholderStages.find((val) => val.value == body.stage);
+
+    if (!stage) throw new NotFoundException(`Stage ${body.stage} not found!`);
+
+    await this.parseEventRequest.execute(
+      ParseEventRequestCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier: `${slugify(stage?.label, {
+          lower: true,
+          strict: true,
+        })}`,
+        payload: body.payload || {},
+        overrides: {},
+        to: [{ type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC, topicKey }],
       })
     );
 

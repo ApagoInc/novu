@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
 import {
   EventsDistributedLockService,
@@ -31,7 +31,7 @@ import { TenantModule } from '../tenant/tenant.module';
     SharedModule,
     TerminusModule,
     WidgetsModule,
-    AuthModule,
+    forwardRef(() => AuthModule),
     SubscribersModule,
     LogsModule,
     ContentTemplatesModule,
@@ -39,7 +39,7 @@ import { TenantModule } from '../tenant/tenant.module';
     ExecutionDetailsModule,
     TopicsModule,
     LayoutsModule,
-    ApagoModule,
+    forwardRef(() => ApagoModule),
     TenantModule,
   ],
   controllers: [EventsController],
@@ -56,5 +56,6 @@ import { TenantModule } from '../tenant/tenant.module';
     CalculateDelayService,
     GetNovuProviderCredentials,
   ],
+  exports: [...USE_CASES],
 })
 export class EventsModule {}
