@@ -494,7 +494,7 @@ export class ApagoController {
           identifier: `${slugify(stage?.label, {
             lower: true,
             strict: true,
-          })}sss`,
+          })}`,
           payload: body.payload || {},
           overrides: {},
           to: [{ type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC, topicKey }],
