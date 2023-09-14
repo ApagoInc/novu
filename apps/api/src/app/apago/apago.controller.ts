@@ -395,7 +395,9 @@ export class ApagoController {
             to: [{ type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC, topicKey: allTitles }],
           })
         );
-      } catch (error) {}
+      } catch (error) {
+        if (error?.status !== 404) throw error;
+      }
 
       const myTitles = this.apagoService.getInformativeEvents({ ...body, titles: 'myTitles' });
 
@@ -438,7 +440,9 @@ export class ApagoController {
               to: toList,
             })
           );
-        } catch (error) {}
+        } catch (error) {
+          if (error?.status !== 404) throw error;
+        }
       }
 
       return { success: true };
@@ -461,7 +465,9 @@ export class ApagoController {
           to: [{ type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC, topicKey }],
         })
       );
-    } catch (error) {}
+    } catch (error) {
+      if (error?.status !== 404) throw error;
+    }
 
     return { success: true };
   }
@@ -479,20 +485,24 @@ export class ApagoController {
 
     if (!stage) throw new NotFoundException(`Stage ${body.stage} not found!`);
 
-    await this.parseEventRequest.execute(
-      ParseEventRequestCommand.create({
-        userId: user._id,
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        identifier: `${slugify(stage?.label, {
-          lower: true,
-          strict: true,
-        })}`,
-        payload: body.payload || {},
-        overrides: {},
-        to: [{ type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC, topicKey }],
-      })
-    );
+    try {
+      await this.parseEventRequest.execute(
+        ParseEventRequestCommand.create({
+          userId: user._id,
+          environmentId: user.environmentId,
+          organizationId: user.organizationId,
+          identifier: `${slugify(stage?.label, {
+            lower: true,
+            strict: true,
+          })}sss`,
+          payload: body.payload || {},
+          overrides: {},
+          to: [{ type: 'Topic' as TriggerRecipientsTypeEnum.TOPIC, topicKey }],
+        })
+      );
+    } catch (error) {
+      if (error?.status !== 404) throw error;
+    }
 
     return { success: true };
   }

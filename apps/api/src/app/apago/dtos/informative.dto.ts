@@ -28,7 +28,6 @@ export class InformativeBodyDto {
 
   @IsDefined()
   @IsArray()
-  @IsString()
   @ValidateIf((o) => partEvents.includes(o.event))
   parts?: string[];
 
