@@ -160,21 +160,33 @@ export class ApagoController {
     return { success: true };
   }
 
-  @Post('/informative/:accountId')
+  @Post('/informative/:accountId/:userId')
   @ExternalApiAccessible()
   @UseGuards(AuthGuard('subscriberJwt'))
   async updateInformative(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Body() body: InformativeBodyDto,
-    @Param('accountId') accountId: string
+    @Param('accountId') accountId: string,
+    @Param('userId') userId: string
   ) {
     const user = await this.apagoService.checkUserPermission({
       accountId,
-      userId: subscriberSession.subscriberId,
+      userId,
       permissions: [],
     });
 
     if (!user) throw new UnauthorizedException();
+
+    if (userId !== subscriberSession.subscriberId) {
+      //A user tries to make changes for another user so we check for permission
+      const isAdmin = await this.apagoService.checkUserPermission({
+        userId,
+        accountId,
+        permissions: ['Account_admin'],
+      });
+
+      if (!isAdmin) throw new UnauthorizedException();
+    }
 
     const find = this.apagoService.informativeEvents
       .flatMap((val) => val.events)
@@ -211,25 +223,40 @@ export class ApagoController {
             }),
           ];
 
-    const subscriber = await this.getSubscriberTopics.execute(
-      GetTopicsCommand.create({
-        environmentId: subscriberSession._environmentId,
-        organizationId: subscriberSession._organizationId,
-        subscriberId: subscriberSession.subscriberId,
-        topic: `informative:${accountId}:${body.event}`,
-        email: user.Email,
-        firstName: user.FirstName,
-        lastName: user.LastName,
-      })
-    );
+    let diffrence: string[] = [];
 
-    const diffrence = subscriber.subscriptions.filter((item) => !newTopics.includes(item.key)).map((item) => item.key);
+    try {
+      const subscriber = await this.getSubscriberTopics.execute(
+        GetTopicsCommand.create({
+          environmentId: subscriberSession._environmentId,
+          organizationId: subscriberSession._organizationId,
+          subscriberId: userId,
+          topic: `informative:${accountId}:${body.event}`,
+          email: user.Email,
+          firstName: user.FirstName,
+          lastName: user.LastName,
+        })
+      );
+
+      diffrence = subscriber.subscriptions.filter((item) => !newTopics.includes(item.key)).map((item) => item.key);
+    } catch (error) {
+      await this.createSubscriberUsecase.execute(
+        CreateSubscriberCommand.create({
+          environmentId: subscriberSession._environmentId,
+          organizationId: subscriberSession._organizationId,
+          subscriberId: userId,
+          email: user.Email,
+          firstName: user.FirstName,
+          lastName: user.LastName,
+        })
+      );
+    }
 
     await this.addBulkSubscribersUseCase.execute(
       AddBulkSubscribersCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
-        subscribers: [subscriberSession.subscriberId],
+        subscribers: [userId],
         topicKeys: newTopics,
         templateId: template._id,
         removeKeys: diffrence,
@@ -239,88 +266,120 @@ export class ApagoController {
     return { success: true, template: template._id };
   }
 
-  @Post('/informative/:accountId/:templateId')
+  @Post('/informative/:accountId/:templateId/:userId')
   @ExternalApiAccessible()
   @UseGuards(AuthGuard('subscriberJwt'))
   async updateChannel(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Body() body: { channel: ChannelPreference },
     @Param('accountId') accountId: string,
-    @Param('templateId') templateId: string
+    @Param('templateId') templateId: string,
+    @Param('userId') userId: string
   ) {
     const user = await this.apagoService.checkUserPermission({
-      userId: subscriberSession.subscriberId,
+      userId,
       accountId,
       permissions: [],
     });
 
     if (!user) throw new UnauthorizedException();
 
+    if (userId !== subscriberSession.subscriberId) {
+      //A user tries to make changes for another user so we check for permission
+      const isAdmin = await this.apagoService.checkUserPermission({
+        userId,
+        accountId,
+        permissions: ['Account_Admin'],
+      });
+
+      if (!isAdmin) throw new UnauthorizedException();
+    }
+
     return await this.updatePreferenceUsecase.execute(
       UpdateSubscriberPreferenceCommand.create({
         environmentId: subscriberSession._environmentId,
         organizationId: subscriberSession._organizationId,
-        subscriberId: subscriberSession.subscriberId,
+        subscriberId: userId,
         templateId: templateId,
         ...(body.channel && { channel: body.channel }),
       })
     );
   }
 
-  @Get('/informative/:accountId')
+  @Get('/informative/:accountId/:userId')
   @ExternalApiAccessible()
   @UseGuards(AuthGuard('subscriberJwt'))
-  async informative(@SubscriberSession() subscriberSession: SubscriberEntity, @Param('accountId') accountId: string) {
+  async informative(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('accountId') accountId: string,
+    @Param('userId') userId: string
+  ) {
     const user = await this.apagoService.checkUserPermission({
-      userId: subscriberSession.subscriberId,
+      userId: userId,
       accountId,
       permissions: [],
     });
 
     if (!user) throw new UnauthorizedException('User not found!');
 
-    const subscriber = await this.getSubscriberTopics.execute(
-      GetTopicsCommand.create({
-        environmentId: subscriberSession._environmentId,
-        organizationId: subscriberSession._organizationId,
-        subscriberId: subscriberSession.subscriberId,
-        email: user.Email,
-        firstName: user.FirstName,
-        lastName: user.LastName,
-        topic: `informative:${accountId}`,
-      })
-    );
+    if (userId !== subscriberSession.subscriberId) {
+      //A user tries to make changes for another user so we check for permission
+      const isAdmin = await this.apagoService.checkUserPermission({
+        userId,
+        accountId,
+        permissions: [],
+      });
+
+      if (!isAdmin) throw new UnauthorizedException();
+    }
 
     const obj = {};
-    if (subscriber.subscriptions) {
-      for (const topic of subscriber.subscriptions) {
-        const key = topic.key;
 
-        const [type, accountId, event, ...rest] = key.split(':');
+    try {
+      const subscriber = await this.getSubscriberTopics.execute(
+        GetTopicsCommand.create({
+          environmentId: subscriberSession._environmentId,
+          organizationId: subscriberSession._organizationId,
+          subscriberId: userId,
+          email: user.Email,
+          firstName: user.FirstName,
+          lastName: user.LastName,
+          topic: `informative:${accountId}`,
+        })
+      );
 
-        const find = this.apagoService.informativeEvents.flatMap((val) => val.events).find((val) => val.value == event);
+      if (subscriber.subscriptions) {
+        for (const topic of subscriber.subscriptions) {
+          const key = topic.key;
 
-        if (!find) continue;
+          const [type, accountId, event, ...rest] = key.split(':');
 
-        const in_app = topic?.preferences?.channels?.in_app;
-        const email = topic?.preferences?.channels?.email;
+          const find = this.apagoService.informativeEvents
+            .flatMap((val) => val.events)
+            .find((val) => val.value == event);
 
-        if (obj[event] && find?.has_parts) {
-          obj[event].parts.push(rest[0]);
-        } else {
-          obj[event] = {
-            event: event,
-            ...(find?.has_parts && { parts: [rest[0]] }),
-            templateId: topic._templateId,
-            channels: {
-              in_app: typeof in_app === 'undefined' ? false : true,
-              email: typeof email === 'undefined' ? false : true,
-            },
-            titles: rest[find.has_parts ? 1 : 0],
-          };
+          if (!find) continue;
+
+          const in_app = topic?.preferences?.channels?.in_app;
+          const email = topic?.preferences?.channels?.email;
+
+          if (obj[event] && find?.has_parts) {
+            obj[event].parts.push(rest[0]);
+          } else {
+            obj[event] = {
+              event: event,
+              ...(find?.has_parts && { parts: [rest[0]] }),
+              templateId: topic._templateId,
+              channels: {
+                in_app: typeof in_app === 'undefined' ? false : in_app,
+                email: typeof email === 'undefined' ? false : email,
+              },
+              titles: rest[find.has_parts ? 1 : 0],
+            };
+          }
         }
       }
-    }
+    } catch (error) {}
 
     const res = this.apagoService.informativeEvents.map((item) => {
       return {
@@ -413,16 +472,15 @@ export class ApagoController {
         const apiService = new ApiService();
         await apiService.init();
         await apiService.setAccount(body.accountId);
-        const users = await apiService.getUsers();
         const toList: string[] = [];
 
         for (const subscriber of topic.subscribers) {
-          const user = users.find((val) => val.UserID == subscriber);
-          if (!user?.JobsList) continue;
-          const jobList = user.JobsList[body.jobAccountId as string] || [];
-
-          if (!jobList.includes(body.jobId)) continue;
-          toList.push(subscriber);
+          const hasJobInList = await apiService.getJobList(
+            subscriber,
+            body.jobAccountId as string,
+            body.jobId as string
+          );
+          if (hasJobInList) toList.push(subscriber);
         }
 
         try {

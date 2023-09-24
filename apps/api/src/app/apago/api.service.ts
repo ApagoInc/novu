@@ -46,6 +46,7 @@ export class ApiService {
         account: accountId,
       });
     } catch (error) {
+      console.log(error.response.data);
       throw new UnauthorizedException("Can't find account!");
     }
   }
@@ -83,6 +84,22 @@ export class ApiService {
       return res.data;
     } catch (error) {
       throw new UnauthorizedException('Insufficient permissions');
+    }
+  }
+
+  async getJobList(id: string, jobAccountId: string, jobId: string) {
+    try {
+      const res = await this.instance.get(`/admin/user/${id}`);
+
+      const { JobsList } = res.data;
+
+      if (!JobsList) return false;
+
+      const list = JobsList[jobAccountId];
+
+      return list.includes(jobId);
+    } catch (error) {
+      return false;
     }
   }
 
