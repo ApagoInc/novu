@@ -29,6 +29,8 @@ import { InformativeBodyDto, InformativeEventTriggerBodyDto } from './dtos/infor
 import { ParseEventRequest, ParseEventRequestCommand } from '../events/usecases/parse-event-request';
 import { ApiService } from './api.service';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { GetPreferences } from '../subscribers/usecases/get-preferences/get-preferences.usecase';
+import { GetPreferencesCommand } from '../subscribers/usecases/get-preferences/get-preferences.command';
 
 @Controller('/apago')
 export class ApagoController {
@@ -41,7 +43,8 @@ export class ApagoController {
     private updatePreferenceUsecase: UpdatePreference,
     private getWorkflowUsecase: GetNotificationTemplate,
     private parseEventRequest: ParseEventRequest,
-    private getTopicUseCase: GetTopicUseCase
+    private getTopicUseCase: GetTopicUseCase,
+    private getPreferenceUsecase: GetPreferences
   ) {}
 
   @Get('/stakeholders/:accountId/:jobId')
@@ -349,6 +352,14 @@ export class ApagoController {
       );
 
       if (subscriber.subscriptions) {
+        const preferences = await this.getPreferenceUsecase.execute(
+          GetPreferencesCommand.create({
+            environmentId: subscriberSession._environmentId,
+            organizationId: subscriberSession._organizationId,
+            subscriberId: userId,
+          })
+        );
+
         for (const topic of subscriber.subscriptions) {
           const key = topic.key;
 
@@ -360,8 +371,10 @@ export class ApagoController {
 
           if (!find) continue;
 
-          const in_app = topic?.preferences?.channels?.in_app;
-          const email = topic?.preferences?.channels?.email;
+          const preference = preferences.find((val) => val.template.name === find.label);
+
+          const in_app = preference?.preference.channels.in_app;
+          const email = preference?.preference.channels.email;
 
           if (obj[event] && find?.has_parts) {
             obj[event].parts.push(rest[0]);
@@ -471,6 +484,7 @@ export class ApagoController {
       if (topic.subscribers.length > 0) {
         const apiService = new ApiService();
         await apiService.init();
+        await apiService.login();
         await apiService.setAccount(body.accountId);
         const toList: string[] = [];
 

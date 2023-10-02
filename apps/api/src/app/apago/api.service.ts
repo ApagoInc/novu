@@ -7,6 +7,7 @@ import { ApiClientData } from './types';
 @Injectable()
 export class ApiService {
   instance: AxiosInstance;
+  lastLogin: null | number = null;
   constructor() {}
 
   async init() {
@@ -15,19 +16,24 @@ export class ApiService {
     const instance = wrapper(axios.create({ jar, baseURL: process.env.LAKESIDE_API }));
 
     this.instance = instance;
-
-    await this.login();
   }
 
   async login() {
-    await this.instance.post('user/login?token=true', {
-      email: process.env.LAKESIDE_EMAIL,
-      password: process.env.LAKESIDE_PASSWORD,
-    });
+    const now = Math.floor(Date.now() / 1000);
+
+    if (this.lastLogin === null || now - this.lastLogin > 3600) {
+      await this.instance.post('user/login?token=true', {
+        email: process.env.LAKESIDE_EMAIL,
+        password: process.env.LAKESIDE_PASSWORD,
+      });
+
+      this.lastLogin = now;
+    }
   }
 
   async getStakeholder(data: ApiClientData) {
     if (data.type !== 'edit_stakeholder') return null;
+    await this.login();
     await this.setAccount(data.accountId);
     await this.getJob(data.jobId);
     await this.getUser(data.userId, data.accountId, ['Stakeholder_Edit', data.stage]);
@@ -36,6 +42,7 @@ export class ApiService {
 
   async getAccount(data: ApiClientData) {
     if (data.type !== 'check_permission') return null;
+    await this.login();
     await this.setAccount(data.accountId);
     return await this.getUser(data.userId, data.accountId, data.permissions);
   }
