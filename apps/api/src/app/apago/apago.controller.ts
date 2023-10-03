@@ -185,7 +185,7 @@ export class ApagoController {
       const isAdmin = await this.apagoService.checkUserPermission({
         userId,
         accountId,
-        permissions: ['Account_admin'],
+        permissions: ['User_Edit'],
       });
 
       if (!isAdmin) throw new UnauthorizedException();
@@ -292,7 +292,7 @@ export class ApagoController {
       const isAdmin = await this.apagoService.checkUserPermission({
         userId,
         accountId,
-        permissions: ['Account_Admin'],
+        permissions: ['User_Edit'],
       });
 
       if (!isAdmin) throw new UnauthorizedException();

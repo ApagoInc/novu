@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
 import { CookieJar } from 'tough-cookie';
@@ -37,6 +37,7 @@ export class ApiService {
     await this.setAccount(data.accountId);
     await this.getJob(data.jobId);
     await this.getUser(data.userId, data.accountId, ['Stakeholder_Edit', data.stage]);
+
     return await this.getUser(data.stakeholderId, data.accountId, [data.stage]);
   }
 
@@ -44,6 +45,7 @@ export class ApiService {
     if (data.type !== 'check_permission') return null;
     await this.login();
     await this.setAccount(data.accountId);
+
     return await this.getUser(data.userId, data.accountId, data.permissions);
   }
 
@@ -84,12 +86,18 @@ export class ApiService {
 
       const userPermissions = await this.getPermissions(Roles[index], accountId);
 
+      Logger.log('Result of userPermissions fetch:')
+      Logger.log(JSON.stringify(userPermissions))
+
       for (let i = 0; i < permissions.length; i++) {
+        Logger.log(`userPermissions includes the permission ${permissions[i]} ? - ${userPermissions.includes(permissions[i])}`)
         if (!userPermissions.includes(permissions[i])) throw new Error('Unauthorized');
       }
 
       return res.data;
     } catch (error) {
+      Logger.error('Error in getUser:')
+      Logger.error(error)
       throw new UnauthorizedException('Insufficient permissions');
     }
   }
