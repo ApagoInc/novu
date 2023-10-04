@@ -35,6 +35,20 @@ export class InformativeBodyDto {
   @IsString()
   @IsIn(events.map((val) => val.value))
   event: string;
+
+  @IsOptional()
+  @IsBoolean()
+  inApp?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  email?: boolean;
+}
+
+export class InformativeBulkBodyDto {
+  @IsDefined()
+  @IsArray()
+  eventList!: InformativeBodyDto[];
 }
 
 export class InformativeEventTriggerBodyDto {

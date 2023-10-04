@@ -82,23 +82,6 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
                 from: 'topics',
                 localField: '_topicId',
                 foreignField: '_id',
-                pipeline: [
-                  {
-                    $lookup: {
-                      from: 'subscriberpreferences',
-                      localField: '_templateId',
-                      foreignField: '_templateId',
-                      as: 'preferences',
-                    },
-                  },
-                  {
-                    $set: {
-                      preferences: {
-                        $first: '$preferences',
-                      },
-                    },
-                  },
-                ],
                 as: 'topic',
               },
             },

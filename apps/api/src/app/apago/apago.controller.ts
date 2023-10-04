@@ -25,12 +25,13 @@ import { GetNotificationTemplate } from '../workflows/usecases/get-notification-
 import slugify from 'slugify';
 import { IJwtPayload, TriggerRecipientsTypeEnum } from '@novu/shared';
 import { StakeholderBodyDto, StakeholderEventTriggerBodyDto, StakeholdersResponseDto } from './dtos/stakeholders.dto';
-import { InformativeBodyDto, InformativeEventTriggerBodyDto } from './dtos/informative.dto';
+import { InformativeBodyDto, InformativeBulkBodyDto, InformativeEventTriggerBodyDto } from './dtos/informative.dto';
 import { ParseEventRequest, ParseEventRequestCommand } from '../events/usecases/parse-event-request';
 import { ApiService } from './api.service';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { GetPreferences } from '../subscribers/usecases/get-preferences/get-preferences.usecase';
 import { GetPreferencesCommand } from '../subscribers/usecases/get-preferences/get-preferences.command';
+import { ChannelTypeEnum } from '@novu/shared';
 
 @Controller('/apago')
 export class ApagoController {
@@ -168,7 +169,7 @@ export class ApagoController {
   @UseGuards(AuthGuard('subscriberJwt'))
   async updateInformative(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Body() body: InformativeBodyDto,
+    @Body() body: InformativeBulkBodyDto,
     @Param('accountId') accountId: string,
     @Param('userId') userId: string
   ) {
@@ -191,82 +192,106 @@ export class ApagoController {
       if (!isAdmin) throw new UnauthorizedException();
     }
 
-    const find = this.apagoService.informativeEvents
-      .flatMap((val) => val.events)
-      .find((val) => val.value == body.event);
+    const list = body.eventList;
 
-    if (!find) throw new NotFoundException('Event not found!');
+    for (const item of list) {
+      const find = this.apagoService.informativeEvents
+        .flatMap((val) => val.events)
+        .find((val) => val.value == item.event);
 
-    const template = await this.getWorkflowUsecase.execute(
-      GetNotificationTemplateCommand.create({
-        environmentId: subscriberSession._environmentId,
-        organizationId: subscriberSession._organizationId,
-        name: find?.label,
-        userId: subscriberSession.subscriberId,
-      })
-    );
+      if (!find) throw new NotFoundException('Event not found!');
 
-    if (!template) throw new NotFoundException('Template not found!');
-
-    const newTopics =
-      body?.parts && body.parts.length > 0
-        ? body.parts.map((part) =>
-            this.apagoService.getInformativeKey({
-              accountId,
-              part,
-              titles: body.titles,
-              event: body.event,
-            })
-          )
-        : [
-            this.apagoService.getInformativeKey({
-              accountId,
-              titles: body.titles,
-              event: body.event,
-            }),
-          ];
-
-    let diffrence: string[] = [];
-
-    try {
-      const subscriber = await this.getSubscriberTopics.execute(
-        GetTopicsCommand.create({
+      const template = await this.getWorkflowUsecase.execute(
+        GetNotificationTemplateCommand.create({
           environmentId: subscriberSession._environmentId,
           organizationId: subscriberSession._organizationId,
-          subscriberId: userId,
-          topic: `informative:${accountId}:${body.event}`,
-          email: user.Email,
-          firstName: user.FirstName,
-          lastName: user.LastName,
+          name: find?.label,
+          userId: subscriberSession.subscriberId,
         })
       );
 
-      diffrence = subscriber.subscriptions.filter((item) => !newTopics.includes(item.key)).map((item) => item.key);
-    } catch (error) {
-      await this.createSubscriberUsecase.execute(
-        CreateSubscriberCommand.create({
+      if (!template) throw new NotFoundException('Template not found!');
+
+      const newTopics =
+        item?.parts && item.parts.length > 0
+          ? item.parts.map((part) =>
+              this.apagoService.getInformativeKey({
+                accountId,
+                part,
+                titles: item.titles,
+                event: item.event,
+              })
+            )
+          : [
+              this.apagoService.getInformativeKey({
+                accountId,
+                titles: item.titles,
+                event: item.event,
+              }),
+            ];
+
+      let diffrence: string[] = [];
+
+      try {
+        const subscriber = await this.getSubscriberTopics.execute(
+          GetTopicsCommand.create({
+            environmentId: subscriberSession._environmentId,
+            organizationId: subscriberSession._organizationId,
+            subscriberId: userId,
+            topic: `informative:${accountId}:${item.event}`,
+            email: user.Email,
+            firstName: user.FirstName,
+            lastName: user.LastName,
+          })
+        );
+
+        diffrence = subscriber.subscriptions.filter((item) => !newTopics.includes(item.key)).map((item) => item.key);
+      } catch (error) {
+        await this.createSubscriberUsecase.execute(
+          CreateSubscriberCommand.create({
+            environmentId: subscriberSession._environmentId,
+            organizationId: subscriberSession._organizationId,
+            subscriberId: userId,
+            email: user.Email,
+            firstName: user.FirstName,
+            lastName: user.LastName,
+          })
+        );
+      }
+
+      await this.addBulkSubscribersUseCase.execute(
+        AddBulkSubscribersCommand.create({
+          environmentId: subscriberSession._environmentId,
+          organizationId: subscriberSession._organizationId,
+          subscribers: [userId],
+          topicKeys: newTopics,
+          templateId: template._id,
+          removeKeys: diffrence,
+        })
+      );
+
+      await this.updatePreferenceUsecase.execute(
+        UpdateSubscriberPreferenceCommand.create({
           environmentId: subscriberSession._environmentId,
           organizationId: subscriberSession._organizationId,
           subscriberId: userId,
-          email: user.Email,
-          firstName: user.FirstName,
-          lastName: user.LastName,
+          templateId: template._id,
+          channel: { enabled: item.inApp ? true : false, type: ChannelTypeEnum.IN_APP },
+        })
+      );
+
+      await this.updatePreferenceUsecase.execute(
+        UpdateSubscriberPreferenceCommand.create({
+          environmentId: subscriberSession._environmentId,
+          organizationId: subscriberSession._organizationId,
+          subscriberId: userId,
+          templateId: template._id,
+          channel: { enabled: item.email ? true : false, type: ChannelTypeEnum.EMAIL },
         })
       );
     }
 
-    await this.addBulkSubscribersUseCase.execute(
-      AddBulkSubscribersCommand.create({
-        environmentId: subscriberSession._environmentId,
-        organizationId: subscriberSession._organizationId,
-        subscribers: [userId],
-        topicKeys: newTopics,
-        templateId: template._id,
-        removeKeys: diffrence,
-      })
-    );
-
-    return { success: true, template: template._id };
+    return { success: true };
   }
 
   @Post('/informative/:accountId/:templateId/:userId')
