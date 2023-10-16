@@ -99,15 +99,19 @@ export function createNestLoggingModuleOptions(settings: ILoggerSettings) {
     ? { target: 'pino-pretty' }
     : undefined;
 
-  // eslint-disable-next-line no-console
+  // eslint-disable-next-line no-console  
   console.log(
     'Selected Log Transport ' + (!transport ? 'None' : 'pino-pretty')
   );
+  // eslint-disable-next-line no-console
+  console.log('Logging level set to debug.')
+
 
   return {
     pinoHttp: {
       customLevels: loggingLevelSet,
-      level: values.level,
+      level: 'debug', 
+      // values.level,
       redact: {
         paths: redactFields,
         censor: '[REDACTED]',
@@ -121,7 +125,7 @@ export function createNestLoggingModuleOptions(settings: ILoggerSettings) {
         tenant: values.tenant,
       },
       transport: transport,
-      autoLogging: !['test', 'local'].includes(process.env.NODE_ENV),
+      // autoLogging: !['test', 'local'].includes(process.env.NODE_ENV),
     },
   };
 }

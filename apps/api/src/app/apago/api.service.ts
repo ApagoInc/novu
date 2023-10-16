@@ -1,4 +1,5 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+/* eslint-disable no-console */
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
 import { CookieJar } from 'tough-cookie';
@@ -71,11 +72,21 @@ export class ApiService {
     try {
       const res = await this.instance.get(`/admin/user/${id}`);
 
+      Logger.debug('get user response')
+      Logger.debug(res)
+      
+
       const { Accounts, Roles } = res.data;
+
+      Logger.debug("Accounts, Roles:")
+      Logger.debug(Accounts, Roles)
 
       const index = Accounts.indexOf(accountId);
 
       const userPermissions = await this.getPermissions(Roles[index], accountId);
+
+
+
 
       for (let i = 0; i < permissions.length; i++) {
         if (!userPermissions.includes(permissions[i])) throw new Error('Unauthorized');
@@ -83,6 +94,12 @@ export class ApiService {
 
       return res.data;
     } catch (error) {
+
+
+      Logger.debug('caught error:')
+      Logger.debug(error)
+
+      
       throw new UnauthorizedException('Insufficient permissions');
     }
   }
