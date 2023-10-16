@@ -10,7 +10,7 @@ export type ApiClientData =
       stage: string;
     };
 
-export type User = { Email: string; UserID: string; FirstName: string; LastName: string };
+export type User = { Email: string; UserID: string; FirstName: string; LastName: string, Status: string };
 
 export type informativeEvents = {
   title: string;

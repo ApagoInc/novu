@@ -25,6 +25,7 @@ export class TriggerProcessorQueueService extends TriggerQueueService implements
     return {
       lockDuration: 90000,
       concurrency: 200,
+      maxStalledCount: 0
     };
   }
 

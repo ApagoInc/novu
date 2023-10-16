@@ -7,6 +7,7 @@ import {
   UseGuards,
   UnauthorizedException,
   NotFoundException,
+  Logger
 } from '@nestjs/common';
 import { SubscriberSession, UserSession } from '../shared/framework/user.decorator';
 import { AuthGuard } from '@nestjs/passport';
@@ -179,7 +180,11 @@ export class ApagoController {
       permissions: [],
     });
 
-    if (!user) throw new UnauthorizedException();
+    if (!user || !user.Status) throw new UnauthorizedException();
+
+    if (user.Status && user.Status !== "active") {
+      throw new UnauthorizedException(`User under userId ${userId} must be in status active to be updated in Novu`)
+    }
 
     if (userId !== subscriberSession.subscriberId) {
       //A user tries to make changes for another user so we check for permission
@@ -253,6 +258,10 @@ export class ApagoController {
 
           diffrence = subscriber.subscriptions.filter((item) => !newTopics.includes(item.key)).map((item) => item.key);
         } catch (error) {
+
+
+          Logger.log(`*** - Subscriber under subscriberId ${userId} ${user.Email || "(no email)"} does not exist - creating now. ${new Date().toLocaleTimeString()}`)
+
           await this.createSubscriberUsecase.execute(
             CreateSubscriberCommand.create({
               environmentId: subscriberSession._environmentId,
@@ -435,6 +444,7 @@ export class ApagoController {
         ...item,
         events: item.events.map((val) => {
           const subscription = obj[val.value];
+
           return {
             ...val,
             subscription,
