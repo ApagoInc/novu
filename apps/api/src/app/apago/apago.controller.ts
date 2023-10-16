@@ -25,10 +25,13 @@ import { GetNotificationTemplate } from '../workflows/usecases/get-notification-
 import slugify from 'slugify';
 import { IJwtPayload, TriggerRecipientsTypeEnum } from '@novu/shared';
 import { StakeholderBodyDto, StakeholderEventTriggerBodyDto, StakeholdersResponseDto } from './dtos/stakeholders.dto';
-import { InformativeBodyDto, InformativeEventTriggerBodyDto } from './dtos/informative.dto';
+import { InformativeBodyDto, InformativeBulkBodyDto, InformativeEventTriggerBodyDto } from './dtos/informative.dto';
 import { ParseEventRequest, ParseEventRequestCommand } from '../events/usecases/parse-event-request';
 import { ApiService } from './api.service';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { GetPreferences } from '../subscribers/usecases/get-preferences/get-preferences.usecase';
+import { GetPreferencesCommand } from '../subscribers/usecases/get-preferences/get-preferences.command';
+import { ChannelTypeEnum } from '@novu/shared';
 
 @Controller('/apago')
 export class ApagoController {
@@ -41,7 +44,8 @@ export class ApagoController {
     private updatePreferenceUsecase: UpdatePreference,
     private getWorkflowUsecase: GetNotificationTemplate,
     private parseEventRequest: ParseEventRequest,
-    private getTopicUseCase: GetTopicUseCase
+    private getTopicUseCase: GetTopicUseCase,
+    private getPreferenceUsecase: GetPreferences
   ) {}
 
   @Get('/stakeholders/:accountId/:jobId')
@@ -165,7 +169,7 @@ export class ApagoController {
   @UseGuards(AuthGuard('subscriberJwt'))
   async updateInformative(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Body() body: InformativeBodyDto,
+    @Body() body: InformativeBulkBodyDto,
     @Param('accountId') accountId: string,
     @Param('userId') userId: string
   ) {
@@ -182,88 +186,122 @@ export class ApagoController {
       const isAdmin = await this.apagoService.checkUserPermission({
         userId,
         accountId,
-        permissions: ['Account_admin'],
+        permissions: ['User_Edit'],
       });
 
       if (!isAdmin) throw new UnauthorizedException();
     }
 
-    const find = this.apagoService.informativeEvents
-      .flatMap((val) => val.events)
-      .find((val) => val.value == body.event);
+    const list = body.eventList;
 
-    if (!find) throw new NotFoundException('Event not found!');
+    const updateFunctions: Array<Promise<void>> = [];
 
-    const template = await this.getWorkflowUsecase.execute(
-      GetNotificationTemplateCommand.create({
-        environmentId: subscriberSession._environmentId,
-        organizationId: subscriberSession._organizationId,
-        name: find?.label,
-        userId: subscriberSession.subscriberId,
-      })
-    );
+    for (const item of list) {
+      const updateSingleEvent = async () => {
+        const find = this.apagoService.informativeEvents
+          .flatMap((val) => val.events)
+          .find((val) => val.value == item.event);
 
-    if (!template) throw new NotFoundException('Template not found!');
+        if (!find) throw new NotFoundException('Event not found!');
 
-    const newTopics =
-      body?.parts && body.parts.length > 0
-        ? body.parts.map((part) =>
+        const template = await this.getWorkflowUsecase.execute(
+          GetNotificationTemplateCommand.create({
+            environmentId: subscriberSession._environmentId,
+            organizationId: subscriberSession._organizationId,
+            name: find?.label,
+            userId: subscriberSession.subscriberId,
+          })
+        );
+
+        if (!template) throw new NotFoundException('Template not found!');
+
+        let newTopics: string[] = [];
+
+        if (find.has_parts && item.parts && item.parts.length > 0) {
+          newTopics = item.parts.map((part) =>
             this.apagoService.getInformativeKey({
               accountId,
               part,
-              titles: body.titles,
-              event: body.event,
+              titles: item.titles,
+              event: item.event,
             })
-          )
-        : [
+          );
+        } else if (!find.has_parts) {
+          newTopics.push(
             this.apagoService.getInformativeKey({
               accountId,
-              titles: body.titles,
-              event: body.event,
-            }),
-          ];
+              titles: item.titles,
+              event: item.event,
+            })
+          );
+        }
 
-    let diffrence: string[] = [];
+        let diffrence: string[] = [];
 
-    try {
-      const subscriber = await this.getSubscriberTopics.execute(
-        GetTopicsCommand.create({
-          environmentId: subscriberSession._environmentId,
-          organizationId: subscriberSession._organizationId,
-          subscriberId: userId,
-          topic: `informative:${accountId}:${body.event}`,
-          email: user.Email,
-          firstName: user.FirstName,
-          lastName: user.LastName,
-        })
-      );
+        try {
+          const subscriber = await this.getSubscriberTopics.execute(
+            GetTopicsCommand.create({
+              environmentId: subscriberSession._environmentId,
+              organizationId: subscriberSession._organizationId,
+              subscriberId: userId,
+              topic: `informative:${accountId}:${item.event}`,
+              email: user.Email,
+              firstName: user.FirstName,
+              lastName: user.LastName,
+            })
+          );
 
-      diffrence = subscriber.subscriptions.filter((item) => !newTopics.includes(item.key)).map((item) => item.key);
-    } catch (error) {
-      await this.createSubscriberUsecase.execute(
-        CreateSubscriberCommand.create({
-          environmentId: subscriberSession._environmentId,
-          organizationId: subscriberSession._organizationId,
-          subscriberId: userId,
-          email: user.Email,
-          firstName: user.FirstName,
-          lastName: user.LastName,
-        })
-      );
+          diffrence = subscriber.subscriptions.filter((item) => !newTopics.includes(item.key)).map((item) => item.key);
+        } catch (error) {
+          await this.createSubscriberUsecase.execute(
+            CreateSubscriberCommand.create({
+              environmentId: subscriberSession._environmentId,
+              organizationId: subscriberSession._organizationId,
+              subscriberId: userId,
+              email: user.Email,
+              firstName: user.FirstName,
+              lastName: user.LastName,
+            })
+          );
+        }
+
+        await this.addBulkSubscribersUseCase.execute(
+          AddBulkSubscribersCommand.create({
+            environmentId: subscriberSession._environmentId,
+            organizationId: subscriberSession._organizationId,
+            subscribers: [userId],
+            topicKeys: newTopics,
+            templateId: template._id,
+            removeKeys: diffrence,
+          })
+        );
+
+        await this.updatePreferenceUsecase.execute(
+          UpdateSubscriberPreferenceCommand.create({
+            environmentId: subscriberSession._environmentId,
+            organizationId: subscriberSession._organizationId,
+            subscriberId: userId,
+            templateId: template._id,
+            channel: { enabled: item.inApp ? true : false, type: ChannelTypeEnum.IN_APP },
+          })
+        );
+
+        await this.updatePreferenceUsecase.execute(
+          UpdateSubscriberPreferenceCommand.create({
+            environmentId: subscriberSession._environmentId,
+            organizationId: subscriberSession._organizationId,
+            subscriberId: userId,
+            templateId: template._id,
+            channel: { enabled: item.email ? true : false, type: ChannelTypeEnum.EMAIL },
+          })
+        );
+      };
+      updateFunctions.push(updateSingleEvent());
     }
 
-    await this.addBulkSubscribersUseCase.execute(
-      AddBulkSubscribersCommand.create({
-        environmentId: subscriberSession._environmentId,
-        organizationId: subscriberSession._organizationId,
-        subscribers: [userId],
-        topicKeys: newTopics,
-        templateId: template._id,
-        removeKeys: diffrence,
-      })
-    );
+    await Promise.all(updateFunctions);
 
-    return { success: true, template: template._id };
+    return { success: true };
   }
 
   @Post('/informative/:accountId/:templateId/:userId')
@@ -289,7 +327,7 @@ export class ApagoController {
       const isAdmin = await this.apagoService.checkUserPermission({
         userId,
         accountId,
-        permissions: ['Account_Admin'],
+        permissions: ['User_Edit'],
       });
 
       if (!isAdmin) throw new UnauthorizedException();
@@ -349,6 +387,14 @@ export class ApagoController {
       );
 
       if (subscriber.subscriptions) {
+        const preferences = await this.getPreferenceUsecase.execute(
+          GetPreferencesCommand.create({
+            environmentId: subscriberSession._environmentId,
+            organizationId: subscriberSession._organizationId,
+            subscriberId: userId,
+          })
+        );
+
         for (const topic of subscriber.subscriptions) {
           const key = topic.key;
 
@@ -360,14 +406,17 @@ export class ApagoController {
 
           if (!find) continue;
 
-          const in_app = topic?.preferences?.channels?.in_app;
-          const email = topic?.preferences?.channels?.email;
+          const preference = preferences.find((val) => val.template.name === find.label);
+
+          const in_app = preference?.preference.channels.in_app;
+          const email = preference?.preference.channels.email;
 
           if (obj[event] && find?.has_parts) {
             obj[event].parts.push(rest[0]);
           } else {
             obj[event] = {
               event: event,
+              key: key,
               ...(find?.has_parts && { parts: [rest[0]] }),
               templateId: topic._templateId,
               channels: {
@@ -471,6 +520,7 @@ export class ApagoController {
       if (topic.subscribers.length > 0) {
         const apiService = new ApiService();
         await apiService.init();
+        await apiService.login();
         await apiService.setAccount(body.accountId);
         const toList: string[] = [];
 

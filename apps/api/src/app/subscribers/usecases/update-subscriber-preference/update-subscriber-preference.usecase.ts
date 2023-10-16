@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, Logger } from '@nestjs/common';
 import {
   SubscriberPreferenceEntity,
   SubscriberPreferenceRepository,
@@ -38,6 +38,9 @@ export class UpdateSubscriberPreference {
       _subscriberId: subscriber._id,
       _templateId: command.templateId,
     });
+
+
+    Logger.debug('userPreference before update:', JSON.stringify(userPreference))
 
     const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
     if (admin) {

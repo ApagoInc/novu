@@ -54,10 +54,10 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
       })
     )
       .then(async (exists: boolean): Promise<void> => {
-        Logger.debug(`metric job exists: ${exists}`, LOG_CONTEXT);
+        // Logger.debug(`metric job exists: ${exists}`, LOG_CONTEXT);
 
         if (!exists) {
-          Logger.debug(`metricJob doesn't exist, creating it`, LOG_CONTEXT);
+          // Logger.debug(`metricJob doesn't exist, creating it`, LOG_CONTEXT);
 
           return await this.addToQueue(METRIC_JOB_ID, undefined, '', {
             jobId: METRIC_JOB_ID,
@@ -88,7 +88,7 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
   private getWorkerProcessor() {
     return async () => {
       return await new Promise<void>(async (resolve, reject): Promise<void> => {
-        Logger.verbose('metric job started', LOG_CONTEXT);
+        // Logger.verbose('metric job started', LOG_CONTEXT);
 
         try {
           for (const queueService of this.token_list) {
@@ -124,11 +124,11 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
               nr.recordMetric(`MetricQueueService/${queueService.name}/delayed`, delayedCount);
               nr.recordMetric(`MetricQueueService/${queueService.name}/active`, activeCount);
             } else {
-              Logger.debug(`MetricQueueService/${queueService.name}/completed`, JSON.stringify(successMetric));
-              Logger.debug(`MetricQueueService/${queueService.name}/failed`, JSON.stringify(failMetric));
-              Logger.debug(`MetricQueueService/${queueService.name}/waiting`, waitCount);
-              Logger.debug(`MetricQueueService/${queueService.name}/delayed`, delayedCount);
-              Logger.debug(`MetricQueueService/${queueService.name}/active`, activeCount);
+              // Logger.debug(`MetricQueueService/${queueService.name}/completed`, JSON.stringify(successMetric));
+              // Logger.debug(`MetricQueueService/${queueService.name}/failed`, JSON.stringify(failMetric));
+              // Logger.debug(`MetricQueueService/${queueService.name}/waiting`, waitCount);
+              // Logger.debug(`MetricQueueService/${queueService.name}/delayed`, delayedCount);
+              // Logger.debug(`MetricQueueService/${queueService.name}/active`, activeCount);
             }
           }
 
@@ -141,10 +141,10 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
   }
 
   private async jobHasCompleted(job): Promise<void> {
-    Logger.verbose('Metric job Completed', job.id, LOG_CONTEXT);
+    // Logger.verbose('Metric job Completed', job.id, LOG_CONTEXT);
   }
 
   private async jobHasFailed(job, error): Promise<void> {
-    Logger.verbose('Metric job failed', error, LOG_CONTEXT);
+    // Logger.verbose('Metric job failed', error, LOG_CONTEXT);
   }
 }
