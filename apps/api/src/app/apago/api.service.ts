@@ -80,14 +80,21 @@ export class ApiService {
     try {
       const res = await this.instance.get(`/admin/user/${id}`);
 
+      Logger.debug('get user response')
+      Logger.debug(res)
+      
+
       const { Accounts, Roles } = res.data;
+
+      Logger.debug("Accounts, Roles:")
+      Logger.debug(Accounts, Roles)
 
       const index = Accounts.indexOf(accountId);
 
       const userPermissions = await this.getPermissions(Roles[index], accountId);
 
-      Logger.log('Result of userPermissions fetch:')
-      Logger.log(JSON.stringify(userPermissions))
+
+
 
       for (let i = 0; i < permissions.length; i++) {
         Logger.log(`userPermissions includes the permission ${permissions[i]} ? - ${userPermissions.includes(permissions[i])}`)
