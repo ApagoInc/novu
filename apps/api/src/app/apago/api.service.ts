@@ -81,7 +81,7 @@ export class ApiService {
       const res = await this.instance.get(`/admin/user/${id}`);
 
       Logger.debug('get user response')
-      Logger.debug(res)
+      Logger.debug(res.data || "(no res.data)")
       
 
       const { Accounts, Roles } = res.data;

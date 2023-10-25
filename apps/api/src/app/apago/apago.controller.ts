@@ -33,6 +33,10 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { GetPreferences } from '../subscribers/usecases/get-preferences/get-preferences.usecase';
 import { GetPreferencesCommand } from '../subscribers/usecases/get-preferences/get-preferences.command';
 import { ChannelTypeEnum } from '@novu/shared';
+import { GetSubscriber } from '../subscribers/usecases/get-subscriber';
+import { GetSubscriberCommand } from '../subscribers/usecases/get-subscriber/get-subscriber.command';
+import { Exception } from 'handlebars';
+
 
 @Controller('/apago')
 export class ApagoController {
@@ -46,8 +50,124 @@ export class ApagoController {
     private getWorkflowUsecase: GetNotificationTemplate,
     private parseEventRequest: ParseEventRequest,
     private getTopicUseCase: GetTopicUseCase,
-    private getPreferenceUsecase: GetPreferences
+    private getPreferenceUsecase: GetPreferences,
+    private getSubscriberUsecase: GetSubscriber
   ) {}
+
+
+
+  
+  /** Check if a user exists in Novu */
+  @Get('/exists/:accountId/:userId')
+  @ExternalApiAccessible()
+  @UseGuards(AuthGuard('subscriberJwt'))
+  async getNovuSubscriberForUser(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('accountId') accountId: string,
+    @Param('userId') userId: string
+  ) {
+
+
+
+    // TODO - consider, do we need to really check any apago API permissions or users here?
+    // This is going to run when a user's edit page is loaded.
+    // It can only be loaded by a user that has User_Edit.
+
+
+    // -----
+
+    // Logger.log(`Checking permissions for the user that fired this check, by navigating to the user edit screen.`)
+    // const user = await this.apagoService.checkUserPermission({
+    //   userId: subscriberSession.subscriberId,
+    //   accountId,
+    //   permissions: [],
+    // });
+
+    // if (!user) throw new UnauthorizedException('User not found!');
+
+    // if (userId !== subscriberSession.subscriberId) {
+    //   //A user is viewing another user's user edit page, so we check for permission
+    //   const isAdmin = await this.apagoService.checkUserPermission({
+    //     userId,
+    //     accountId,
+    //     permissions: [],
+    //   });
+
+    //   if (!isAdmin) throw new UnauthorizedException();
+    // }
+
+    Logger.log(`Attempting to fetch the novu subscriber under ID: ${userId}`)
+
+    // See if the user is in Novu
+    const novuUser = await this.getSubscriberUsecase.execute(
+      GetSubscriberCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        subscriberId: userId
+      })
+    );
+
+
+  Logger.log(`Value of novuUser:`)
+  Logger.log(novuUser)
+
+  if (!novuUser) {
+    throw new NotFoundException(`Subscriber under user ID ${userId} does not yet exist in Novu.`);
+  }
+  
+
+  return {'result': `User under subscriber ID ${userId} exists in Novu`};
+  }
+
+
+  @Post('/subscriber/manualCreate/:accountId/:userId')
+  @ExternalApiAccessible()
+  @UseGuards(AuthGuard('subscriberJwt'))  
+  async manualCreateSubscriber(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('accountId') accountId: string,
+    @Param('userId') userId: string
+  ) {
+
+    // TODO - should we also check perms of the one calling this?
+    // Or do we already know by the fact that the user is viewing User_Edit, that they have access to do this?
+    // TODO - I guess in theory, someone could call the URL without being on the UI, so we should check perms of the actor.
+
+    const user = await this.apagoService.checkUserPermission({
+      accountId,
+      userId,
+      permissions: [],
+    });
+
+    if (!user || !user.Status) throw new UnauthorizedException("Could not create user - unauthorized.");
+
+    if (user.Status && user.Status !== "active") {
+      throw new UnauthorizedException(`User under userId ${userId} must be in status active to be added to Novu.`)
+    }
+
+
+    Logger.log(`*** - Subscriber under subscriberId ${userId} ${user.Email || "(no email)"} does not exist - MANUALLY creating now. ${new Date().toLocaleTimeString()}`)
+
+    try {
+    await this.createSubscriberUsecase.execute(
+      CreateSubscriberCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        subscriberId: userId,
+        email: user.Email,
+        firstName: user.FirstName,
+        lastName: user.LastName,
+      })
+    );
+
+    return {newSubscriberId: userId};
+    } catch (err) {
+
+      throw new Exception(`Something went wrong while trying to manually create the new subscriber: ${err}`)
+    }
+  }
+
+  
 
   @Get('/stakeholders/:accountId/:jobId')
   @ExternalApiAccessible()
@@ -196,6 +316,35 @@ export class ApagoController {
 
       if (!isAdmin) throw new UnauthorizedException();
     }
+
+
+    // 
+
+
+
+
+    // See if the user is in Novu
+    const novuUser = await this.getSubscriberUsecase.execute(
+      GetSubscriberCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        subscriberId: userId
+      })
+    );
+
+
+  Logger.log(`Value of novuUser:`)
+  Logger.log(novuUser)
+
+  if (!novuUser) {
+    throw new NotFoundException(`Subscriber under user ID ${userId} does not yet exist in Novu.`);
+  }
+
+
+
+
+
+    // 
 
     const list = body.eventList;
 
