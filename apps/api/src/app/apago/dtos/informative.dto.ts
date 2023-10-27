@@ -1,5 +1,4 @@
 import {
-  ArrayMinSize,
   IsArray,
   IsDefined,
   IsString,
@@ -7,11 +6,11 @@ import {
   IsBoolean,
   IsOptional,
   ValidateIf,
-  IsJSON,
   IsObject,
   IsNotEmpty,
 } from 'class-validator';
 import * as INFORMATİVE_EVENTS from '../data/informativeEvents.json';
+import { ChannelPreference } from '../../shared/dtos/channel-preference';
 
 const events = INFORMATİVE_EVENTS.flatMap((arr) => arr.events);
 
@@ -19,12 +18,11 @@ const administrativeEvents = events.filter((val: any) => val.administrative).map
 
 const partEvents = events.filter((val) => val.has_parts).map((val) => val.value);
 
-export class InformativeBodyDto {
+export class InformativeSubscriptionsList {
   @IsDefined()
-  @IsString()
-  @IsIn(['allTitles', 'myTitles'])
+  @IsBoolean()
   @ValidateIf((o) => !administrativeEvents.includes(o.event))
-  titles?: string;
+  allTitles?: boolean;
 
   @IsDefined()
   @IsArray()
@@ -33,41 +31,34 @@ export class InformativeBodyDto {
 
   @IsDefined()
   @IsString()
-  @IsIn(events.map((val) => val.value))
-  event: string;
+  templateId: string;
 
-  @IsOptional()
-  @IsBoolean()
-  inApp?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  email?: boolean;
+  @IsArray()
+  preferences: ChannelPreference[];
 }
 
-export class InformativeBulkBodyDto {
+export class InformativeSubscriptionsDto {
   @IsDefined()
   @IsArray()
-  eventList!: InformativeBodyDto[];
+  list!: InformativeSubscriptionsList[];
 }
 
 export class InformativeEventTriggerBodyDto {
-  @IsDefined()
   @IsString()
-  @IsDefined()
+  @IsNotEmpty()
   accountId: string;
 
-  @IsDefined()
+  @IsNotEmpty()
   @IsString()
   @ValidateIf((o) => !administrativeEvents.includes(o.event))
   jobAccountId?: string;
 
-  @IsDefined()
+  @IsNotEmpty()
   @IsString()
   @ValidateIf((o) => !administrativeEvents.includes(o.event))
   jobId?: string;
 
-  @IsDefined()
+  @IsNotEmpty()
   @IsString()
   @ValidateIf((o) => partEvents.includes(o.event))
   part?: string;

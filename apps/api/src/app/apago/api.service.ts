@@ -55,7 +55,6 @@ export class ApiService {
         account: accountId,
       });
     } catch (error) {
-      console.log(error.response.data);
       throw new UnauthorizedException("Can't find account!");
     }
   }
@@ -80,31 +79,29 @@ export class ApiService {
     try {
       const res = await this.instance.get(`/admin/user/${id}`);
 
-      Logger.debug('get user response')
-      Logger.debug(res)
-      
+      Logger.debug('get user response');
+      // Logger.debug(res);
 
       const { Accounts, Roles } = res.data;
 
-      Logger.debug("Accounts, Roles:")
-      Logger.debug(Accounts, Roles)
+      Logger.debug('Accounts, Roles:');
+      Logger.debug(Accounts, Roles);
 
       const index = Accounts.indexOf(accountId);
 
       const userPermissions = await this.getPermissions(Roles[index], accountId);
 
-
-
-
       for (let i = 0; i < permissions.length; i++) {
-        Logger.log(`userPermissions includes the permission ${permissions[i]} ? - ${userPermissions.includes(permissions[i])}`)
+        Logger.log(
+          `userPermissions includes the permission ${permissions[i]} ? - ${userPermissions.includes(permissions[i])}`
+        );
         if (!userPermissions.includes(permissions[i])) throw new Error('Unauthorized');
       }
 
       return res.data;
     } catch (error) {
-      Logger.error('Error in getUser:')
-      Logger.error(error)
+      Logger.error('Error in getUser:');
+      Logger.error(error);
       throw new UnauthorizedException('Insufficient permissions');
     }
   }

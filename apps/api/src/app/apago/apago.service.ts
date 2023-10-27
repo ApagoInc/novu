@@ -1,9 +1,7 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ApiClientData, User, informativeEvents, stakeholderStages } from './types';
-import { TriggerRecipientsTypeEnum } from '@novu/shared';
 import { ApiService } from './api.service';
 import * as util from 'util';
-import slugify from 'slugify';
 import * as INFORMATİVE_EVENTS from './data/informativeEvents.json';
 import * as STAKEHOLDER_STAGES from './data/stakeholderStages.json';
 import * as DEFAULT_TEMPLATES from './data/defaultTemplates.json';
@@ -96,44 +94,5 @@ export class ApagoService {
 
     this.apiServices.push(apiClient);
     this.processQueue();
-  }
-
-  getStakeholderKey(body: { jobId: string; part: string; stage: string }) {
-    return `stakeholder:${body.jobId}:${body.stage}:${body.part}`;
-  }
-
-  getInformativeKey(payload: {
-    part?: string;
-    event: string;
-    accountId: string;
-    titles?: string;
-    administrative?: boolean;
-  }) {
-    const event = this.informativeEvents.flatMap((events) => events.events).find((val) => val.value == payload.event);
-
-    const key = ['informative', payload.accountId, payload.event];
-
-    if (payload.part && event?.has_parts) {
-      key.push(payload.part);
-    }
-
-    if (payload.titles && !event?.administrative) {
-      key.push(payload.titles);
-    }
-
-    return key.join(':');
-  }
-
-  getInformativeEvents(body: { part?: string; payload?: any; event: string; accountId: string; titles?: string }) {
-    const event = this.informativeEvents.flatMap((events) => events.events).find((val) => val.value == body.event);
-
-    if (!event?.label) throw new NotFoundException('');
-
-    return this.getInformativeKey({
-      event: body.event,
-      part: body.part,
-      accountId: body.accountId,
-      titles: body.titles,
-    });
   }
 }

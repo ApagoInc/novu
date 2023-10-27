@@ -20,4 +20,6 @@ export * from './repositories/subscriber-preference';
 export * from './repositories/topic';
 export * from './repositories/layout';
 export * from './repositories/tenant';
+export * from './repositories/informative-subscriptions';
+export * from './repositories/stakeholders';
 export * from './shared';

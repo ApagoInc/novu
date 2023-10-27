@@ -46,7 +46,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   if (expressApp) {
     app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
   } else {
-    app = await NestFactory.create(AppModule, { bufferLogs: true });
+    app = await NestFactory.create(AppModule);
   }
 
   app.flushLogs();
