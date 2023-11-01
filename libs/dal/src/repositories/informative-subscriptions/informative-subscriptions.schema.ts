@@ -7,7 +7,7 @@ import { InformativeSubscriptionsDBModel } from './informative-subscriptions.ent
 
 const informativeSubscriptionsSchema = new Schema<InformativeSubscriptionsDBModel>(
   {
-    accountId: Schema.Types.String,
+    accountId: { type: Schema.Types.String, index: true, required: true },
     parts: [Schema.Types.String],
     allTitles: Schema.Types.Boolean,
     _templateId: {

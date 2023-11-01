@@ -20,34 +20,36 @@ export class SetInformativeSubscriptions {
       accountId: command.accountId,
     };
 
-    for (const item of command.list) {
-      const updateSubsription = await this.informativeSubscriptionsRepository.update(
-        { ...baseCommand, _templateId: item.templateId },
-        { $set: { parts: item.parts, allTitles: item.allTitles } }
-      );
-
-      if (updateSubsription.matched == 0) {
-        this.informativeSubscriptionsRepository.create({
-          ...baseCommand,
-          _templateId: item.templateId,
-          accountId: command.accountId,
-          parts: item.parts,
-          allTitles: item.allTitles,
-        });
-      }
-
-      item.preferences.map((preference) => {
-        this.updatePreferenceUsecase.execute(
-          UpdateSubscriberPreferenceCommand.create({
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            subscriberId: command.externalSubsciberId,
-            templateId: item.templateId,
-            channel: { enabled: preference.enabled, type: preference.type },
-          })
+    await Promise.all(
+      command.list.map(async (item) => {
+        const updateSubsription = await this.informativeSubscriptionsRepository.update(
+          { ...baseCommand, _templateId: item.templateId },
+          { $set: { parts: item.parts, allTitles: item.allTitles } }
         );
-      });
-    }
+
+        if (updateSubsription.matched == 0) {
+          this.informativeSubscriptionsRepository.create({
+            ...baseCommand,
+            _templateId: item.templateId,
+            accountId: command.accountId,
+            parts: item.parts,
+            allTitles: item.allTitles,
+          });
+        }
+
+        for (const preference of item.preferences) {
+          await this.updatePreferenceUsecase.execute(
+            UpdateSubscriberPreferenceCommand.create({
+              environmentId: command.environmentId,
+              organizationId: command.organizationId,
+              subscriberId: command.externalSubsciberId,
+              templateId: item.templateId,
+              channel: { enabled: preference.enabled, type: preference.type },
+            })
+          );
+        }
+      })
+    );
 
     return { success: true };
   }

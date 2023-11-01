@@ -7,8 +7,8 @@ import { StakeholdersDBModel } from './stakeholders.entity';
 
 const stakeholdersSchema = new Schema<StakeholdersDBModel>(
   {
-    jobId: Schema.Types.String,
-    stage: Schema.Types.String,
+    jobId: { type: Schema.Types.String, index: true, required: true },
+    stage: { type: Schema.Types.String, required: true },
     parts: [Schema.Types.String],
     _subscriberId: {
       type: Schema.Types.ObjectId,
