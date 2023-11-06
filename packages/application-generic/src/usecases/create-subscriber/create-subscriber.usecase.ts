@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { SubscriberRepository } from '@novu/dal';
 import { SubscriberEntity } from '@novu/dal';
 
@@ -22,6 +22,13 @@ export class CreateSubscriber {
   ) {}
 
   async execute(command: CreateSubscriberCommand) {
+    
+    
+// TODO - remove logs in this fn
+Logger.log('Create subscriber execute is running')
+
+    
+    
     let subscriber =
       command.subscriber ??
       (await this.fetchSubscriber({
@@ -37,6 +44,9 @@ export class CreateSubscriber {
         }),
       });
 
+
+      Logger.log(`[${new Date().toISOString()}] - !!! - subscriber under subscriberId ${command.subscriberId} does not yet exist. Creating now...`)
+
       subscriber = await this.subscriberRepository.create({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
@@ -50,6 +60,9 @@ export class CreateSubscriber {
         data: command.data,
       });
     } else {
+
+      Logger.log(`[${new Date().toISOString()}] updating existing subscriber under ${command.subscriberId}...`)
+
       subscriber = await this.updateSubscriber.execute(
         UpdateSubscriberCommand.create({
           environmentId: command.environmentId,

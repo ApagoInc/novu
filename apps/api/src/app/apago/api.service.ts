@@ -1,4 +1,4 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
 import { CookieJar } from 'tough-cookie';
@@ -13,6 +13,9 @@ export class ApiService {
   async init() {
     const jar = new CookieJar();
 
+    if (!process.env.LAKESIDE_API) {
+      throw new InternalServerErrorException(`Server environment does not have the required LAKESIDE_API value defined.Must define LAKESIDE_API, LAKESIDE_EMAIL, and LAKESIDE_PASSWORD.`)
+    }
     const instance = wrapper(axios.create({ jar, baseURL: process.env.LAKESIDE_API }));
 
     this.instance = instance;

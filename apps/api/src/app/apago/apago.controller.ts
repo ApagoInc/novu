@@ -179,6 +179,15 @@ export class ApagoController {
       permissions: [],
     });
 
+    if (user?.Status !== "active") {
+      throw new UnauthorizedException(
+        {
+          reason: 'user_not_active', 
+          message: `User must be in Status 'active' to be added to Novu (Request failed for user under scout UserID ${userId})`
+        })
+    }
+
+
     if (!user) throw new UnauthorizedException('User not found!');
 
     if (userId !== subscriberSession.subscriberId) {
