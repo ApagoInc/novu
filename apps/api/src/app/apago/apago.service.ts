@@ -86,7 +86,7 @@ export class ApagoService {
         const result = await apiClient.getAccount(job.data);
         job.cb(null, result);
       } else {
-        job.cb(new UnauthorizedException('Unkown operation'), null);
+        job.cb(new UnauthorizedException('Unknown operation'), null);
       }
     } catch (error) {
       job.cb(error, null);

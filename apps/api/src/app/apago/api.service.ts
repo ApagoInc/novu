@@ -105,7 +105,7 @@ export class ApiService {
     } catch (error) {
       Logger.error('Error in getUser:');
       Logger.error(error);
-      throw new UnauthorizedException('Insufficient permissions');
+      throw new UnauthorizedException({message: 'User does not have the required permissions to participate in Novu notifications.', reason: 'insufficient_permissions'});
     }
   }
 

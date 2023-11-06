@@ -183,7 +183,7 @@ export class ApagoController {
       throw new UnauthorizedException(
         {
           reason: 'user_not_active', 
-          message: `User must be in Status 'active' to be added to Novu (Request failed for user under scout UserID ${userId})`
+          message: `User must be in Status 'active' to participate in Novu notifications.`
         })
     }
 
@@ -236,11 +236,14 @@ export class ApagoController {
                   userId: subscriberSession.subscriberId,
                 })
               );
+
               return { ...event, template: { _id: template._id } };
             }
+
             return { ...event, subscription };
           })
         );
+
         return {
           ...item,
           events,
