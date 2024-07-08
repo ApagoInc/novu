@@ -1,5 +1,5 @@
 import { CONTEXT_PATH } from './config';
-import 'newrelic';
+// import 'newrelic';
 import '@sentry/tracing';
 import helmet from 'helmet';
 import { INestApplication, Logger, NestInterceptor, ValidationPipe } from '@nestjs/common';

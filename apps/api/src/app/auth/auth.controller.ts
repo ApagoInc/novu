@@ -138,6 +138,9 @@ export class AuthController {
 
   @Post('/register')
   async userRegistration(@Body() body: UserRegistrationBodyDto) {
+    // TODO - Idea - maybe, to validate these -
+    // -> check if the user email is in LSP.
+    // -> If not, reject the creation.
     return await this.userRegisterUsecase.execute(
       UserRegisterCommand.create({
         email: body.email,

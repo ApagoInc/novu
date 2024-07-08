@@ -112,25 +112,5 @@
         "value": "TITLE_READY_FOR_DELIVERY"
       }
     ]
-  },
-  {
-    "title": "Administrative Events",
-    "events": [
-      {
-        "label": "User Was Created",
-        "value": "USER_WAS_CREATED",
-        "administrative": true
-      },
-      {
-        "label": "User Was Modified",
-        "value": "USER_WAS_MODIFIED",
-        "administrative": true
-      },
-      {
-        "label": "User Was Deleted",
-        "value": "USER_WAS_DELETED",
-        "administrative": true
-      }
-    ]
   }
 ]

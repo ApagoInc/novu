@@ -46,6 +46,7 @@
     "@aws-sdk/s3-request-presigner": "^3.382.0",
     "@azure/storage-blob": "^12.11.0",
     "@google-cloud/storage": "^6.2.3",
+    "@nestjs/common": "^10.3.9",
     "@novu/africas-talking": "^0.18.0",
     "@novu/apns": "^0.18.0",
     "@novu/burst-sms": "^0.18.0",
@@ -104,11 +105,13 @@
     "lodash": "^4.17.15",
     "nestjs-pino": "^3.4.0",
     "node-fetch": "^3.2.10",
+    "pino": "^9.2.0",
     "pino-http": "^8.3.3",
     "pino-pretty": "^9.4.0",
     "redlock": "4.2.0",
     "reflect-metadata": "^0.1.13",
-    "rrule": "^2.7.2"
+    "rrule": "^2.7.2",
+    "rxjs": "7.8.1"
   },
   "optionalDependencies": {
     "@taskforcesh/bullmq-pro": "5.1.14"

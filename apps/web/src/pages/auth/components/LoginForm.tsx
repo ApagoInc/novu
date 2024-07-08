@@ -97,7 +97,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
     <>
       {!IS_DOCKER_HOSTED && (
         <>
-          <GitHubButton
+          {/* <GitHubButton
             component="a"
             href={githubLink}
             my={30}
@@ -110,7 +110,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
           >
             Sign In with GitHub
           </GitHubButton>
-          <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
+          <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" /> */}
         </>
       )}
       <form noValidate onSubmit={handleSubmit(onLogin)}>
@@ -155,14 +155,15 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
         >
           {invitationToken ? 'Sign In & Accept' : 'Sign In'}
         </Button>
-        <Center mt={20}>
+        {/* TODO - Can't allow this on the novu server. Not just anyone can "Sign Up", or they may then create an organization, etc. - this feature has to be restricted. */}
+        {/* <Center mt={20}>
           <Text mr={10} size="md" color={colors.B60}>
             Don't have an account yet?
           </Text>
           <Link to={signupLink}>
             <Text gradient>Sign Up</Text>
           </Link>
-        </Center>
+        </Center> */}
       </form>
       {isError && !emailServerError && (
         <Text data-test-id="error-alert-banner" mt={20} size="lg" weight="bold" align="center" color={colors.error}>

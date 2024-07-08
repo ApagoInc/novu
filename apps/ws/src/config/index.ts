@@ -2,6 +2,7 @@ import * as dotenv from 'dotenv';
 import * as envalid from 'envalid';
 import { json, str, port } from 'envalid';
 import { getContextPath, NovuComponentEnum } from '@novu/shared';
+import { readdirSync } from 'fs';
 
 dotenv.config();
 
@@ -27,6 +28,12 @@ switch (process.env.NODE_ENV) {
     path = `${__dirname}/../.env`;
 }
 
+// NOTE: In this implementation, we ignore the above, and just use a .env file right here in the ./src/config dir.
+// The .env file is copied to this dir as part of the build command.
+path = "./src/config/.env"
+
+// console.log("DIRNAME:", __dirname)
+// console.log("readdirSync('.')", readdirSync("."))
 const { error } = dotenv.config({ path });
 
 if (error && !process.env.LAMBDA_TASK_ROOT) throw error;

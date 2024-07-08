@@ -1,12 +1,21 @@
 import { isBrowser } from '../utils';
 import { getContextPath, NovuComponentEnum } from '@novu/shared';
-
+// import { config } from 'dotenv';
 declare global {
   interface Window {
     _env_: any;
     _cypress: any;
   }
 }
+
+// const env = config();
+
+// console.log('Adding configured env to window._env_...?');
+
+// window._env_ = { ...window._env_, ...process.env };
+
+// TODO - perhaps, use "dotenv" in the env-config.js file to configure the value received in window._env.
+console.log('window._env_...?', window._env_);
 
 const isCypress = (isBrowser() && (window as any).Cypress) || (isBrowser() && (window as any).parent.Cypress);
 

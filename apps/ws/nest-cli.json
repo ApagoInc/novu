@@ -4,7 +4,8 @@
   "compilerOptions": {
     "assets": [
       ".env.test",
-      ".env.development"
+      ".env.development",
+      ".env"
     ]
   }
 }

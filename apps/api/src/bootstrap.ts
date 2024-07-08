@@ -1,5 +1,5 @@
 import { CONTEXT_PATH } from './config';
-import 'newrelic';
+// import 'newrelic';
 import '@sentry/tracing';
 
 import helmet from 'helmet';
@@ -20,6 +20,7 @@ import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guar
 import { validateEnv } from './config/env-validator';
 
 import * as packageJson from '../package.json';
+import { readFileSync } from 'fs';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/workflows', '/v1/layouts'];
 
@@ -39,6 +40,33 @@ if (process.env.SENTRY_DSN) {
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
 
+const httpsCerts = {
+  cert: readFileSync(process.env.HTTPS_CERT_PATH || `/home/ec2-user/certsFrom05_16_24/server.cert`),
+  key: readFileSync(process.env.HTTPS_KEY_PATH || `/home/ec2-user/certsFrom05_16_24/server.key`),
+};
+
+if (httpsCerts?.cert && httpsCerts.key) {
+  console.log('Successfully got https cert and key!');
+} else {
+  console.log(
+    'Failed to obtain https cert and key. Please provide absolute filepaths to the https cert and key files, as the values for the following .env variables for the API: HTTPS_CERT_PATH, HTTPS_KEY_PATH'
+  );
+}
+
+function httpsRequireSslMiddleware(req, res, next) {
+  // const nodeEnv = process.env.NODE_ENV;
+
+  // console.log('In ', httpsRequireSslMiddleware.name, '...');
+
+  // if (req.headers['x-forwarded-proto'] !== 'https') {
+  //   // const redirectTarget = ['https://', req.get('Host'), req.url].join('');
+  //   // console.log(httpsRequireSslMiddleware.name, ' - REDIRECT to...', redirectTarget);
+  //   // return res.redirect(redirectTarget);
+  // }
+  // console.log(httpsRequireSslMiddleware.name, ' - next...');
+  // return next();
+}
+
 export async function bootstrap(expressApp?): Promise<INestApplication> {
   BullMqService.haveProInstalled();
 
@@ -46,8 +74,74 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   if (expressApp) {
     app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
   } else {
-    app = await NestFactory.create(AppModule);
+    app = await NestFactory.create(AppModule, {
+      ...(httpsCerts ? { httpsOptions: { cert: httpsCerts.cert, key: httpsCerts.key } } : {}),
+    });
   }
+
+  if (httpsCerts.cert && httpsCerts.key) {
+    // app.use(httpsRequireSslMiddleware);
+  }
+
+  // Logger.log('API bootstrap file - value of app url:', safeStringify(app));
+
+  // const circ: { [a: symbol | string | number]: any } = {
+  //   head: 'a',
+  //   body: 'b',
+  //   tail: 'c',
+  //   other: 'a',
+  // };
+
+  // circ.trouble = {
+  //   a: { b: 'c' },
+  //   b: [...[1, 2]],
+  // };
+
+  // close the circle somewhere:
+  // circ.trouble.a = circ.trouble;
+
+  // function safeStringify(o: any) {
+  //   const safeObj: {
+  //     [prop: string]: any;
+  //     circularKeys: string[];
+  //   } = {
+  //     circularKeys: [],
+  //   };
+  //   try {
+  //     if (o instanceof Object) {
+  //       for (const [key, val] of Object.entries(o)) {
+  //         try {
+  //           const strfiable = JSON.stringify(val);
+  //           // If here, it didn't error, so:
+  //           safeObj[key] = val;
+  //         } catch (err) {
+  //           let newCircular = key;
+  //           // chase the circular ref for n times?
+  //           let n = 0;
+  //           let next = Object.keys(val || { '': '' })[0];
+  //           while (n < 3) {
+  //             let nested = next?.[key];
+  //             if (nested) {
+  //               newCircular += `.${nested}`;
+  //               next = Object.keys(nested || { '': '' })[0];
+  //             }
+  //             n++;
+  //           }
+  //           safeObj.circularKeys.push(key);
+  //           continue;
+  //         }
+  //       }
+
+  //       // JSON.stringify(safeObj)
+  //       console.log(safeObj);
+  //     } else {
+  //       console.log('not an object:', o);
+  //     }
+  //   } catch (err) {
+  //     console.log('err in safeStringify:', err);
+  //     return;
+  //   }
+  // }
 
   app.flushLogs();
 
@@ -91,32 +185,43 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   app.use(compression());
 
-  const options = new DocumentBuilder()
-    .setTitle('Novu API')
-    .setDescription('The Novu API description')
-    .setVersion('1.0')
-    .addTag('Events')
-    .addTag('Subscribers')
-    .addTag('Topics')
-    .addTag('Notification')
-    .addTag('Integrations')
-    .addTag('Layouts')
-    .addTag('Workflows')
-    .addTag('Notification Templates')
-    .addTag('Workflow groups')
-    .addTag('Changes')
-    .addTag('Environments')
-    .addTag('Inbound Parse')
-    .addTag('Feeds')
-    .addTag('Tenants')
-    .addTag('Messages')
-    .addTag('Execution Details')
-    .build();
-  const document = SwaggerModule.createDocument(app, options);
+  // const options = new DocumentBuilder()
+  //   .setTitle('Novu API')
+  //   .setDescription('The Novu API description')
+  //   .setVersion('1.0')
+  //   .addTag('Events')
+  //   .addTag('Subscribers')
+  //   .addTag('Topics')
+  //   .addTag('Notification')
+  //   .addTag('Integrations')
+  //   .addTag('Layouts')
+  //   .addTag('Workflows')
+  //   .addTag('Notification Templates')
+  //   .addTag('Workflow groups')
+  //   .addTag('Changes')
+  //   .addTag('Environments')
+  //   .addTag('Inbound Parse')
+  //   .addTag('Feeds')
+  //   .addTag('Tenants')
+  //   .addTag('Messages')
+  //   .addTag('Execution Details')
+  //   .build();
+  // const document = SwaggerModule.createDocument(app, options);
 
-  SwaggerModule.setup('api', app, document);
+  // SwaggerModule.setup('api', app, document);
 
   Logger.log('BOOTSTRAPPED SUCCESSFULLY');
+
+  // const serveStaticHandler: RequestHandler = (req, res, next) => {
+  //   if (req) {
+  //     // TODO - maybe place all web reqs under /web/
+  //     // res.sendFile('../../web/public/index.html');
+  //   }
+  //   next?.();
+  // };
+
+  // // Serve frontend
+  // app.use(serveStaticHandler);
 
   if (expressApp) {
     await app.init();

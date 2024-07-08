@@ -8,7 +8,9 @@ module.exports = {
       {
         "name": "novu-web",
         "cwd": "/usr/novu/apps/web/",
-        "script": "npm run start:dev"
+        // ":dev"
+        "script": "npm run start"
+        // "script": "npm run start:static:build"
       },
       {
         "name": "novu-widget",

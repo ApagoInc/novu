@@ -165,6 +165,8 @@ const tokenStoredToken: string = getToken();
 
 applyToken(tokenStoredToken);
 
+// console.log('web CONTEXT_PATH:', CONTEXT_PATH)
+
 function App() {
   return (
     <SegmentProvider>
@@ -173,12 +175,28 @@ function App() {
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               <Routes>
-                <Route path={ROUTES.AUTH_SIGNUP} element={<SignUpPage />} />
+                {/* TODO - disable the below - make where signups must be approved. 
+                 
+                 Currently, users can only be added by "inviting" them on the invitation page.
+                 - The user's email must be entered, and an invite link is then generated.
+                 (Novu says the invite link is sent via email, but it is not currently sent to the user - this must be configured, if it's desired as a feature moving forward.)
+                 - Click the user's "pending" invite on the 3 dots icon, and select copy invite link.
+                 - Give the invite link privately to the user via an email or similar format. 
+                 
+                 ---
+
+                 If it's ever desired to change this, consider:
+                 - making it where signups require an LSP admin email and password? 
+                 */}
+                {/* We can't allow this to be exposed to the open internet, regardless of what its URL is. */}
+                {/* If this is exposed - anyone who can access the novu server's endpoints can "sign up". That is trouble. */}
+                {/* <Route path={`${ROUTES.AUTH_SIGNUP}_5d7d6c10-b4d2-43c9-87a6-085e517e5efa`} element={<SignUpPage />} /> */}
                 <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
                 <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
                 <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
                 <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
-                <Route path={ROUTES.AUTH_APPLICATION} element={<CreateOrganizationPage />} />
+                {/* Same principle here. We must not expose this endpoint freely, as it allows anyone to perform this action. */}
+                {/* <Route path={ROUTES.AUTH_APPLICATION} element={<CreateOrganizationPage />} /> */}
                 <Route
                   path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
                   element={

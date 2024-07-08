@@ -127,7 +127,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
     <>
       {!IS_DOCKER_HOSTED && (
         <>
-          <GitHubButton
+          {/* <GitHubButton
             my={30}
             component="a"
             href={githubLink}
@@ -139,8 +139,8 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
             data-test-id="github-button"
           >
             Sign Up with GitHub
-          </GitHubButton>
-          <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
+          </GitHubButton> */}
+          {/* <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" /> */}
         </>
       )}
       <form noValidate name="login-form" onSubmit={handleSubmit(onSubmit)}>

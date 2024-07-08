@@ -79,7 +79,7 @@ export default function LoginPage() {
       ) : (
         <AuthContainer
           title="Sign In"
-          description="Welcome back! Sign in with the data you entered in your registration"
+          // description="Welcome back! Sign in with the data you entered in your registration"
         >
           <LoginForm />
         </AuthContainer>

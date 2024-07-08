@@ -106,6 +106,11 @@ export class OrganizationController {
     );
 
     for (const event of this.apagoService.getTemplates()) {
+
+
+      // TODO - where these workflows are being created, we might(?) need to update email workflow creation again, apparently.
+
+
       await this.createWorkflowUsecase.execute(
         CreateNotificationTemplateCommand.create({
           organizationId: organization._id,
@@ -127,8 +132,9 @@ export class OrganizationController {
               name: 'Email',
               active: true,
               template: {
-                senderName: 'sender',
-                subject: 'subject',
+                // TODO - add using sender name from env
+                senderName: 'Lakeside Prepress',
+                subject: event.name || 'Lakeside Prepress Email Notification',
                 content: [{ content: event.initialContent || '', type: EmailBlockTypeEnum.TEXT }],
                 type: StepTypeEnum.EMAIL,
                 contentType: 'editor',

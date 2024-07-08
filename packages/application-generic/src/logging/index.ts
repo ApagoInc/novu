@@ -125,6 +125,8 @@ export function createNestLoggingModuleOptions(settings: ILoggerSettings) {
         tenant: values.tenant,
       },
       transport: transport,
+      // NOTE - The below controls whether or not to log EVERY request.
+      // Enabling this will make it difficult to tail and search logs.
       // autoLogging: !['test', 'local'].includes(process.env.NODE_ENV),
     },
   };

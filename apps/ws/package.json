@@ -7,7 +7,8 @@
   "license": "UNLICENSED",
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "nest build",
+    "___//#comment// something like this is a different possible solution ->": "http-server build -p 4200 --proxy https://novu.apagocloud.net -S ",
+    "build": "nest build && cp ./src/.env ./dist/src/config/.env",
     "docker:build": "docker build -f ./Dockerfile -t novu-ws ./../..",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nodemon",
@@ -45,6 +46,7 @@
     "lodash": "^4.17.15",
     "nest-raven": "^10.0.0",
     "newrelic": "^11.0.0",
+    "pino": "^9.2.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "7.8.1",
