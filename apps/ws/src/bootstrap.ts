@@ -23,22 +23,36 @@ if (process.env.SENTRY_DSN) {
 export async function bootstrap() {
   BullMqService.haveProInstalled();
 
+  const runAsHttp = process.env.RUN_ON_HTTP === 'true';
+
   // TODO - The API uses identical https cert setup code - factor this out at some point, to a library function or something?
-  const httpsCerts = {
-    cert: readFileSync(`/home/ec2-user/certsFrom05_16_24/server.cert`),
-    key: readFileSync(`/home/ec2-user/certsFrom05_16_24/server.key`),
-  };
+  const httpsCerts =
+    !runAsHttp && process.env.HTTPS_CERT_PATH && process.env.HTTPS_KEY_PATH
+      ? {
+          cert: readFileSync(process.env.HTTPS_CERT_PATH),
+          key: readFileSync(process.env.HTTPS_KEY_PATH),
+        }
+      : undefined;
   const app = await NestFactory.create(AppModule, {
     bufferLogs: true,
     ...(httpsCerts ? { httpsOptions: { cert: httpsCerts.cert, key: httpsCerts.key } } : {}),
   });
 
   if (httpsCerts?.cert && httpsCerts.key) {
-    console.log('Successfully got https cert and key!');
+    console.log('Successfully read https cert and key files');
+    // TODO - comment out
+    console.log('https:', process.env.HTTPS_CERT_PATH, ';', process.env.HTTPS_KEY_PATH);
   } else {
-    console.log(
-      'Failed to obtain https cert and key. Please provide absolute filepaths to the https cert and key files, as the values for the following .env variables for the websocket server: HTTPS_CERT_PATH, HTTPS_KEY_PATH'
-    );
+    if (runAsHttp) {
+      console.log('Running websocket server on HTTP, not HTTPS');
+    } else {
+      // console.log(
+      //   'WARNING - Failed to obtain https cert and key. Please provide absolute filepaths to the https cert and key files, as the values for the following .env variables for the websocket server: HTTPS_CERT_PATH, HTTPS_KEY_PATH. \n (If instead intending to run the websocket server on HTTP, set RUN_ON_HTTP=true in .env.)'
+      // );
+      throw new Error(
+        'ERROR - Failed to obtain https cert and key. Please provide absolute filepaths to the https cert and key files, as the values for the following .env variables for the websocket server: HTTPS_CERT_PATH, HTTPS_KEY_PATH. \n (If instead intending to run the websocket server on HTTP, set RUN_ON_HTTP=true in .env.)'
+      );
+    }
   }
 
   const redisIoAdapter = new RedisIoAdapter(app);

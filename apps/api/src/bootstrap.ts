@@ -40,31 +40,31 @@ if (process.env.SENTRY_DSN) {
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
 
-const httpsCerts = {
-  cert: readFileSync(process.env.HTTPS_CERT_PATH || `/home/ec2-user/certsFrom05_16_24/server.cert`),
-  key: readFileSync(process.env.HTTPS_KEY_PATH || `/home/ec2-user/certsFrom05_16_24/server.key`),
-};
+const runAsHttp = process.env.RUN_ON_HTTP === 'true';
+
+const httpsCerts =
+  !runAsHttp && process.env.HTTPS_CERT_PATH && process.env.HTTPS_KEY_PATH
+    ? {
+        cert: readFileSync(process.env.HTTPS_CERT_PATH),
+        key: readFileSync(process.env.HTTPS_KEY_PATH),
+      }
+    : undefined;
 
 if (httpsCerts?.cert && httpsCerts.key) {
-  console.log('Successfully got https cert and key!');
+  console.log('Successfully read https cert and key files');
+  // TODO - comment out
+  console.log('https:', process.env.HTTPS_CERT_PATH, ';', process.env.HTTPS_KEY_PATH);
 } else {
-  console.log(
-    'Failed to obtain https cert and key. Please provide absolute filepaths to the https cert and key files, as the values for the following .env variables for the API: HTTPS_CERT_PATH, HTTPS_KEY_PATH'
-  );
-}
-
-function httpsRequireSslMiddleware(req, res, next) {
-  // const nodeEnv = process.env.NODE_ENV;
-
-  // console.log('In ', httpsRequireSslMiddleware.name, '...');
-
-  // if (req.headers['x-forwarded-proto'] !== 'https') {
-  //   // const redirectTarget = ['https://', req.get('Host'), req.url].join('');
-  //   // console.log(httpsRequireSslMiddleware.name, ' - REDIRECT to...', redirectTarget);
-  //   // return res.redirect(redirectTarget);
-  // }
-  // console.log(httpsRequireSslMiddleware.name, ' - next...');
-  // return next();
+  if (runAsHttp) {
+    console.log('Running API server on HTTP, not HTTPS');
+  } else {
+    // console.log(
+    //   'WARNING - Failed to obtain https cert and key. Please provide absolute filepaths to the https cert and key files, as the values for the following .env variables for the API server: HTTPS_CERT_PATH, HTTPS_KEY_PATH. \n (If instead intending to run the API server on HTTP, set RUN_ON_HTTP=true in .env.)'
+    // );
+    throw new Error(
+      'ERROR - Failed to obtain https cert and key. Please provide absolute filepaths to the https cert and key files, as the values for the following .env variables for the API server: HTTPS_CERT_PATH, HTTPS_KEY_PATH. \n (If instead intending to run the API server on HTTP, set RUN_ON_HTTP=true in .env.)'
+    );
+  }
 }
 
 export async function bootstrap(expressApp?): Promise<INestApplication> {
@@ -79,9 +79,9 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     });
   }
 
-  if (httpsCerts.cert && httpsCerts.key) {
-    // app.use(httpsRequireSslMiddleware);
-  }
+  // if (httpsCerts?.cert && httpsCerts.key) {
+  // app.use(httpsRequireSslMiddleware);
+  // }
 
   // Logger.log('API bootstrap file - value of app url:', safeStringify(app));
 
@@ -211,17 +211,6 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   // SwaggerModule.setup('api', app, document);
 
   Logger.log('BOOTSTRAPPED SUCCESSFULLY');
-
-  // const serveStaticHandler: RequestHandler = (req, res, next) => {
-  //   if (req) {
-  //     // TODO - maybe place all web reqs under /web/
-  //     // res.sendFile('../../web/public/index.html');
-  //   }
-  //   next?.();
-  // };
-
-  // // Serve frontend
-  // app.use(serveStaticHandler);
 
   if (expressApp) {
     await app.init();
