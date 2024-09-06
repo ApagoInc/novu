@@ -1,6 +1,5 @@
 import { isBrowser } from '../utils';
 import { getContextPath, NovuComponentEnum } from '@novu/shared';
-// import { config } from 'dotenv';
 declare global {
   interface Window {
     _env_: any;
@@ -8,16 +7,15 @@ declare global {
   }
 }
 
-// const env = config();
+console.log('process.env...?', JSON.stringify(process.env));
 
-// console.log('Adding configured env to window._env_...?');
-
-// window._env_ = { ...window._env_, ...process.env };
+window._env_ = { ...window._env_, ...process.env };
 
 // TODO - perhaps, use "dotenv" in the env-config.js file to configure the value received in window._env.
 console.log('window._env_...?', window._env_);
 
-const isCypress = (isBrowser() && (window as any).Cypress) || (isBrowser() && (window as any).parent.Cypress);
+const isCypress = false;
+// (isBrowser() && (window as any).Cypress) || (isBrowser() && (window as any).parent.Cypress);
 
 export const API_ROOT =
   window._env_.REACT_APP_API_URL || isCypress
@@ -46,8 +44,11 @@ export const WIDGET_EMBED_PATH =
   process.env.REACT_APP_WIDGET_EMBED_PATH ||
   'http://localhost:4701/embed.umd.min.js';
 
-export const IS_DOCKER_HOSTED =
-  window._env_.REACT_APP_DOCKER_HOSTED_ENV === 'true' || process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
+export const IS_DOCKER_HOSTED = false;
+// Just setting the above to false. It has been for most of the development and testing process,
+// and I'm concerned changing it to true could have a negative effect on features in use currently.
+
+// window._env_.REACT_APP_DOCKER_HOSTED_ENV === 'true' || process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
 
 export const INTERCOM_APP_ID = window._env_.REACT_APP_INTERCOM_APP_ID || process.env.REACT_APP_INTERCOM_APP_ID;
 

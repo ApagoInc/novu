@@ -39,6 +39,7 @@ export function SettingsPage() {
     );
   }
 
+  // TODO - Check on this, make sure it's ok.
   if (selfHosted) {
     return (
       <SettingsPageWrapper>

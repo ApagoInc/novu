@@ -23,7 +23,7 @@ services:
     ports:
       - 27017:27017
   api:
-    image: 'ghcr.io/novuhq/novu/api:0.17.1'
+    image: 'novu-api'
     depends_on:
       - mongodb
       - redis
@@ -59,10 +59,11 @@ services:
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       API_CONTEXT_PATH: ${API_CONTEXT_PATH}
+      RUN_ON_HTTP: true
     ports:
       - '${API_PORT}:${API_PORT}'
   worker:
-    image: 'ghcr.io/novuhq/novu/worker:0.17.1'
+    image: 'novu-worker'
     depends_on:
       - mongodb
       - redis
@@ -93,7 +94,7 @@ services:
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
   ws:
-    image: 'ghcr.io/novuhq/novu/ws:0.17.1'
+    image: 'novu-ws'
     depends_on:
       - mongodb
       - redis
@@ -114,62 +115,94 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       WS_CONTEXT_PATH: ${WS_CONTEXT_PATH}
+      RUN_ON_HTTP: true
     ports:
       - '3002:3002'
-  web:
-    image: 'ghcr.io/novuhq/novu/web:0.17.1'
-    depends_on:
-      - api
-      - worker
-    container_name: web
+  # The webapp is being ran outside of Docker, due to open issues on the Novu frontend build in a self-hosted Docker context
+  # web:
+  #   image: 'novu-web'
+  #   depends_on:
+  #     - api
+  #     - worker
+  #   container_name: web
+  #   restart: unless-stopped
+  #   logging:
+  #     driver: 'json-file'
+  #     options:
+  #       max-size: '50m'
+  #       max-file: '5'
+  #   environment:
+  #     REACT_APP_API_URL: ${API_ROOT_URL}
+  #     REACT_APP_ENVIRONMENT: ${NODE_ENV}
+  #     REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
+  #     REACT_APP_DOCKER_HOSTED_ENV: 'true'
+  #     REACT_APP_WS_URL: ${REACT_APP_WS_URL}
+  #   ports:
+  #     - 4200:4200
+  proxy:
+    container_name: proxy
+    build:
+      context: ../../../apps/proxy # path all the way out to the apps/proxy dir
+      dockerfile: ./Dockerfile
+      # args:
+      #   HTTPS_CERT_OS_PATH: ${HTTPS_CERT_OS_PATH}
+      #   HTTPS_KEY_OS_PATH: ${HTTPS_KEY_OS_PATH}
+      #   HTTPS_CERT_CONTAINER_PATH: ${HTTPS_CERT_CONTAINER_PATH}
+      #   HTTPS_KEY_CONTAINER_PATH: ${HTTPS_KEY_CONTAINER_PATH}
+      args:
+        PROXY_HOST_PORT: ${PROXY_HOST_PORT:-9000}
+        PROXY_CONTAINER_PORT: ${PROXY_CONTAINER_PORT:-9000}
+        DOCKER: ${DOCKER:-'true'}
+        HTTPS_CERT_OS_PATH: ${HTTPS_CERT_OS_PATH}
+        HTTPS_KEY_OS_PATH: ${HTTPS_KEY_OS_PATH}
+        HTTPS_CERT_CONTAINER_PATH: ${HTTPS_CERT_CONTAINER_PATH}
+        HTTPS_KEY_CONTAINER_PATH: ${HTTPS_KEY_CONTAINER_PATH}
     restart: unless-stopped
+    env_file: 
+      - .env
     logging:
       driver: 'json-file'
       options:
         max-size: '50m'
         max-file: '5'
-    environment:
-      REACT_APP_API_URL: ${API_ROOT_URL}
-      REACT_APP_ENVIRONMENT: ${NODE_ENV}
-      REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
-      REACT_APP_DOCKER_HOSTED_ENV: 'true'
-      REACT_APP_WS_URL: ${REACT_APP_WS_URL}
     ports:
-      - 4200:4200
-  widget:
-    image: 'ghcr.io/novuhq/novu/widget:0.17.1'
-    depends_on:
-      - api
-      - worker
-      - web
-    container_name: widget
-    restart: unless-stopped
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: '50m'
-        max-file: '5'
-    environment:
-      REACT_APP_API_URL: ${API_ROOT_URL}
-      REACT_APP_WS_URL: ${REACT_APP_WS_URL}
-      REACT_APP_ENVIRONMENT: ${NODE_ENV}
-      WIDGET_CONTEXT_PATH: ${WIDGET_CONTEXT_PATH}
-    ports:
-      - 4500:4500
-  embed:
-    depends_on:
-      - widget
-    image: 'ghcr.io/novuhq/novu/embed:0.17.1'
-    container_name: embed
-    restart: unless-stopped
-    logging:
-      driver: 'json-file'
-      options:
-        max-size: '50m'
-        max-file: '5'
-    environment:
-      WIDGET_URL: ${WIDGET_URL}
-    ports:
-      - 4701:4701
+      - ${PROXY_HOST_PORT:-9000}:${PROXY_CONTAINER_PORT:-9000}
 volumes:
   mongodb: ~
+# (following is not used)
+# image:
+# widget:
+#   image: 'ghcr.io/novuhq/novu/widget:0.17.1'
+#   depends_on:
+#     - api
+#     - worker
+#     - web
+#   container_name: widget
+#   restart: unless-stopped
+#   logging:
+#     driver: 'json-file'
+#     options:
+#       max-size: '50m'
+#       max-file: '5'
+#   environment:
+#     REACT_APP_API_URL: ${API_ROOT_URL}
+#     REACT_APP_WS_URL: ${REACT_APP_WS_URL}
+#     REACT_APP_ENVIRONMENT: ${NODE_ENV}
+#     WIDGET_CONTEXT_PATH: ${WIDGET_CONTEXT_PATH}
+#   ports:
+#     - 4500:4500
+# embed:
+#   depends_on:
+#     - widget
+#   image: 'ghcr.io/novuhq/novu/embed:0.17.1'
+#   container_name: embed
+#   restart: unless-stopped
+#   logging:
+#     driver: 'json-file'
+#     options:
+#       max-size: '50m'
+#       max-file: '5'
+#   environment:
+#     WIDGET_URL: ${WIDGET_URL}
+#   ports:
+#     - 4701:4701

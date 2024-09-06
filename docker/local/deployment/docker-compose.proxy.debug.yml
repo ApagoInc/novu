@@ -1,0 +1,30 @@
+version: '3.9'
+services:
+  proxy:
+    container_name: proxy
+    build:
+      context: ../../../apps/proxy # path all the way out to the apps/proxy dir
+      dockerfile: ./Dockerfile
+      # args:
+      #   HTTPS_CERT_OS_PATH: ${HTTPS_CERT_OS_PATH}
+      #   HTTPS_KEY_OS_PATH: ${HTTPS_KEY_OS_PATH}
+      #   HTTPS_CERT_CONTAINER_PATH: ${HTTPS_CERT_CONTAINER_PATH}
+      #   HTTPS_KEY_CONTAINER_PATH: ${HTTPS_KEY_CONTAINER_PATH}
+      args:
+        PROXY_HOST_PORT: ${PROXY_HOST_PORT:-9000}
+        PROXY_CONTAINER_PORT: ${PROXY_CONTAINER_PORT:-9000}
+        DOCKER: ${DOCKER:-'true'}
+        HTTPS_CERT_OS_PATH: ${HTTPS_CERT_OS_PATH}
+        HTTPS_KEY_OS_PATH: ${HTTPS_KEY_OS_PATH}
+        HTTPS_CERT_CONTAINER_PATH: ${HTTPS_CERT_CONTAINER_PATH}
+        HTTPS_KEY_CONTAINER_PATH: ${HTTPS_KEY_CONTAINER_PATH}
+    restart: unless-stopped
+    env_file: 
+      - .env
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '50m'
+        max-file: '5'
+    ports:
+      - ${PROXY_HOST_PORT:-9000}:${PROXY_CONTAINER_PORT:-9000}

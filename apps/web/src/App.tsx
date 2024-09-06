@@ -1,7 +1,7 @@
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
-import { Route, Routes, BrowserRouter } from 'react-router-dom';
+import { Route, Routes, BrowserRouter, Navigate } from 'react-router-dom';
 import { withLDProvider } from 'launchdarkly-react-client-sdk';
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
@@ -291,6 +291,7 @@ function App() {
                     <Route path="layouts" element={<LayoutsListPage />} />
                   </Route>
                 </Route>
+                <Route path="*" element={<Navigate to={ROUTES.AUTH_LOGIN} />} />
               </Routes>
             </AuthProvider>
           </QueryClientProvider>

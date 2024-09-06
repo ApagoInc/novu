@@ -9,6 +9,8 @@
     "prebuild": "rimraf dist",
     "___//#comment// something like this is a different possible solution ->": "http-server build -p 4200 --proxy https://novu.apagocloud.net -S ",
     "build": "nest build && cp ./src/.env ./dist/src/config/.env",
+    "cp-env": "cp ./src/.env ./src/config/.env",
+    "predocker:build": "echo 'copying env into ./src/config.env' && npm run cp-env && echo 'copied env into ./src/config.env'",
     "docker:build": "docker build -f ./Dockerfile -t novu-ws ./../..",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nodemon",

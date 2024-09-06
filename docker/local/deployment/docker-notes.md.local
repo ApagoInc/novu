@@ -1,0 +1,6 @@
+Currently, the novu containers must each be built before ever running docker-compose.
+
+Except for our custom "proxy" container, the others must pull from a pre-built image.
+
+Also, the main "web" build is broken, due to  existing bugs in the Novu build for a self-hosted docker environment.
+As a result, we will use the default React server to host the files until a fix can be made for the static build.

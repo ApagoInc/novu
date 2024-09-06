@@ -105,3 +105,7 @@ docker/.env
 
 *.cert
 *.key
+**/*.pem/*
+**/*.pem/*
+**/*.pem/*
+**/*.pem/*

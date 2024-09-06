@@ -4,7 +4,13 @@ import { Button, colors, shadows, Text, Title } from '../../../design-system';
 
 import styled from '@emotion/styled';
 import { createStyles, Group, Popover, Stack, useMantineColorScheme } from '@mantine/core';
-import { ActorTypeEnum, INotificationTemplate, StepTypeEnum, SystemAvatarIconEnum } from '@novu/shared';
+import {
+  ActorTypeEnum,
+  ICreateNotificationTemplateDto,
+  INotificationTemplate,
+  StepTypeEnum,
+  SystemAvatarIconEnum,
+} from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';

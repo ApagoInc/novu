@@ -1,0 +1,13 @@
+.env
+*.env
+*.env*
+.env.*
+*.local.*
+*.local
+.local*
+local.*
+*.log
+*.pem
+*.crt
+*.key
+**/*.pem/*

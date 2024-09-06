@@ -1,7 +1,6 @@
 import { Group, Stack, UnstyledButton, useMantineColorScheme } from '@mantine/core';
 import { IUserEntity } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
-import { use } from 'chai';
 import { TooltipRenderProps } from 'react-joyride';
 import { useNavigate, useParams } from 'react-router-dom';
 import { updateUserOnBoardingTour } from '../../../api/user';
