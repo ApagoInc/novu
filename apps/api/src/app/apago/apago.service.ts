@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ApiClientData, User, informativeEvents, stakeholderStages } from './types';
 import { ApiService } from './api.service';
 import * as util from 'util';
-import * as INFORMATİVE_EVENTS from './data/informativeEvents.json';
+import * as INFORMATIVE_EVENTS from './data/informativeEvents.json';
 import * as STAKEHOLDER_STAGES from './data/stakeholderStages.json';
 import * as DEFAULT_TEMPLATES from './data/defaultTemplates.json';
 
@@ -11,7 +11,7 @@ export class ApagoService {
   queue: Array<{ data: ApiClientData; cb: (err: any, data: User | null) => void }> = [];
   apiServices: Array<ApiService> = [];
   apiServiceCount = 10;
-  informativeEvents: informativeEvents = INFORMATİVE_EVENTS;
+  informativeEvents: informativeEvents = INFORMATIVE_EVENTS;
   stakeholderStages: stakeholderStages = STAKEHOLDER_STAGES;
 
   constructor() {
@@ -20,7 +20,7 @@ export class ApagoService {
 
   getTemplates() {
     return [
-      ...INFORMATİVE_EVENTS.flatMap((arr) =>
+      ...INFORMATIVE_EVENTS.flatMap((arr) =>
         arr.events.map((val) => ({
           name: val.label,
           critical: false,

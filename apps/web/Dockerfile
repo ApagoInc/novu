@@ -1,6 +1,9 @@
 # start build stage
 FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine as builder
-# ENV NX_DAEMON=false
+ENV NX_DAEMON=false
+
+RUN echo $NX_DAEMON
+RUN sleep 2
 
 WORKDIR /usr/src/app
 
@@ -30,6 +33,15 @@ COPY pnpm-lock.yaml .
 RUN echo 'Skipping the RUN --mount=type=cache, because it seems to hang/break the build every time.\n As it turns out, there is no speed benefit to caching if the caching attempt causes the build to hang indefinitely.'
 
 CMD ["sleep", "infinity"]
+# Currently, the steps of `pnpm install` and `cd ./apps/web && npm run start:static:build:http-only`
+# are being ran inside the container manually, due to a tendency for the automatic version 
+# of this install to freeze.
+
+# RUN pnpm install || echo "ok, apparently pnpm install failed"
+
+# RUN cd /usr/src/app/apps/web 
+
+# CMD ["npm", "run", "start:dev"]
 
 # TODO - fix this once the Novu webapp issue can be resolved.
 

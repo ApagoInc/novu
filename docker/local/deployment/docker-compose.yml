@@ -8,6 +8,10 @@ services:
       driver: 'none'
   mongodb:
     image: mongo
+    command: 
+      - --quiet
+      - '--logpath'
+      - '/var/log/mongodb/mongod.log'
     container_name: mongodb
     restart: unless-stopped
     logging:
@@ -59,6 +63,10 @@ services:
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       API_CONTEXT_PATH: ${API_CONTEXT_PATH}
+      # Important custom fields for our implementation
+      LAKESIDE_API: ${LAKESIDE_API}
+      LAKESIDE_EMAIL: ${LAKESIDE_EMAIL}
+      LAKESIDE_PASSWORD: ${LAKESIDE_PASSWORD}
       RUN_ON_HTTP: true
     ports:
       - '${API_PORT}:${API_PORT}'
@@ -118,27 +126,26 @@ services:
       RUN_ON_HTTP: true
     ports:
       - '3002:3002'
-  # The webapp is being ran outside of Docker, due to open issues on the Novu frontend build in a self-hosted Docker context
-  # web:
-  #   image: 'novu-web'
-  #   depends_on:
-  #     - api
-  #     - worker
-  #   container_name: web
-  #   restart: unless-stopped
-  #   logging:
-  #     driver: 'json-file'
-  #     options:
-  #       max-size: '50m'
-  #       max-file: '5'
-  #   environment:
-  #     REACT_APP_API_URL: ${API_ROOT_URL}
-  #     REACT_APP_ENVIRONMENT: ${NODE_ENV}
-  #     REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
-  #     REACT_APP_DOCKER_HOSTED_ENV: 'true'
-  #     REACT_APP_WS_URL: ${REACT_APP_WS_URL}
-  #   ports:
-  #     - 4200:4200
+  web:
+    image: 'novu-web'
+    depends_on:
+      - api
+      - worker
+    container_name: web
+    restart: unless-stopped
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '50m'
+        max-file: '5'
+    environment:
+      REACT_APP_API_URL: ${API_ROOT_URL}
+      REACT_APP_ENVIRONMENT: ${NODE_ENV}
+      REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
+      REACT_APP_DOCKER_HOSTED_ENV: 'true'
+      REACT_APP_WS_URL: ${REACT_APP_WS_URL}
+    ports:
+      - 4200:4200
   proxy:
     container_name: proxy
     build:

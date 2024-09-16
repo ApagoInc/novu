@@ -14,7 +14,14 @@ export class ApiService {
     const jar = new CookieJar();
 
     if (!process.env.LAKESIDE_API) {
-      throw new InternalServerErrorException(`Server environment does not have the required LAKESIDE_API value defined.Must define LAKESIDE_API, LAKESIDE_EMAIL, and LAKESIDE_PASSWORD.`)
+      throw new InternalServerErrorException(
+        `Server environment does not have the required LAKESIDE_API value defined.Must define LAKESIDE_API, LAKESIDE_EMAIL, and LAKESIDE_PASSWORD.`
+      );
+    }
+    if (process.env.LAKESIDE_API && process.env.LAKESIDE_EMAIL) {
+      console.log(
+        `[INFO] *** API server is pointed at the following LSC API: ${process.env.LAKESIDE_API}; Using the following email: ${process.env.LAKESIDE_EMAIL}`
+      );
     }
     const instance = wrapper(axios.create({ jar, baseURL: process.env.LAKESIDE_API }));
 
@@ -105,7 +112,10 @@ export class ApiService {
     } catch (error) {
       Logger.error('Error in getUser:');
       Logger.error(error);
-      throw new UnauthorizedException({message: 'User does not have the required permissions to participate in Novu notifications.', reason: 'insufficient_permissions'});
+      throw new UnauthorizedException({
+        message: 'User does not have the required permissions to participate in Novu notifications.',
+        reason: 'insufficient_permissions',
+      });
     }
   }
 

@@ -37,6 +37,9 @@ RUN if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
 
 WORKDIR /usr/src/app/apps/ws
 
+RUN cp src/.env dist/src/.env
+RUN cp src/.env dist/src/config/.env
+
 RUN cp src/.example.env dist/src/.env
 RUN cp src/.env.test dist/src/.env.test
 RUN cp src/.env.development dist/src/.env.development

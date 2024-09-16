@@ -1,4 +1,5 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-npx --no-install commitlint --edit "$1"
+echo "For the Apago fork, skipping commitlint - because we aren't observing the commit msg conventions of the main branch."
+# npx --no-install commitlint --edit "$1"
