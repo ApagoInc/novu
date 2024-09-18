@@ -71,15 +71,55 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       requestQuery.read = { $in: [true, false] };
     }
 
+    const payloadSearch: { $or: { [dottedObjectKey: string]: { $regex: string; $options?: string } }[] } = { $or: [] };
+
     if (query.payload) {
-      requestQuery = {
-        ...requestQuery,
-        ...getFlatObject({ payload: query.payload }),
-      };
+      console.log('in getFilterQueryForMessage - got a query.payload value.');
+      // requestQuery = {
+      //   ...requestQuery,
+      //   ...getFlatObject({ payload: query.payload }),
+      // };
+
+      for (const secondaryIdField of ['ISBN13', 'ISBN10', 'CustomerReference']) {
+        if (secondaryIdField in query.payload && query.payload[secondaryIdField]) {
+          console.log(
+            'Found a value for field',
+            secondaryIdField,
+            'in the payload object - adding to the $or query...'
+          );
+
+          const dotKey = `payload.${secondaryIdField}`;
+
+          payloadSearch.$or.push({
+            // payload: { [secondaryIdField]: { $regex: query.payload[secondaryIdField], $options: 'i' }}
+            [dotKey]: { $regex: query.payload[secondaryIdField], $options: 'i' },
+          });
+          // requestQuery = {...requestQuery, }
+        }
+      }
+
+      console.log('request query after payload added:', JSON.stringify(query));
     }
 
-    if (query.content) {
+    // if any of those values exist, our condition is:
+    // message matches content OR message matches payload.field1 OR message matches payload.field2...
+
+    if (payloadSearch.$or.length > 0) {
+      requestQuery = { ...requestQuery, $or: payloadSearch.$or };
+      if (query.content) {
+        // We're not dotting a path to content, because it's top level:
+        requestQuery.$or?.push({ content: { $regex: query.content, $options: 'i' } });
+      }
+      console.log(
+        'The query did have payloadSearch values in the $or statement. Making query with requestQuery:',
+        JSON.stringify(requestQuery)
+      );
+    } else if (query.content) {
       requestQuery = { ...requestQuery, content: { $regex: query.content, $options: 'i' } };
+      console.log(
+        'Did not have payloadSearch values in the payload $or statement. Making query with requestQuery:',
+        JSON.stringify(requestQuery)
+      );
     }
 
     return requestQuery;
