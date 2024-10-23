@@ -29,7 +29,8 @@ RUN echo "HTTPS_KEY_OS_PATH: ${HTTPS_KEY_OS_PATH}"
 
 RUN echo "HTTPS_CERT_OS_PATH ${HTTPS_CERT_OS_PATH}"
 
-# COPY ${HTTPS_CERT_OS_PATH} ${HTTPS_KEY_OS_PATH} ./certs
+COPY ${HTTPS_CERT_OS_PATH} ./certs  
+COPY ${HTTPS_KEY_OS_PATH} ./certs
 
 # CMD ["sleep", "infinity"]   
 # For debugging in container - run the above with `docker compose up --build proxy -d`    - allow using shell inside container with subsequent 'docker exec -it sh proxy'

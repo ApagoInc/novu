@@ -61,33 +61,10 @@
     "title": "Proofing Events",
     "events": [
       {
-        "label": "Page Review(s) Requested",
-        "value": "PAGE_REVIEWS_REQUESTED",
-        "has_parts": true
-      },
-      {
-        "label": "Component Review Requested",
-        "value": "COMPONENT_REVIEW_REQUESTED",
-        "has_parts": true
-      },
-      {
         "label": "Title Review Requested",
         "value": "TITLE_REVIEW_REQUESTED"
       },
-      {
-        "label": "Page Approval(s) Requested",
-        "value": "PAGE_APPROVALS_REQUESTED",
-        "has_parts": true
-      },
-      {
-        "label": "Component Approval Requested",
-        "value": "COMPONENT_APPROVAL_REQUESTED",
-        "has_parts": true
-      },
-      {
-        "label": "Title Approval Requested",
-        "value": "TITLE_APPROVAL_REQUESTED"
-      },
+
       {
         "label": "Page Proof(s) Approved",
         "value": "PAGE_PROOFS_APPROVED",
@@ -104,12 +81,42 @@
         "has_parts": true
       },
       {
-        "label": "Title Proof Approved",
-        "value": "TITLE_PROOF_APPROVED"
+        "label": "Component Checked In",
+        "value": "COMPONENT_CHECKED_IN",
+        "has_parts": true
       },
       {
         "label": "Title Ready for Delivery",
         "value": "TITLE_READY_FOR_DELIVERY"
+      }
+    ]
+  },
+  {
+    "title": "Download Events",
+    "events": [
+      {
+        "label": "RTO Proof Download Ready",
+        "value": "RTO_PROOF_DOWNLOAD_READY"
+      }
+    ]
+  },
+  {
+    "title": "Administrative Events",
+    "events": [
+      {
+        "label": "User Was Created",
+        "value": "USER_WAS_CREATED",
+        "administrative": true
+      },
+      {
+        "label": "User Was Modified",
+        "value": "USER_WAS_MODIFIED",
+        "administrative": true
+      },
+      {
+        "label": "User Was Deleted",
+        "value": "USER_WAS_DELETED",
+        "administrative": true
       }
     ]
   }

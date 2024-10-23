@@ -94,6 +94,10 @@ export class ApiService {
     page: number,
     { payload, ...rest }: IStoreQuery = {}
   ): Promise<IPaginatedResponse<IMessage>> {
+    console.log(
+      'in getNotificationsList - payload string:',
+      JSON.stringify(payload)
+    );
     const payloadString = payload ? btoa(JSON.stringify(payload)) : undefined;
 
     return await this.httpClient.getFullResponse(

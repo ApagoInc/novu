@@ -7,6 +7,7 @@ import {
   UseGuards,
   UnauthorizedException,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { SubscriberSession, UserSession } from '../shared/framework/user.decorator';
 import { AuthGuard } from '@nestjs/passport';
@@ -179,14 +180,12 @@ export class ApagoController {
       permissions: [],
     });
 
-    if (user?.Status !== "active") {
-      throw new UnauthorizedException(
-        {
-          reason: 'user_not_active', 
-          message: `User must be in Status 'active' to participate in Novu notifications.`
-        })
+    if (user?.Status !== 'active') {
+      throw new UnauthorizedException({
+        reason: 'user_not_active',
+        message: `User must be in Status 'active' to participate in Novu notifications.`,
+      });
     }
-
 
     if (!user) throw new UnauthorizedException('User not found!');
 
@@ -282,6 +281,34 @@ export class ApagoController {
   @UseGuards(JwtAuthGuard)
   @Post('/trigger/informative')
   async triggerInformativeEvents(@UserSession() user: IJwtPayload, @Body() body: InformativeEventTriggerBodyDto) {
+    // We also support sending discrete notifications to just one or several recipients, IF that is requested here.
+    const specialOptions = body.payload?.specialOptions;
+    console.log('body, and body.payload:', JSON.stringify(body), JSON.stringify(body.payload));
+    const discrete =
+      specialOptions &&
+      specialOptions.discrete &&
+      (specialOptions.discrete === 'true' || specialOptions.discrete === true);
+    const recipients =
+      discrete && specialOptions.recipients && Array.isArray(specialOptions.recipients)
+        ? specialOptions.recipients
+        : undefined;
+
+    // TODO - better validation on recipients
+    console.log(
+      'in /trigger/informative post - got the following values:',
+      JSON.stringify({
+        specialOptions,
+        discrete,
+        recipients,
+      })
+    );
+
+    if (discrete) {
+      if (!recipients || (recipients && recipients.length === 0)) {
+        throw new BadRequestException('Cannot post discrete notification without at least one recipient.');
+      }
+    }
+
     const event = this.apagoService.informativeEvents
       .flatMap((val) => val.events)
       .find((val) => val.value == body.event);
@@ -310,29 +337,35 @@ export class ApagoController {
     );
 
     let toList: string[] = [];
-
-    if (!event?.administrative) {
-      toList = subscribers.filter((item) => item.allTitles === true).map((item) => item.subscriber.subscriberId);
-      const myTitles = subscribers.filter((item) => item.allTitles !== true);
-
-      if (myTitles.length > 0) {
-        const apiService = new ApiService();
-        await apiService.init();
-        await apiService.login();
-        await apiService.setAccount(body.accountId);
-
-        for (const subscriber of myTitles) {
-          const hasJobInList = await apiService.getJobList(
-            subscriber.subscriber.subscriberId,
-            body.jobAccountId as string,
-            body.jobId as string
-          );
-          if (hasJobInList) toList.push(subscriber.subscriber.subscriberId);
-        }
-      }
+    if (discrete && recipients) {
+      // TODO - pass subscriber IDs (which are LSP user IDs)
+      toList = recipients;
     } else {
-      toList = subscribers.map((item) => item.subscriber.subscriberId);
+      if (!event?.administrative) {
+        toList = subscribers.filter((item) => item.allTitles === true).map((item) => item.subscriber.subscriberId);
+        const myTitles = subscribers.filter((item) => item.allTitles !== true);
+
+        if (myTitles.length > 0) {
+          const apiService = new ApiService();
+          await apiService.init();
+          await apiService.login();
+          await apiService.setAccount(body.accountId);
+
+          for (const subscriber of myTitles) {
+            const hasJobInList = await apiService.getJobList(
+              subscriber.subscriber.subscriberId,
+              body.jobAccountId as string,
+              body.jobId as string
+            );
+            if (hasJobInList) toList.push(subscriber.subscriber.subscriberId);
+          }
+        }
+      } else {
+        toList = subscribers.map((item) => item.subscriber.subscriberId);
+      }
     }
+
+    console.log('Got the following value for toList:', JSON.stringify(toList));
 
     return this.parseEventRequest.execute(
       ParseEventRequestCommand.create({
