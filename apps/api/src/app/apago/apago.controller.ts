@@ -336,28 +336,92 @@ export class ApagoController {
       })
     );
 
+    const jobAssociatedAccounts: { [acct in 'parentAcct' | 'bookAcct' | 'tepAcct']?: string } | undefined =
+      body.payload.jobAssociatedAccounts;
+
+    if (jobAssociatedAccounts) {
+      console.log(
+        'got a jobAssociatedAccounts value of',
+        jobAssociatedAccounts,
+        '- for myTitles subscribers, these accounts will be checked on their JobsList.'
+      );
+    } else {
+      console.log(
+        `No jobAssociatedAccounts value was found. This could cause the job we're notifying for to not be found even if the user does have the job in their JobsList.`
+      );
+    }
+
     let toList: string[] = [];
     if (discrete && recipients) {
       // TODO - pass subscriber IDs (which are LSP user IDs)
       toList = recipients;
     } else {
       if (!event?.administrative) {
+        console.log('debug - preparing toList');
         toList = subscribers.filter((item) => item.allTitles === true).map((item) => item.subscriber.subscriberId);
+
+        console.log('debug - first iteration of toList, with only the "allTitles: true" subscribers:', toList);
         const myTitles = subscribers.filter((item) => item.allTitles !== true);
 
+        console.log('debug - list of users with allTitles: false (myTitles users):', toList);
         if (myTitles.length > 0) {
+          console.log('debug - preparing to check for jobs in subscribed users lists:');
+
           const apiService = new ApiService();
           await apiService.init();
           await apiService.login();
+          // however many accounts the job might possibly be in here,
+          // we have to check for them.
+          if (jobAssociatedAccounts) {
+            console.log(
+              'Will check JobsList for following accounts from the jobAssociatedAccounts list:',
+              JSON.stringify(jobAssociatedAccounts)
+            );
+            const acctsToCheck = Object.values(jobAssociatedAccounts);
+            console.log('accounts to check', acctsToCheck);
+          }
+
           await apiService.setAccount(body.accountId);
 
+          console.log(
+            'debug - before checking each myTitles subscriber JobsList for job',
+            body.jobId,
+            'in account',
+            body.jobAccountId,
+            "- the api service's account has been set to",
+            body.accountId
+          );
+
+          // TODO - consider updating this to set the apiService account to always be jobAssociatedAccount.parentAcct.
+          // Might work the best.
+
           for (const subscriber of myTitles) {
+            console.log(
+              'debug - checking JobsList of subscriber',
+              subscriber.subscriber.subscriberId,
+              '- seeing if the job is in their jobslist'
+            );
+
             const hasJobInList = await apiService.getJobList(
               subscriber.subscriber.subscriberId,
               body.jobAccountId as string,
-              body.jobId as string
+              body.jobId as string,
+              body.payload?.jobAssociatedAccounts
             );
-            if (hasJobInList) toList.push(subscriber.subscriber.subscriberId);
+            if (hasJobInList) {
+              console.log(
+                'user',
+                subscriber.subscriber.subscriberId,
+                'had the job in their JobsList - adding this user to the toList, to receive this notification'
+              );
+              toList.push(subscriber.subscriber.subscriberId);
+            } else {
+              console.log(
+                'user',
+                subscriber.subscriber.subscriberId,
+                'did NOT have the job in their JobsList - user will not be added to the toList'
+              );
+            }
           }
         }
       } else {
@@ -365,7 +429,10 @@ export class ApagoController {
       }
     }
 
-    console.log('Got the following value for toList:', JSON.stringify(toList));
+    console.log(
+      'Got the following final value for toList, right before sending notifications:',
+      JSON.stringify(toList)
+    );
 
     return this.parseEventRequest.execute(
       ParseEventRequestCommand.create({

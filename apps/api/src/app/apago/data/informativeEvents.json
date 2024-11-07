@@ -88,6 +88,10 @@
       {
         "label": "Title Ready for Delivery",
         "value": "TITLE_READY_FOR_DELIVERY"
+      },
+      {
+        "label": "Checkout Complete",
+        "value": "CHECKOUT_COMPLETE"
       }
     ]
   },

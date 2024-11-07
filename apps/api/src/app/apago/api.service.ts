@@ -119,18 +119,85 @@ export class ApiService {
     }
   }
 
-  async getJobList(id: string, jobAccountId: string, jobId: string) {
+  async getJobList(
+    id: string,
+    jobAccountId: string,
+    jobId: string,
+    jobAssocAccts?: { [acct in 'parentAcct' | 'bookAcct' | 'tepAcct']?: string } | undefined
+  ) {
     try {
+      console.log(
+        'in getJobList for the following params:',
+        '(id is user ID)',
+        JSON.stringify({ id, jobAccountId, jobId })
+      );
+
+      console.log('calling /admin/user/' + id);
       const res = await this.instance.get(`/admin/user/${id}`);
+
+      console.log('response details:', res.status, res.statusText);
 
       const { JobsList } = res.data;
 
-      if (!JobsList) return false;
+      // Here, we have to consider if we can always check all jobAssocAccts WITHOUT having to change the currently set account each time.
 
-      const list = JobsList[jobAccountId];
+      // Maybe, at the upper level, we could always set the acct to the parentAcct value - which might always reliably give us access to all 3 accounts' lists.
 
-      return list.includes(jobId);
+      console.log('JobsList obtained in data:', JobsList);
+
+      if (!JobsList) {
+        console.log('did not obtain a JobsList back from the call. Returning false for getJobList.');
+        return false;
+      }
+
+      // Again, be aware of the possibility that we might have to change the currently set account, but for now:
+      if (jobAssocAccts) {
+        if (jobAssocAccts.parentAcct) {
+          console.log('checking JobsList, for the list for parentAcct', jobAssocAccts.parentAcct);
+          const list = JobsList[jobAssocAccts.parentAcct];
+          console.log('value of list for that account:', list);
+          const found = list?.includes(jobId);
+          console.log('Was the list was found to include the job under ID', jobId, '? ->', String(found));
+          if (found) {
+            return found;
+          }
+        }
+        if (jobAssocAccts.bookAcct) {
+          console.log('checking JobsList, for the list for bookAcct', jobAssocAccts.bookAcct);
+          const list = JobsList[jobAssocAccts.bookAcct];
+          console.log('value of list for that account:', list);
+          const found = list?.includes(jobId);
+          console.log('Was the list was found to include the job under ID', jobId, '? ->', String(found));
+          if (found) {
+            return found;
+          }
+        }
+        if (jobAssocAccts.tepAcct) {
+          console.log('checking JobsList, for the list for tepAcct', jobAssocAccts.tepAcct);
+          const list = JobsList[jobAssocAccts.tepAcct];
+          console.log('value of list for that account:', list);
+          const found = list?.includes(jobId);
+          console.log('Was the list was found to include the job under ID', jobId, '? ->', String(found));
+          if (found) {
+            return found;
+          }
+        }
+        console.log('Could not find job in any of the listed associated accounts. Returning false');
+        return false;
+      } else {
+        console.log('no jobAssociatedAccounts was defined! Just checking with the normal job account ID.');
+        console.log('checking JobsList, for the list for account', jobAccountId);
+        const list = JobsList[jobAccountId];
+
+        console.log('value of list for that account:', list);
+
+        console.log('Was the list was found to include the job under ID', jobId, '? ->', String(list.includes(jobId)));
+
+        return list.includes(jobId);
+      }
     } catch (error) {
+      console.log('error in getJobList:', error);
+      console.log('due to error, just returning false for getJobList.');
       return false;
     }
   }
