@@ -10,6 +10,17 @@ export class InformativeSubscribers {
   constructor(private informativeSubscriptionsRepository: InformativeSubscriptionsRepository) {}
 
   async execute(command: InformativeSubscribersCommand) {
+    console.log(
+      'in usecase of InformativeSubscribersCommand - about to fetch subscribers, using the following data:',
+      JSON.stringify({
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _templateId: command.templateId,
+        accountId: command.accountId,
+        part: command.part,
+      }),
+      '(Note: supplying part queries where not expected (i.e. job-level notifs) will cause zero subscribers to be returned.)'
+    );
     const subscribers = await this.informativeSubscriptionsRepository.getSubscribers({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,

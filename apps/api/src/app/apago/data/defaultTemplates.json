@@ -20,7 +20,8 @@
   "USER_WAS_DELETED": "[{{accountName}}] User deleted",
   "RTO_PROOF_DOWNLOAD_READY": "[{{accountName}}] RTO proofs are now ready for download",
   "COMPONENT_CHECKED_IN": "[{{accountName}}] {{componentName}} component checked in for title {{titleName}}",
-  "CHECKOUT_COMPLETE": "[{{accountName}}] {{titleName}} - {{componentName}} Checkout complete",
+  "COMPONENT_CHECKOUT_COMPLETE": "[{{accountName}}] {{titleName}} - {{componentName}} component checkout complete",
+  "TITLE_CHECKOUT_COMPLETE": "[{{accountName}}] {{titleName}} - Checkout complete",
   "Preflight1_ApplyFix": "[{{accountName}}] {{titleName}} - {{componentName}} component has Preflight 1 issues that need to be resolved",
   "Preflight1_Signoff": "[{{accountName}}] {{titleName}} - {{componentName}} component page proofs are ready to be reviewed",
   "Preflight2_Signoff": "[{{accountName}}] {{titleName}} - {{componentName}} component is ready to be approved to print"

@@ -363,7 +363,8 @@ export class ApagoController {
         console.log('debug - first iteration of toList, with only the "allTitles: true" subscribers:', toList);
         const myTitles = subscribers.filter((item) => item.allTitles !== true);
 
-        console.log('debug - list of users with allTitles: false (myTitles users):', toList);
+        console.log('debug - list of users with allTitles: false (myTitles users):', myTitles);
+
         if (myTitles.length > 0) {
           console.log('debug - preparing to check for jobs in subscribed users lists:');
 
