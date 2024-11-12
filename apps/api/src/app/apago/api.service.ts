@@ -46,8 +46,24 @@ export class ApiService {
     await this.login();
     await this.setAccount(data.accountId);
     await this.getJob(data.jobId);
-    await this.getUser(data.userId, data.accountId, ['Stakeholder_Edit', data.stage]);
 
+    // The *editing* user really only has to have Stakeholder_Edit. For the *editing* user,
+    // whether or not they have the permission for the stakeholder action (data.stage) is not relevant.
+    const stakeholderEditorRequiredPerms = ['Stakeholder_Edit'];
+    console.log('in getStakeholder with the following data:', JSON.stringify(data));
+    console.log(
+      'About to check permissions for the editing user. Will run getUser with the following params - userId:',
+      data.userId,
+      '- accountId:',
+      data.accountId,
+      'required permissions:',
+      stakeholderEditorRequiredPerms
+    );
+
+    // Check the permissions of the editing user.
+    await this.getUser(data.userId, data.accountId, [...stakeholderEditorRequiredPerms]);
+
+    // Having gotten here without erroring out, now get the *requested* user's user object, and make sure they have the permission to perform the action that will be added to their stakeholder status (`data.stage` is the permission required).
     return await this.getUser(data.stakeholderId, data.accountId, [data.stage]);
   }
 

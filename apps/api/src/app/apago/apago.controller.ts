@@ -86,6 +86,9 @@ export class ApagoController {
     @Param('jobId') jobId: string,
     @Param('accountId') accountId: string
   ) {
+    // Let's be very clear:
+    // userId is the user EDITING stakeholders.
+    // stakeholderId is the user being edited as a stakeholder.
     const stakeholderUser = await this.apagoService.checkStakeholderPermissions({
       userId: subscriberSession.subscriberId,
       jobId,
