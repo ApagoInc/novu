@@ -438,17 +438,70 @@ export class ApagoController {
       JSON.stringify(toList)
     );
 
-    return this.parseEventRequest.execute(
-      ParseEventRequestCommand.create({
-        userId: user._id,
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        identifier: template.triggers[0].identifier,
-        payload: body.payload || {},
-        overrides: {},
-        to: toList,
-      })
-    );
+    // There is one rare additional case, where we also want to inform a relevant group of stakeholders about one of these events.
+    // If a "COMPONENT_PROOF_APPROVED" event happens, we need to notify the stakeholders for that job and part(s).
+    // TODO - rewrite if needed
+    let approveToPrintSpecialPromise;
+    if (body.event === 'COMPONENT_PROOF_APPROVED') {
+      console.log(
+        'Got a COMPONENT_PROOF_APPROVED event. Going to also notify all stakeholders for job',
+        body.jobId,
+        'and part',
+        body.part
+      );
+
+      const approveToPrintStakeholderSubs = await this.stakeholderSubscribers.execute(
+        StakeholderSubscribersCommand.create({
+          stage: 'Preflight2_Signoff',
+          jobId: body.jobId || '',
+          part: body.part || '',
+          organizationId: user.organizationId,
+          environmentId: user.environmentId,
+        })
+      );
+
+      // Subscribers that should receive this special stakeholder notification
+      const approveToPrintStakeholderSubIdList = approveToPrintStakeholderSubs.map(
+        (item) => item.subscriber.subscriberId
+      );
+
+      console.log(
+        'in POST /trigger/informative for special stakeholders approve to print case - got the following approve to print stakeholders id list, to send to:',
+        JSON.stringify(approveToPrintStakeholderSubIdList)
+      );
+
+      approveToPrintSpecialPromise = this.parseEventRequest.execute(
+        ParseEventRequestCommand.create({
+          userId: user._id,
+          environmentId: user.environmentId,
+          organizationId: user.organizationId,
+          identifier: `${slugify('Approve to Print-complete', {
+            lower: true,
+            strict: true,
+          })}`,
+          payload: body.payload || {},
+          overrides: {},
+          to: approveToPrintStakeholderSubIdList,
+        })
+      );
+    }
+
+    const approveToPrintCompleteStakeholdersP = approveToPrintSpecialPromise || Promise.resolve();
+
+    return Promise.all([
+      this.parseEventRequest.execute(
+        ParseEventRequestCommand.create({
+          userId: user._id,
+          environmentId: user.environmentId,
+          organizationId: user.organizationId,
+          identifier: template.triggers[0].identifier,
+          payload: body.payload || {},
+          overrides: {},
+          to: toList,
+        })
+      ),
+      approveToPrintCompleteStakeholdersP,
+    ]);
   }
 
   @ExternalApiAccessible()
@@ -585,6 +638,7 @@ export class ApagoController {
             environmentId: user.environmentId,
             organizationId: user.organizationId,
             // TODO - the identifiers for these two MUST be kept as "<original stakeholder event identifier>-complete"
+            // TODO - fix how fragile the identifiers are here - (label?)
             identifier: `${slugify(`${priorStageObj?.label || priorStage}-complete`, {
               lower: true,
               strict: true,
