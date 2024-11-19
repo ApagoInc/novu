@@ -455,9 +455,68 @@ export class ApagoController {
   @UseGuards(JwtAuthGuard)
   @Post('/trigger/stakeholder')
   async trackStakeholderEvent(@UserSession() user: IJwtPayload, @Body() body: StakeholderEventTriggerBodyDto) {
-    const stage = this.apagoService.stakeholderStages.find((val) => val.value == body.stage);
+    const stage = this.apagoService.stakeholderStages.find((val) => val.value === body.stage);
 
     if (!stage) throw new NotFoundException(`Stage ${body.stage} not found!`);
+
+    // S1 - "Preflight1_ApplyFix"
+    // S2 - "Preflight1_Signoff"
+    // S3 - "Preflight2_Signoff"
+
+    try {
+      console.log('running POST /trigger/stakeholder for the following input:', JSON.stringify(body));
+    } catch (err) {
+      console.log('Error in POST /trigger/stakeholder when attempting stringify on the request body:', err);
+    }
+
+    // See if the current stage had a prior stage
+    const priorStage = this.apagoService.stakeholderStages.find((val) => val.value === body.stage)?.prior;
+    const priorStageObj = priorStage
+      ? this.apagoService.stakeholderStages.find((val) => val.value === priorStage)
+      : undefined;
+
+    if (priorStage) {
+      console.log('got the following as the prior stage for the notification:', priorStage);
+      if (priorStageObj) {
+        console.log(
+          'got the following as the prior stage object from the stages object array:',
+          JSON.stringify(priorStageObj)
+        );
+      } else {
+        console.log(
+          'WARNING: got priorStage as',
+          priorStage,
+          'but did not find prior stage obj in the stages object array when searched by "value" property.'
+        );
+      }
+    }
+
+    const dedupeCompletionNotifs = 'dedupeCompletionNotifs' in body ? body.dedupeCompletionNotifs : true;
+
+    if (priorStage) {
+      console.log(
+        'in POST /trigger/stakeholder - received a post trigger for the stage',
+        stage,
+        '- subscribers to the previous stage,',
+        priorStage,
+        ', also need to be notified that it is now complete.'
+      );
+      console.log(
+        'using a value of',
+        String(dedupeCompletionNotifs),
+        'for dedupeCompletionNotifs. If true, subscribers won\'t receive both a "prior stage complete" and "next stage needs action" notif. They will only receive one or the other.'
+      );
+    }
+
+    // TODO -
+    // Setting up the stage completed notifications:
+
+    // If stage is S2 or S3, send "completed" notifications. I.e.,
+    // Notification to take action for S2 => S1 completed
+    // Notification to take action for S3 => S2 completed
+    // Is it ALWAYS true that the S2/S3 notifications to take action occur at the SAME time that S1/S2 is completed?
+
+    // Maybe we ensure it is by making sure the LSP API passes a flag telling us that it did just change - i.e, was just now completed. (if that's not duplicate info.)
 
     const subscribers = await this.stakeholderSubscribers.execute(
       StakeholderSubscribersCommand.create({
@@ -469,21 +528,91 @@ export class ApagoController {
       })
     );
 
+    // Subscribers that should receive the normal stakeholder notification
     const toList = subscribers.map((item) => item.subscriber.subscriberId);
 
-    return this.parseEventRequest.execute(
-      ParseEventRequestCommand.create({
-        userId: user._id,
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        identifier: `${slugify(stage?.label, {
-          lower: true,
-          strict: true,
-        })}`,
-        payload: body.payload || {},
-        overrides: {},
-        to: toList,
-      })
-    );
+    console.log('in POST /trigger/stakeholder - got the following normal stakeholders toList:', JSON.stringify(toList));
+
+    // If there's a prior stage completed that we need to notify for, then
+    // get the list of those subscribed to this particular stage
+    const priorStageSubs = priorStage
+      ? await this.stakeholderSubscribers.execute(
+          StakeholderSubscribersCommand.create({
+            stage: priorStage,
+            jobId: body.jobId,
+            part: body.part,
+            organizationId: user.organizationId,
+            environmentId: user.environmentId,
+          })
+        )
+      : undefined;
+
+    // if deduping - filter members of the toList against this.
+    // (This prevents those who are subscribed to BOTH stages receiving a "complete" notification;
+    // In this setup, the completion of the prior stage is implied when the user receives a notice to perform the next stage's action)
+    const priorStageToList = priorStageSubs
+      ?.map((item) => item.subscriber.subscriberId)
+      .filter((subscriberId) => {
+        if (dedupeCompletionNotifs) {
+          const isAlreadyOnInitialList = toList.find((id) => id === subscriberId);
+          if (isAlreadyOnInitialList) {
+            console.log(
+              'filtering for duplicate notifications - filtered subscriber id',
+              subscriberId,
+              'from the prior completion notif list. (Was already on the initial next action notif list)'
+            );
+            return false;
+          }
+          return true;
+        } else {
+          return subscriberId;
+        }
+      });
+
+    if (priorStageToList) {
+      console.log(
+        `in POST /trigger/stakeholder - got the following prior stage stakeholders toList - these users will be notified that "${stage.value}" is now complete:`,
+        JSON.stringify(priorStageToList)
+      );
+    }
+
+    // We'll always be running the initial toList request,
+    // but, if the prior stage data is defined here - we'll also be running that as part of the request.
+    const priorStageCompletionP = priorStageToList
+      ? this.parseEventRequest.execute(
+          ParseEventRequestCommand.create({
+            userId: user._id,
+            environmentId: user.environmentId,
+            organizationId: user.organizationId,
+            // TODO - the identifiers for these two MUST be kept as "<original stakeholder event identifier>-complete"
+            identifier: `${slugify(`${priorStageObj?.label || priorStage}-complete`, {
+              lower: true,
+              strict: true,
+            })}`,
+            payload: body.payload || {},
+            overrides: {},
+            to: priorStageToList,
+          })
+        )
+      : Promise.resolve();
+
+    return Promise.all([
+      this.parseEventRequest.execute(
+        ParseEventRequestCommand.create({
+          userId: user._id,
+          environmentId: user.environmentId,
+          organizationId: user.organizationId,
+          identifier: `${slugify(stage?.label, {
+            lower: true,
+            strict: true,
+          })}`,
+          payload: body.payload || {},
+          overrides: {},
+          to: toList,
+        })
+      ),
+      priorStageCompletionP,
+    ]);
+    // TODO - make sure that running this as an array of promises doesn't present issues elsewhere in the app.
   }
 }

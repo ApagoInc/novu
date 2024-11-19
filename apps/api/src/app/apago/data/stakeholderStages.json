@@ -5,10 +5,12 @@
   },
   {
     "label": "Approve Content",
-    "value": "Preflight1_Signoff"
+    "value": "Preflight1_Signoff",
+    "prior": "Preflight1_ApplyFix"
   },
   {
     "label": "Approve to Print",
-    "value": "Preflight2_Signoff"
+    "value": "Preflight2_Signoff",
+    "prior": "Preflight1_Signoff"
   }
 ]
