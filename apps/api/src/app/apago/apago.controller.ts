@@ -440,14 +440,22 @@ export class ApagoController {
 
     // There is one rare additional case, where we also want to inform a relevant group of stakeholders about one of these events.
     // If a "COMPONENT_PROOF_APPROVED" event happens, we need to notify the stakeholders for that job and part(s).
-    // TODO - rewrite if needed
-    let approveToPrintSpecialPromise;
+    // Currently, the above is the only case where a special trigger promise will be added to the `specialTriggers` array.
+    const specialTriggers: Promise<any>[] = [];
     if (body.event === 'COMPONENT_PROOF_APPROVED') {
       console.log(
         'Got a COMPONENT_PROOF_APPROVED event. Going to also notify all stakeholders for job',
         body.jobId,
         'and part',
         body.part
+      );
+
+      // Determine if we should de-deduplicate cases of what would be informing someone of the same thing twice through two different mediums.
+      const dedupeCompletionNotifs = 'dedupeCompletionNotifs' in body ? body.dedupeCompletionNotifs : true;
+
+      console.log(
+        '[COMPONENT_PROOF_APPROVED special stakeholder trigger] - Value for dedupeCompletionNotifs (default is true):',
+        String(dedupeCompletionNotifs)
       );
 
       const approveToPrintStakeholderSubs = await this.stakeholderSubscribers.execute(
@@ -460,33 +468,71 @@ export class ApagoController {
         })
       );
 
-      // Subscribers that should receive this special stakeholder notification
-      const approveToPrintStakeholderSubIdList = approveToPrintStakeholderSubs.map(
-        (item) => item.subscriber.subscriberId
+      // Get the acting approver's user ID (due to how Novu is set up, this will be an equal string value to their subscriber ID in the Novu system)
+      // This way, if the user is on both notification lists -
+      // we can filter the 'Approve to Print Complete' notification to keep it from going to them, alongside their informative approve to print subscription.
+      const actingUserId = body.payload.actorUserId;
+
+      console.log(
+        '[COMPONENT_PROOF_APPROVED special stakeholder trigger] - Got an acting user id of',
+        actingUserId || '(Could not get a value. Did the payload not have an actorUserId?)'
       );
+
+      // See if the acting approver's user ID is on the `toList` for the normal informative notification.
+      // If it is, and we're deduplicating - we will only send the informative one to this user.
+      const actingUserSubbedForInformative = actingUserId ? toList.includes(actingUserId) : false;
+
+      console.log(
+        '[COMPONENT_PROOF_APPROVED special stakeholder trigger] - acting user id of',
+        actingUserId,
+        'was found in the informative subs list? ->',
+        actingUserSubbedForInformative ? 'yes' : 'no'
+      );
+
+      // Subscribers that should receive this special stakeholder notification
+      const approveToPrintStakeholderSubIdList = approveToPrintStakeholderSubs
+        .map((item) => item.subscriber.subscriberId)
+        .filter(
+          dedupeCompletionNotifs && actingUserSubbedForInformative
+            ? (val) => {
+                // If deduping, we'll remove the value of the acting user's ID from the stakeholder notification list.
+                if (val !== actingUserId) {
+                  return true;
+                }
+                console.log(
+                  "Found a value in the approveToPrintStakeholderSubIdList that is equal to the user's ID that approved the job to print:",
+                  actingUserId,
+                  '- filtering this user out from the users that will receive the stakeholder approve to print complete notification. User will only receive the original "Component Proof Approved" informative notification.'
+                );
+                return false;
+              }
+            : (val) => val
+          // The above just passes the data through.
+        );
 
       console.log(
         'in POST /trigger/informative for special stakeholders approve to print case - got the following approve to print stakeholders id list, to send to:',
         JSON.stringify(approveToPrintStakeholderSubIdList)
       );
 
-      approveToPrintSpecialPromise = this.parseEventRequest.execute(
-        ParseEventRequestCommand.create({
-          userId: user._id,
-          environmentId: user.environmentId,
-          organizationId: user.organizationId,
-          identifier: `${slugify('Approve to Print-complete', {
-            lower: true,
-            strict: true,
-          })}`,
-          payload: body.payload || {},
-          overrides: {},
-          to: approveToPrintStakeholderSubIdList,
-        })
+      // Add the extra 'trigger' we have to run for stakeholder approve to print complete to the specialTriggers list
+      specialTriggers.push(
+        this.parseEventRequest.execute(
+          ParseEventRequestCommand.create({
+            userId: user._id,
+            environmentId: user.environmentId,
+            organizationId: user.organizationId,
+            identifier: `${slugify('Approve to Print-complete', {
+              lower: true,
+              strict: true,
+            })}`,
+            payload: body.payload || {},
+            overrides: {},
+            to: approveToPrintStakeholderSubIdList,
+          })
+        )
       );
     }
-
-    const approveToPrintCompleteStakeholdersP = approveToPrintSpecialPromise || Promise.resolve();
 
     return Promise.all([
       this.parseEventRequest.execute(
@@ -500,7 +546,7 @@ export class ApagoController {
           to: toList,
         })
       ),
-      approveToPrintCompleteStakeholdersP,
+      ...specialTriggers,
     ]);
   }
 
@@ -544,7 +590,7 @@ export class ApagoController {
       }
     }
 
-    const dedupeCompletionNotifs = 'dedupeCompletionNotifs' in body ? body.dedupeCompletionNotifs : true;
+    const dedupeCompletionNotifs = 'dedupeCompletionNotifs' in body ? body.dedupeCompletionNotifs : false;
 
     if (priorStage) {
       console.log(
@@ -557,7 +603,7 @@ export class ApagoController {
       console.log(
         'using a value of',
         String(dedupeCompletionNotifs),
-        'for dedupeCompletionNotifs. If true, subscribers won\'t receive both a "prior stage complete" and "next stage needs action" notif. They will only receive one or the other.'
+        'for dedupeCompletionNotifs (default is false). If true, subscribers won\'t receive both a "prior stage complete" and "next stage needs action" notif. They will only receive one or the other.'
       );
     }
 
