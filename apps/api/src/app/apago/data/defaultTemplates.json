@@ -24,5 +24,8 @@
   "TITLE_CHECKOUT_COMPLETE": "[{{accountName}}] {{titleName}} - Checkout complete",
   "Preflight1_ApplyFix": "[{{accountName}}] {{titleName}} - {{componentName}} component has Preflight 1 issues that need to be resolved",
   "Preflight1_Signoff": "[{{accountName}}] {{titleName}} - {{componentName}} component page proofs are ready to be reviewed",
-  "Preflight2_Signoff": "[{{accountName}}] {{titleName}} - {{componentName}} component is ready to be approved to print"
+  "Preflight2_Signoff": "[{{accountName}}] {{titleName}} - {{componentName}} component is ready to be approved to print",
+  "resolve-preflight-complete": "[{{accountName}}] {{titleName}} - {{componentName}} component - all Preflight 1 issues have been resolved",
+  "approve-content-complete": "[{{accountName}}] {{titleName}} - All {{componentName}} component page proofs have been reviewed",
+  "approve-to-print-complete": "[{{accountName}}] {{titleName}} - {{componentName}} component has been approved to print"
 }

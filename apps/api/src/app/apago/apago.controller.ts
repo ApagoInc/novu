@@ -468,46 +468,27 @@ export class ApagoController {
         })
       );
 
-      // Get the acting approver's user ID (due to how Novu is set up, this will be an equal string value to their subscriber ID in the Novu system)
-      // This way, if the user is on both notification lists -
-      // we can filter the 'Approve to Print Complete' notification to keep it from going to them, alongside their informative approve to print subscription.
-      const actingUserId = body.payload.actorUserId;
-
-      console.log(
-        '[COMPONENT_PROOF_APPROVED special stakeholder trigger] - Got an acting user id of',
-        actingUserId || '(Could not get a value. Did the payload not have an actorUserId?)'
-      );
-
-      // See if the acting approver's user ID is on the `toList` for the normal informative notification.
-      // If it is, and we're deduplicating - we will only send the informative one to this user.
-      const actingUserSubbedForInformative = actingUserId ? toList.includes(actingUserId) : false;
-
-      console.log(
-        '[COMPONENT_PROOF_APPROVED special stakeholder trigger] - acting user id of',
-        actingUserId,
-        'was found in the informative subs list? ->',
-        actingUserSubbedForInformative ? 'yes' : 'no'
-      );
+      // If dedupeCompletionNotifs is true and any users are on both notification lists -
+      // we will filter the 'Approve to Print Complete' notification to keep it from going to these users.
+      // These users will only receive the normal informative "COMPONENT_PROOF_APPROVED" notification.
 
       // Subscribers that should receive this special stakeholder notification
       const approveToPrintStakeholderSubIdList = approveToPrintStakeholderSubs
         .map((item) => item.subscriber.subscriberId)
         .filter(
-          dedupeCompletionNotifs && actingUserSubbedForInformative
+          dedupeCompletionNotifs
             ? (val) => {
-                // If deduping, we'll remove the value of the acting user's ID from the stakeholder notification list.
-                if (val !== actingUserId) {
-                  return true;
+                if (toList.includes(val)) {
+                  console.log(
+                    '- filtering user ID',
+                    val,
+                    'out from the users that will receive the stakeholder approve to print complete notification. User will only receive the original "Component Proof Approved" informative notification.'
+                  );
+                  return false;
                 }
-                console.log(
-                  "Found a value in the approveToPrintStakeholderSubIdList that is equal to the user's ID that approved the job to print:",
-                  actingUserId,
-                  '- filtering this user out from the users that will receive the stakeholder approve to print complete notification. User will only receive the original "Component Proof Approved" informative notification.'
-                );
-                return false;
+                return true;
               }
             : (val) => val
-          // The above just passes the data through.
         );
 
       console.log(
@@ -590,9 +571,27 @@ export class ApagoController {
       }
     }
 
-    const dedupeCompletionNotifs = 'dedupeCompletionNotifs' in body ? body.dedupeCompletionNotifs : false;
+    try {
+      console.log(' debug - value of payload:', JSON.stringify(body.payload));
+    } catch (err) {
+      console.log('error while trying to stringify payload for debug:', err, '- continuing on');
+    }
 
-    if (priorStage) {
+    // (We will almost always notify for completion of the prior stakeholder stage, except for a
+    // particular case in which we will conditionally post or not post a completion message:
+    // If the prior stage was Preflight1_ApplyFix("Resolve Preflight"), we will only post a "Resolve Preflight Complete" message if the payload has an additional flag, "notifyForRpfComplete", with a value of true.
+    const notifyForPrior =
+      priorStage && priorStage === 'Preflight1_ApplyFix' ? body.payload?.notifyForRpfComplete || false : true;
+
+    console.log(
+      'Got value of notifyForPrior as:',
+      notifyForPrior,
+      `Prior stage, ${priorStage}, will ${!notifyForPrior ? 'not ' : ''}be notified for.`
+    );
+
+    const dedupeCompletionNotifs = 'dedupeCompletionNotifs' in body ? body.dedupeCompletionNotifs : true;
+
+    if (notifyForPrior && priorStage) {
       console.log(
         'in POST /trigger/stakeholder - received a post trigger for the stage',
         stage,
@@ -603,7 +602,7 @@ export class ApagoController {
       console.log(
         'using a value of',
         String(dedupeCompletionNotifs),
-        'for dedupeCompletionNotifs (default is false). If true, subscribers won\'t receive both a "prior stage complete" and "next stage needs action" notif. They will only receive one or the other.'
+        'for dedupeCompletionNotifs (default is true). If true, subscribers won\'t receive both a "prior stage complete" and "next stage needs action" notif. They will only receive one or the other.'
       );
     }
 
@@ -634,17 +633,18 @@ export class ApagoController {
 
     // If there's a prior stage completed that we need to notify for, then
     // get the list of those subscribed to this particular stage
-    const priorStageSubs = priorStage
-      ? await this.stakeholderSubscribers.execute(
-          StakeholderSubscribersCommand.create({
-            stage: priorStage,
-            jobId: body.jobId,
-            part: body.part,
-            organizationId: user.organizationId,
-            environmentId: user.environmentId,
-          })
-        )
-      : undefined;
+    const priorStageSubs =
+      notifyForPrior && priorStage
+        ? await this.stakeholderSubscribers.execute(
+            StakeholderSubscribersCommand.create({
+              stage: priorStage,
+              jobId: body.jobId,
+              part: body.part,
+              organizationId: user.organizationId,
+              environmentId: user.environmentId,
+            })
+          )
+        : undefined;
 
     // if deduping - filter members of the toList against this.
     // (This prevents those who are subscribed to BOTH stages receiving a "complete" notification;

@@ -12,5 +12,17 @@
     "label": "Approve to Print",
     "value": "Preflight2_Signoff",
     "prior": "Preflight1_Signoff"
+  },
+  {
+    "label": "Resolve Preflight Complete",
+    "value": "resolve-preflight-complete"
+  },
+  {
+    "label": "Approve Content Complete",
+    "value": "approve-content-complete"
+  },
+  {
+    "label": "Approve to Print Complete",
+    "value": "approve-to-print-complete"
   }
 ]
