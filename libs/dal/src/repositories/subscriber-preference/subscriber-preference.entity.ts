@@ -15,6 +15,8 @@ export class SubscriberPreferenceEntity {
 
   _templateId: string;
 
+  accountId: string;
+
   enabled: boolean;
 
   channels: IPreferenceChannels;

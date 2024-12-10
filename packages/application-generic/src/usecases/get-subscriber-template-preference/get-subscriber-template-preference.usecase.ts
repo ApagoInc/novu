@@ -48,12 +48,30 @@ export class GetSubscriberTemplatePreference {
       throw new ApiException(`Subscriber ${command.subscriberId} not found`);
     }
     const initialActiveChannels = await this.getActiveChannels(command);
+
+    // So, even though elsewhere we differentiate subscriber preferences by accountId alongside these below parameters,
+    // here, one is being found just based on environment, subscriber, and template ID.
+    // Maybe this is ok.
+    // Because, we are not managing subscriptions at this level.
+    // We're instead using the added informative and stakeholder subscriptions system to determine who will receive what notifications.
+    // And even this is fetching whatever random first preference was set for a given template,
+    // I don't think the notification/channel preferences are being edited at this level...
     const subscriberPreference =
       await this.subscriberPreferenceRepository.findOne({
+        accountId: command.accountId,
         _environmentId: command.environmentId,
         _subscriberId: subscriber._id,
         _templateId: command.template._id,
       });
+
+    console.log(
+      'In execute for GetSubscriberTemplatePreferenceCommand - got the following subscriber preference:'
+    );
+    try {
+      console.log(JSON.stringify(subscriberPreference));
+    } catch (e) {
+      console.log('Failed to stringify:', subscriberPreference);
+    }
 
     const subscriberChannelPreference = subscriberPreference?.channels;
     const templateChannelPreference = command.template.preferenceSettings;

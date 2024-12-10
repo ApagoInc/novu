@@ -12,11 +12,14 @@ export class SubscriberPreferenceRepository extends BaseRepository<
     super(SubscriberPreference, SubscriberPreferenceEntity);
   }
 
+  // accountId: string;
+  // TODO - this does not appear to be used anywhere.
   async findSubscriberPreferences(
     environmentId: string,
     subscriberId: string,
     templatesIds: string[]
   ): Promise<SubscriberPreferenceEntity[]> {
+    console.log('!!! - findSubscriberPreferences is running.');
     return await this.find({
       _environmentId: environmentId,
       _subscriberId: subscriberId,

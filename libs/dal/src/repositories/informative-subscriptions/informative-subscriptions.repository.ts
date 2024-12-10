@@ -27,7 +27,7 @@ export class InformativeSubscriptionsRepository extends BaseRepository<
       .populate<{ template: { name: string } }>('template', 'name')
       .populate<{ preferences: any }>({
         path: 'preferences',
-        match: { _subscriberId: query._subscriberId },
+        match: { _subscriberId: query._subscriberId, accountId: query.accountId },
         select: 'channels',
       })
       .lean();

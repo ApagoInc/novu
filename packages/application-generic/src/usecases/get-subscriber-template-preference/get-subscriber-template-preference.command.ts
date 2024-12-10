@@ -1,5 +1,5 @@
 import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../commands';
 
@@ -8,4 +8,7 @@ export class GetSubscriberTemplatePreferenceCommand extends EnvironmentWithSubsc
   template: NotificationTemplateEntity;
 
   subscriber?: SubscriberEntity;
+
+  @IsString()
+  accountId: string;
 }

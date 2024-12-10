@@ -8,6 +8,7 @@ export class UpdatePreference {
 
   async execute(command: UpdatePreferenceCommand) {
     const updateCommand = UpdateSubscriberPreferenceCommand.create({
+      accountId: command.accountId,
       organizationId: command.organizationId,
       subscriberId: command.subscriberId,
       environmentId: command.environmentId,

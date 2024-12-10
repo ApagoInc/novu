@@ -19,4 +19,7 @@ export class UpdatePreferenceCommand extends EnvironmentCommand {
   @ValidateNested()
   @IsOptional()
   channel?: ChannelPreference;
+
+  @IsString()
+  accountId: string;
 }
