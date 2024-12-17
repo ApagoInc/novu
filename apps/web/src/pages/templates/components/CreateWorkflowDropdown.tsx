@@ -2,7 +2,7 @@ import { Skeleton } from '@mantine/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFile } from '@fortawesome/free-regular-svg-icons';
 import { faDiagramNext } from '@fortawesome/free-solid-svg-icons';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import { Button, Dropdown, PlusButton, Popover } from '../../../design-system';
 import { PlusCircle } from '../../../design-system/icons';

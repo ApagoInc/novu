@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { css, cx } from '@emotion/css';
 
 import { Header } from './header/Header';

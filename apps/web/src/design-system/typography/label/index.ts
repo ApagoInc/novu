@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 export const Label = styled.div<{ gradientColor?: 'red' | 'blue' | 'none' }>`
   height: 20px;

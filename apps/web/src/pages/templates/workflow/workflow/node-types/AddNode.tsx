@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { ActionIcon, useMantineTheme } from '@mantine/core';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import { Digest, Mail, Mobile, PlusCircleOutlined, Chat, Sms, InApp, Timer } from '../../../../../design-system/icons';
 import { colors, Dropdown, Text } from '../../../../../design-system';

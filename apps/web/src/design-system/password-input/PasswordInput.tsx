@@ -1,5 +1,5 @@
 import React, { ChangeEvent } from 'react';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { PasswordInputProps, PasswordInput as MantinePasswordInput } from '@mantine/core';
 import { colors } from '../config';
 import { inputStyles } from '../config/inputs.styles';

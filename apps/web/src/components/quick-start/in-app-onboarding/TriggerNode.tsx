@@ -2,7 +2,7 @@ import { Handle, Position } from 'react-flow-renderer';
 
 import { Button, colors, shadows, Text, Title } from '../../../design-system';
 
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { createStyles, Group, Popover, Stack, useMantineColorScheme } from '@mantine/core';
 import {
   ActorTypeEnum,

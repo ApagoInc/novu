@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { createStyles, Group, Popover as MantinePopover, UnstyledButton, useMantineColorScheme } from '@mantine/core';
 import {
   ChannelTypeEnum,

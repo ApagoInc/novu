@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Stack, Timeline, useMantineColorScheme } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { getApiKeys } from '../../../api/environment';

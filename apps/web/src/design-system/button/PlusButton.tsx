@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import { Button, IButtonProps } from './Button';
 import { Text } from '../typography/text/Text';

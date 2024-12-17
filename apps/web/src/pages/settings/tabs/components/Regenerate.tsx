@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { useMutation } from '@tanstack/react-query';
 import { showNotification } from '@mantine/notifications';
 import { Group } from '@mantine/core';

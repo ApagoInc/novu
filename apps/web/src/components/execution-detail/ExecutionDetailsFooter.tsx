@@ -1,5 +1,5 @@
 import { Group } from '@mantine/core';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import { GotAQuestionButton } from '../utils/GotAQuestionButton';
 import { Container } from '../../design-system';

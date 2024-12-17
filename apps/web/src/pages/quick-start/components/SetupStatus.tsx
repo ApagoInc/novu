@@ -1,7 +1,7 @@
 import { Group, Stack } from '@mantine/core';
 import { useEffect } from 'react';
 
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Button, colors, Text } from '../../../design-system';
 import { Label } from '../../../design-system/typography/label';
 import { When } from '../../../components/utils/When';

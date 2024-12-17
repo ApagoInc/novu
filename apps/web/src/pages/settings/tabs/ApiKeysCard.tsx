@@ -1,7 +1,7 @@
 import { ActionIcon, Input as MantineInput } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { useQuery } from '@tanstack/react-query';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import { Input, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';

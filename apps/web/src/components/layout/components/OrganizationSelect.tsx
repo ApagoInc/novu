@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as capitalize from 'lodash.capitalize';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { IOrganizationEntity } from '@novu/shared';
 
 import { Select } from '../../../design-system';

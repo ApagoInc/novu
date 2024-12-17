@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { useMantineColorScheme } from '@mantine/core';
 import { NotificationCenter, NovuProvider } from '@novu/notification-center';
 import { API_ROOT, WS_URL } from '../../../config';

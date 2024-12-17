@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { BoltGradient } from '../../../design-system/icons';
 import { colors, Text } from '../../../design-system';
 

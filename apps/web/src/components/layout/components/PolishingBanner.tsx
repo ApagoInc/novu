@@ -1,7 +1,7 @@
 import { useMantineTheme } from '@mantine/core';
 import { useSegment } from '../../providers/SegmentProvider';
 import { Close } from '../../../design-system/icons/actions/Close';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { useLocalStorage } from '@mantine/hooks';
 
 export function PolishingBanner() {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Container, Grid } from '@mantine/core';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import { ExecutionDetail } from './ExecutionDetail';
 import { ExecutionDetailRawSnippet } from './ExecutionDetailShowRaw';

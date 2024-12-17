@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { UnstyledButton, UnstyledButtonProps, createPolymorphicComponent } from '@mantine/core';
 
 export const Button = createPolymorphicComponent<'button', UnstyledButtonProps>(
