@@ -30,4 +30,7 @@ export class UserRegistrationBodyDto {
   @IsOptional()
   @IsEnum(SignUpOriginEnum)
   origin?: SignUpOriginEnum;
+
+  @IsOptional()
+  overrideKey?: string;
 }

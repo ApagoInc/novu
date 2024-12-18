@@ -15,6 +15,5 @@ export class UpdateSubscriberPreferenceCommand extends EnvironmentWithSubscriber
   @IsOptional()
   channel?: ChannelPreference;
 
-  @IsString()
-  accountId: string;
+  accountId: string | null;
 }

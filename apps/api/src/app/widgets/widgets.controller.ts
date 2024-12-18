@@ -336,6 +336,7 @@ export class WidgetsController {
   @Get('/preferences')
   async getSubscriberPreference(@SubscriberSession() subscriberSession: SubscriberEntity) {
     const command = GetSubscriberPreferenceCommand.create({
+      accountId: null,
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,

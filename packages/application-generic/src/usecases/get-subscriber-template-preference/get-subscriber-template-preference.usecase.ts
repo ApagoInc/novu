@@ -50,19 +50,45 @@ export class GetSubscriberTemplatePreference {
     const initialActiveChannels = await this.getActiveChannels(command);
 
     // So, even though elsewhere we differentiate subscriber preferences by accountId alongside these below parameters,
-    // here, one is being found just based on environment, subscriber, and template ID.
+    // here, one is POTENTIALLY being found just based on environment, subscriber, and template ID.
     // Maybe this is ok.
+    // It shouldn't really happen with the way accountIds are now applied to preferences.
     // Because, we are not managing subscriptions at this level.
     // We're instead using the added informative and stakeholder subscriptions system to determine who will receive what notifications.
-    // And even this is fetching whatever random first preference was set for a given template,
-    // I don't think the notification/channel preferences are being edited at this level...
+    // In the case of there not being an accountId to use here, the code will fetch whatever random first preference was set for a given template,
+    if (command.accountId) {
+      console.log(
+        'in execute of GetSubscriberTemplatePreferenceCommand - received the following value for accountId:',
+        command.accountId
+      );
+    } else {
+      if (command.accountId === null) {
+        // TODO - Maybe make this an error, moving forward?
+        console.log(
+          "WARNING! in execute of GetSubscriberTemplatePreferenceCommand - accountId was passed as null. Now, an accountId will not be used to query this subscriber's preferences!"
+        );
+      } else {
+        console.log(
+          'WARNING - in execute of GetSubscriberTemplatePreferenceCommand - accountId was not passed as either null or string! Value of accountId, stringified:',
+          JSON.stringify(command.accountId)
+        );
+      }
+    }
+
+    const subPrefQuery = {
+      ...(command.accountId ? { accountId: command.accountId } : {}),
+      _environmentId: command.environmentId,
+      _subscriberId: subscriber._id,
+      _templateId: command.template._id,
+    };
+
+    console.log(
+      'about to query subscriberPreference with the following query:',
+      JSON.stringify(subPrefQuery)
+    );
+
     const subscriberPreference =
-      await this.subscriberPreferenceRepository.findOne({
-        accountId: command.accountId,
-        _environmentId: command.environmentId,
-        _subscriberId: subscriber._id,
-        _templateId: command.template._id,
-      });
+      await this.subscriberPreferenceRepository.findOne(subPrefQuery);
 
     console.log(
       'In execute for GetSubscriberTemplatePreferenceCommand - got the following subscriber preference:'

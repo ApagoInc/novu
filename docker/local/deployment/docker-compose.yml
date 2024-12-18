@@ -68,6 +68,7 @@ services:
       LAKESIDE_EMAIL: ${LAKESIDE_EMAIL}
       LAKESIDE_PASSWORD: ${LAKESIDE_PASSWORD}
       RUN_ON_HTTP: true
+      API_OVERRIDE_KEY: ${API_OVERRIDE_KEY}
     ports:
       - '${API_PORT}:${API_PORT}'
   worker:
@@ -138,32 +139,40 @@ services:
       options:
         max-size: '50m'
         max-file: '5'
+    env_file: 
+      - .env
     environment:
+      MY_HOST: ${PROXY_HOST}
       REACT_APP_API_URL: ${API_ROOT_URL}
       REACT_APP_ENVIRONMENT: ${NODE_ENV}
       REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
       REACT_APP_DOCKER_HOSTED_ENV: 'true'
       REACT_APP_WS_URL: ${REACT_APP_WS_URL}
+      FRONT_BASE_URL: ${FRONT_BASE_URL}
+      FRONT_BASE_CONTEXT_PATH: ${FRONT_BASE_CONTEXT_PATH}
     ports:
       - 4200:4200
   proxy:
     container_name: proxy
     build:
-      context: ../../../apps/proxy # path all the way out to the apps/proxy dir
+      context: ../../../apps/proxy
       dockerfile: ./Dockerfile
-      # args:
-      #   HTTPS_CERT_OS_PATH: ${HTTPS_CERT_OS_PATH}
-      #   HTTPS_KEY_OS_PATH: ${HTTPS_KEY_OS_PATH}
-      #   HTTPS_CERT_CONTAINER_PATH: ${HTTPS_CERT_CONTAINER_PATH}
-      #   HTTPS_KEY_CONTAINER_PATH: ${HTTPS_KEY_CONTAINER_PATH}
       args:
-        PROXY_HOST_PORT: ${PROXY_HOST_PORT:-9000}
-        PROXY_CONTAINER_PORT: ${PROXY_CONTAINER_PORT:-9000}
-        DOCKER: ${DOCKER:-'true'}
+        NGINX_HOST: ${PROXY_HOST}
+        NGINX_PORT: "443"
+        HOST_NAME: ${HOST_NAME}
+        PROXY_HOST: ${PROXY_HOST}
         HTTPS_CERT_OS_PATH: ${HTTPS_CERT_OS_PATH}
         HTTPS_KEY_OS_PATH: ${HTTPS_KEY_OS_PATH}
-        HTTPS_CERT_CONTAINER_PATH: ${HTTPS_CERT_CONTAINER_PATH}
-        HTTPS_KEY_CONTAINER_PATH: ${HTTPS_KEY_CONTAINER_PATH}
+    image: nginx:1.27.3-alpine
+    volumes:
+      # Use this bind mount to monitor logs on the host machine, i.e. with fail2ban or similar
+      - type: bind
+        source: ${NGINX_LOG_MOUNT_HOST_DIR}
+        target: /var/log/nginx/
+    ports:
+    # host:container
+    - "443:443"
     restart: unless-stopped
     env_file: 
       - .env
@@ -172,44 +181,5 @@ services:
       options:
         max-size: '50m'
         max-file: '5'
-    ports:
-      - ${PROXY_HOST_PORT:-9000}:${PROXY_CONTAINER_PORT:-9000}
 volumes:
   mongodb: ~
-# (following is not used)
-# image:
-# widget:
-#   image: 'ghcr.io/novuhq/novu/widget:0.17.1'
-#   depends_on:
-#     - api
-#     - worker
-#     - web
-#   container_name: widget
-#   restart: unless-stopped
-#   logging:
-#     driver: 'json-file'
-#     options:
-#       max-size: '50m'
-#       max-file: '5'
-#   environment:
-#     REACT_APP_API_URL: ${API_ROOT_URL}
-#     REACT_APP_WS_URL: ${REACT_APP_WS_URL}
-#     REACT_APP_ENVIRONMENT: ${NODE_ENV}
-#     WIDGET_CONTEXT_PATH: ${WIDGET_CONTEXT_PATH}
-#   ports:
-#     - 4500:4500
-# embed:
-#   depends_on:
-#     - widget
-#   image: 'ghcr.io/novuhq/novu/embed:0.17.1'
-#   container_name: embed
-#   restart: unless-stopped
-#   logging:
-#     driver: 'json-file'
-#     options:
-#       max-size: '50m'
-#       max-file: '5'
-#   environment:
-#     WIDGET_URL: ${WIDGET_URL}
-#   ports:
-#     - 4701:4701

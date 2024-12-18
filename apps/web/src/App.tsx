@@ -64,89 +64,6 @@ import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
 
 library.add(far, fas);
 
-if (LOGROCKET_ID && window !== undefined) {
-  LogRocket.init(LOGROCKET_ID, {
-    release: packageJson.version,
-    rootHostname: 'novu.co',
-    console: {
-      shouldAggregateConsoleErrors: true,
-    },
-    network: {
-      requestSanitizer: (request) => {
-        // if the url contains token 'ignore' it
-        if (request.url.toLowerCase().indexOf('token') !== -1) {
-          // ignore the request response pair
-          return null;
-        }
-
-        // remove Authorization header from logrocket
-        request.headers.Authorization = undefined;
-
-        // otherwise log the request normally
-        return request;
-      },
-    },
-  });
-  setupLogRocketReact(LogRocket);
-}
-
-if (SENTRY_DSN) {
-  Sentry.init({
-    dsn: SENTRY_DSN,
-    integrations: [
-      new Integrations.BrowserTracing(),
-      new Sentry.Replay({
-        // Additional SDK configuration goes in here, for example:
-        maskAllText: true,
-        blockAllMedia: true,
-      }),
-    ],
-    environment: ENV,
-
-    /*
-     * This sets the sample rate to be 10%. You may want this to be 100% while
-     * in development and sample at a lower rate in production
-     */
-    replaysSessionSampleRate: 0.5,
-
-    /*
-     * If the entire session is not sampled, use the below sample rate to sample
-     * sessions when an error occurs.
-     */
-    replaysOnErrorSampleRate: 1.0,
-
-    /*
-     * Set tracesSampleRate to 1.0 to capture 100%
-     * of transactions for performance monitoring.
-     * We recommend adjusting this value in production
-     */
-    tracesSampleRate: 1.0,
-    beforeSend(event: Sentry.Event) {
-      const logRocketSession = LogRocket.sessionURL;
-
-      if (logRocketSession !== null || (event as string) !== '' || event !== undefined) {
-        /*
-         * Must ignore the next line as this variable could be null but
-         * can not be null because of the check in the if statement above.
-         */
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error
-        event.extra.LogRocket = logRocketSession;
-
-        return event;
-      } else {
-        return event;
-      } //else
-    },
-  });
-
-  LogRocket.getSessionURL((sessionURL) => {
-    Sentry.configureScope((scope) => {
-      scope.setExtra('sessionURL', sessionURL);
-    });
-  });
-}
-
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
   const response = await api.get(`${queryKey[0]}`);
 
@@ -166,12 +83,17 @@ const tokenStoredToken: string = getToken();
 applyToken(tokenStoredToken);
 
 // console.log('web CONTEXT_PATH:', CONTEXT_PATH)
+// console.log(process.env)
+
+const webAppCtxPath = '/web';
+
+// console.log('context path being used:', CONTEXT_PATH || webAppCtxPath)
 
 function App() {
   return (
     <SegmentProvider>
       <HelmetProvider>
-        <BrowserRouter basename={CONTEXT_PATH}>
+        <BrowserRouter basename={CONTEXT_PATH || webAppCtxPath}>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               <Routes>
@@ -196,8 +118,9 @@ function App() {
                 <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
                 <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
                 {/* Same principle here. We must not expose this endpoint freely, as it allows anyone to perform this action. */}
-                {/* <Route path={ROUTES.AUTH_APPLICATION} element={<CreateOrganizationPage />} /> */}
-                <Route
+                {/* Only signed-in users can create organizations. */}
+                <Route path={ROUTES.AUTH_APPLICATION} element={<CreateOrganizationPage />} />
+                {/* <Route
                   path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
                   element={
                     <RequiredAuth>
@@ -212,7 +135,7 @@ function App() {
                       <LinkVercelProjectPage type="edit" />
                     </RequiredAuth>
                   }
-                />
+                /> */}
                 <Route element={<AppLayout />}>
                   <Route path={ROUTES.ANY} element={<HomePage />} />
                   <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
@@ -231,12 +154,12 @@ function App() {
                     <Route path="create" element={<CreateTenantPage />} />
                     <Route path=":identifier" element={<UpdateTenantPage />} />
                   </Route>
-                  <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
-                  <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />
-                  <Route path={ROUTES.QUICK_START_NOTIFICATION_CENTER} element={<NotificationCenter />} />
-                  <Route path={ROUTES.QUICK_START_SETUP} element={<FrameworkSetup />} />
-                  <Route path={ROUTES.QUICK_START_SETUP_FRAMEWORK} element={<Setup />} />
-                  <Route path={ROUTES.QUICK_START_SETUP_SUCCESS} element={<InAppSuccess />} />
+                  {/* <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
+                    <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />
+                    <Route path={ROUTES.QUICK_START_NOTIFICATION_CENTER} element={<NotificationCenter />} />
+                    <Route path={ROUTES.QUICK_START_SETUP} element={<FrameworkSetup />} />
+                    <Route path={ROUTES.QUICK_START_SETUP_FRAMEWORK} element={<Setup />} />
+                    <Route path={ROUTES.QUICK_START_SETUP_SUCCESS} element={<InAppSuccess />} /> */}
                   <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
                   <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>
                     <Route path="" element={<ApiKeysCard />} />

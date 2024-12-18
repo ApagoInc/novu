@@ -215,6 +215,12 @@ export class SendMessage {
       _id: job._templateId,
       environmentId: job._environmentId,
     });
+
+    // TODO - will we need to come back here and actually also limit this by account ID?
+    // By way of something like:
+    // job.payload.accountId?
+    // Hm.
+
     if (!template) throw new PlatformException(`Notification template ${job._templateId} is not found`);
 
     if (template.critical || this.isActionStep(job)) {
@@ -227,13 +233,25 @@ export class SendMessage {
     });
     if (!subscriber) throw new PlatformException('Subscriber not found with id ' + job._subscriberId);
 
-    const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
+    const cmdInput = {
+      accountId: null,
       organizationId: job._organizationId,
       subscriberId: subscriber.subscriberId,
       environmentId: job._environmentId,
       template,
       subscriber,
-    });
+    };
+
+    console.log(
+      'in filterPreferredChannels - about to create a GetSubscriberTemplatePreferenceCommand with the following input:'
+    );
+    try {
+      console.log(JSON.stringify(cmdInput));
+    } catch (e) {
+      console.log('Error - ', e, '- failed to stringify the following:', cmdInput);
+    }
+
+    const buildCommand = GetSubscriberTemplatePreferenceCommand.create(cmdInput);
 
     const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand);
 

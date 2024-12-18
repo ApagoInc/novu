@@ -22,7 +22,16 @@ export class UserRegister {
   ) {}
 
   async execute(command: UserRegisterCommand) {
-    if (process.env.DISABLE_USER_REGISTRATION === 'true') throw new ApiException('Account creation is disabled');
+    if (process.env.DISABLE_USER_REGISTRATION === 'true') {
+      // If a master key override is passed and an environment variable is defined,
+      // allow the request even if disabled
+      const masterKey = command.overrideKey || undefined;
+      if (masterKey && process.env.API_OVERRIDE_KEY && process.env.API_OVERRIDE_KEY === masterKey) {
+        console.log('[WARN] - Request contained valid override key. Proceeding to execute user register command.');
+      } else {
+        throw new ApiException('Account creation is disabled');
+      }
+    }
 
     const email = normalizeEmail(command.email);
     const existingUser = await this.userRepository.findByEmail(email);

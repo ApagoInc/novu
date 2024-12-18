@@ -1,6 +1,6 @@
 {
   "name": "@novu/web",
-  "homepage": ".",
+  "homepage": "/web",
   "version": "0.18.0",
   "private": true,
   "scripts": {
@@ -11,13 +11,11 @@
     "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 react-app-rewired --max_old_space_size=4096 build",
     "//build": "react-scripts build",
     "precommit": "lint-staged",
-    "docker:build": "docker buildx build -f ./Dockerfile -t novu-web ./../..",
+    "docker:build:apago": "docker buildx build --build-arg PROXY_HOST='https://novu.apagocloud.net' -f ./Dockerfile -t novu-web ./../..",
+    "docker:build:lsp": "docker buildx build --build-arg PROXY_HOST='https://notifications.lscscout.com' -f ./Dockerfile -t novu-web ./../..",
     "envsetup:docker": "chmod +x ./env.sh && ./env.sh && mv ./env-config.js ./build/env-config.js",
     "envsetup": "chmod +x ./env.sh && ./env.sh && mv env-config.js ./public/env-config.js",
-    "//": "TODO - FYI, the below may use 'envsetup:docker', but it is currently used for a NON-docker production runtime. Also - update the -C and -K paths to the server cert and key to be either dynamic, or standardized, i.e. something like ~/novuhttps/server.cert. Update the port (4200) to be dynamic as well, if desired.",
     "start:static:build": "pnpm envsetup:docker && node server.js",
-    "//start:static:build": "pnpm envsetup:docker && http-server build -p 4200 --proxy https://notifications.lscscout.com:4200? -S -C /home/ec2-user/https_certs/domain.cert.pem -K /home/ec2-user/https_certs/private.key.pem",
-    "start:static:build:http-only": "pnpm envsetup:docker && http-server build -p 4200 --proxy https://notifications.lscscout.com:9000/web?",
     "start:docker:http-only": "pnpm build && pnpm start:static:build:http-only",
     "start:docker": "pnpm build && pnpm start:static:build",
     "start:dev": "PORT=4200 pnpm start",

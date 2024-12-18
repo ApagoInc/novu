@@ -43,23 +43,23 @@ export default function LoginPage() {
         return;
       }
 
-      if (isFromVercel) {
-        setToken(token);
-        startVercelSetup();
+      // if (isFromVercel) {
+      //   setToken(token);
+      //   startVercelSetup();
 
-        return;
-      }
+      //   return;
+      // }
 
-      if (source === 'cli') {
-        segment.track('Dashboard Visit', {
-          widget: sourceWidget || 'unknown',
-          source: 'cli',
-        });
-        setToken(token);
-        navigate(ROUTES.GET_STARTED);
+      // if (source === 'cli') {
+      //   segment.track('Dashboard Visit', {
+      //     widget: sourceWidget || 'unknown',
+      //     source: 'cli',
+      //   });
+      //   setToken(token);
+      //   navigate(ROUTES.GET_STARTED);
 
-        return;
-      }
+      //   return;
+      // }
 
       if (invitationToken) {
         submitToken(token, invitationToken);

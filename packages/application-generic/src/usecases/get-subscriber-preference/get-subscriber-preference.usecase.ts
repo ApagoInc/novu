@@ -26,9 +26,43 @@ export class GetSubscriberPreference {
     private analyticsService: AnalyticsService
   ) {}
 
+  // TODO - do we ever even use this?
+
   async execute(
     command: GetSubscriberPreferenceCommand
   ): Promise<ISubscriberPreferenceResponse[]> {
+    console.log(
+      'in execute of GetSubscriberPreferenceCommand - received the following values for the command:'
+    );
+    try {
+      console.log(JSON.stringify(command));
+    } catch (e) {
+      console.log(
+        'Error - ',
+        e,
+        '- failed to stringify the following:',
+        command
+      );
+    }
+
+    if (command.accountId) {
+      console.log(
+        'in execute of GetSubscriberPreferenceCommand - received the following value for accountId:',
+        command.accountId
+      );
+    } else {
+      if (typeof command.accountId === null) {
+        console.log(
+          'in execute of GetSubscriberPreferenceCommand - accountId was passed as null'
+        );
+      } else {
+        console.log(
+          'WARNING - in execute of GetSubscriberPreferenceCommand - accountId was not passed as either null or string! Value of accountId, stringified:',
+          JSON.stringify(command.accountId)
+        );
+      }
+    }
+
     const admin = await this.memberRepository.getOrganizationAdminAccount(
       command.organizationId
     );
@@ -55,6 +89,7 @@ export class GetSubscriberPreference {
       templateList.map(async (template) =>
         this.getSubscriberTemplatePreferenceUsecase.execute(
           GetSubscriberTemplatePreferenceCommand.create({
+            accountId: command.accountId,
             organizationId: command.organizationId,
             subscriberId: command.subscriberId,
             environmentId: command.environmentId,

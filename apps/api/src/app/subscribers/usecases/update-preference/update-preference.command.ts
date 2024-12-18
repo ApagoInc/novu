@@ -20,6 +20,5 @@ export class UpdatePreferenceCommand extends EnvironmentCommand {
   @IsOptional()
   channel?: ChannelPreference;
 
-  @IsString()
-  accountId: string;
+  accountId: string | null;
 }

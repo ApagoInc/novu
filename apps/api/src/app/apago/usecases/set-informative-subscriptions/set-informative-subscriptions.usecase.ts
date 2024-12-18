@@ -42,6 +42,9 @@ export class SetInformativeSubscriptions {
     );
     TEMP_DebugSafeStringify(JSON.stringify(command.list));
 
+    // NOTE -
+    // command.list contains *only* the subscriptions that were changed.
+    // It is NOT necessarily a collection of every single subscription and its state.
     await Promise.all(
       command.list.map(async (item) => {
         console.log(

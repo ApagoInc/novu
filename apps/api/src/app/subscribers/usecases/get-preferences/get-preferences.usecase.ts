@@ -9,6 +9,7 @@ export class GetPreferences {
 
   async execute(command: GetPreferencesCommand) {
     const preferenceCommand = GetSubscriberPreferenceCommand.create({
+      accountId: null,
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       subscriberId: command.subscriberId,
