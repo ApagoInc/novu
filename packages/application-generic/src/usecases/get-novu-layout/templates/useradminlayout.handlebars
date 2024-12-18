@@ -320,8 +320,8 @@ a:hover, a:visited, a:active, a:link {
 								<tr>
 									<td class="content-block">
 
-                                        <div style="display: flex; width: 100%; flex-flow: row nowrap; justify-content: center;">
-                                         <h2 style="width: 100; text-align:center;">{{{body}}}</h2>
+                                        <div style="display: flex; flex-flow: row nowrap; justify-content: center;">
+                                         <h2 style="text-align:center; width: 100%;">{{{body}}}</h2>
                                          </div>
 <br>
 
@@ -340,10 +340,14 @@ a:hover, a:visited, a:active, a:link {
     <th>Customer:</th>
     <td>{{{accountName}}}</td>
   </tr>
+   <tr>
+    <th>User:</th>
+    <td>{{{targetUserName}}}</td>
+  </tr>
   
   {{!-- Not convinced this is quite right - variable scope is wrong or something --}}
-  {{#if optionalDisplays.ISBNDisplayValue}}
-   <tr>
+  {{!--{{#if optionalDisplays.ISBNDisplayValue}}--}}
+  {{!-- <tr>--}}
    {{!-- Example of optional templating --}}
    {{!--   {{#if preheader}}--}}
    {{!--  <div style="display: none; max-height: 0px; overflow: hidden;">--}}
@@ -352,30 +356,44 @@ a:hover, a:visited, a:active, a:link {
    {{!--  </div>--}}
    {{!--{{/if}}--}}
 
-   <th>ISBN:</th>
+  {{!-- <th>ISBN:</th>--}}
    {{!-- Handle if undefined --}}
-   <td>{{{ISBNDisplayValue}}}</td>
-   </tr>
-  {{/if}}
-  {{#if optionalDisplays.CustomerReference}}
-  <tr>
-    <th>CR:</th>
-    <td>{{{CustomerReference}}}</td>
-  </tr>
-  {{/if}}
-  <tr>
-    <th>Title:</th>
-    <td>{{{titleName}}}</td>
-  </tr>
-  {{#if optionalDisplays.componentName}}
-  <tr>
-    <th>Component:</th>
-    <td>{{{componentName}}}</td>
-  </tr>
-  {{/if}}
+  {{!-- <td>{{{ISBNDisplayValue}}}</td>--}}
+  {{!-- </tr>--}}
+  {{!--{{/if}}--}}
+  {{!--{{#if optionalDisplays.CustomerReference}}--}}
+  {{!--<tr>--}}
+  {{!--  <th>CR:</th>--}}
+  {{!--  <td>{{{CustomerReference}}}</td>--}}
+  {{!--</tr>--}}
+  {{!--{{/if}}--}}
+  {{!--<tr>--}}
+  {{!--  <th>Title:</th>--}}
+  {{!--  <td>{{{titleName}}}</td>--}}
+  {{!--</tr>--}}
+  {{!--{{#if optionalDisplays.componentName}}--}}
+  {{!--<tr>--}}
+  {{!--  <th>Component:</th>--}}
+  {{!--  <td>{{{componentName}}}</td>--}}
+  {{!--</tr>--}}
+  {{!--{{/if}}--}}
+  {{!--  {{#if optionalDisplays.componentNameList}}--}}
+  {{!--<tr>--}}
+  {{!--  <th>Components:</th>--}}
+  {{!--  <td>{{{componentNameList}}}</td>--}}
+  {{!--</tr>--}}
+  {{!--{{/if}}--}}
 </table>
-                                        <br>
-									    <a href="{{{hrefSliceA}}}{{{subscriber.subscriberId}}}{{{hrefSliceB}}}" class="btn-primary" itemprop="url"><span style="color: #fff !important; font-size: 12px;">Click here for details</span></a>
+<br>
+{{!--<p style="text-align: center; width: 100%;">Please use the following links to download your proof files.</p>--}}
+
+{{!--\{{#each components}}--}}
+{{!-- <a href="{{this.downloadHref}}" class="btn-primary" itemprop="url"><span style="color: #fff !important; font-size: 12px; margin: 5px;">--}}
+{{!--  {{this.name}}--}}
+{{!-- </span></a>--}}
+{{!--{{/each}}--}}
+{{!--</div>--}}
+{{!--}{{{hrefSliceA}}}{{{subscriber.subscriberId}}}{{{hrefSliceB}}}--}}
 
 									</td>
 								</tr>
@@ -383,7 +401,11 @@ a:hover, a:visited, a:active, a:link {
 						</td>
 					</tr>
 				</table>
-
+				
+				{{!--{{#with expiration}}--}}
+				{{!--<p style="width: 100%; text-align: center; color: #999; font-size: 12px;">(Links will expire on {{dateString}})</p>--}}
+    {{!--{{/with}}--}}
+    
 		</td>
 	</tr>
 </table>

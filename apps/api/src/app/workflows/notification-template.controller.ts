@@ -35,6 +35,7 @@ import { Roles } from '../auth/framework/roles.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
+import { v4 as uuidv4 } from 'uuid';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -47,7 +48,7 @@ export class NotificationTemplateController {
     private getNotificationTemplateUsecase: GetNotificationTemplate,
     private updateTemplateByIdUsecase: UpdateNotificationTemplate,
     private deleteTemplateByIdUsecase: DeleteNotificationTemplate,
-    private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus
+    private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus,
   ) {}
 
   @Get('')
@@ -166,6 +167,38 @@ export class NotificationTemplateController {
     @Query() query: CreateWorkflowQuery,
     @Body() body: CreateWorkflowRequestDto
   ): Promise<WorkflowResponse> {
+
+    console.log('In POST /notification-templates(?), create notification-template route (notification-template.controller.ts)')
+    console.log('got following params:')
+    try {
+      console.log(JSON.stringify({ user, query, body }))
+    } catch (err) {
+      console.log('Error:', err, '; Could not stringify the params! Direct console.log of each:')
+      console.log('user:', user)
+      console.log('query:', query)
+      console.log('body:', body)
+    }
+
+    const parensRe = new RegExp(/[()]/g)
+    const mostNonAlphaNumRe = new RegExp(/[\s-!$%^&*_+|~=`{}\[\]:";'<>?,.\/]/g)
+    const createInternalId = (name: string) => {
+      // const id = String(name).toLocaleUpperCase().replace(parensRe, '').replace(mostNonAlphaNumRe, '_');
+      // console.log(`Converted name ${name} to new internalId value "${id}"`)
+      // return id;
+      // The UI uses "Untitled" as the name, so the above is not ideal/useful
+
+      // just a random name. This really shouldn't be the way any workflows are getting set up.
+      return `template-${uuidv4()}`
+
+    }
+
+    // Use the passed internalId if one was passed.
+    // Else, convert the name to an identifier and use that. (i.e. "Component Checked In" would become "COMPONENT_CHECKED_IN")
+    const internalIdVal = body.internalId ? body.internalId : createInternalId(body.name)
+
+    console.log(`Setting workflow's internalId to "${internalIdVal}"`)
+
+
     return this.createNotificationTemplateUsecase.execute(
       CreateNotificationTemplateCommand.create({
         organizationId: user.organizationId,
@@ -183,6 +216,7 @@ export class NotificationTemplateController {
         blueprintId: body.blueprintId,
         data: body.data,
         __source: query?.__source,
+        internalId: internalIdVal
       })
     );
   }

@@ -32,6 +32,9 @@ export class CreateNotificationTemplateCommand extends EnvironmentWithUserComman
   @IsDefined()
   notificationGroupId: string;
 
+  @IsDefined()
+  internalId: string;
+
   @IsOptional()
   @IsArray()
   tags: string[];

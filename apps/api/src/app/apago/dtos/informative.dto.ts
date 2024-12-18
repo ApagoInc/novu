@@ -9,7 +9,7 @@ import {
   IsObject,
   IsNotEmpty,
 } from 'class-validator';
-import * as INFORMATİVE_EVENTS from '../data/informativeEvents.json';
+import INFORMATİVE_EVENTS from '../data/informativeEvents';
 import { ChannelPreference } from '../../shared/dtos/channel-preference';
 
 const events = INFORMATİVE_EVENTS.flatMap((arr) => arr.events);

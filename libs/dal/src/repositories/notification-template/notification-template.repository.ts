@@ -45,10 +45,10 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntity(item);
   }
 
-  async findByIdOrName(environmentId: string, id?: string, name?: string) {
+  async findByInternalId(environmentId: string, internalId?: string, id?: string) {
     const requestQuery: NotificationTemplateQuery = {
+      ...(internalId && { internalId: internalId }),
       ...(id && { _id: id }),
-      ...(name && { name: name }),
       _environmentId: environmentId,
     };
 

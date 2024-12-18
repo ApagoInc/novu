@@ -2,9 +2,9 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ApiClientData, User, informativeEvents, stakeholderStages } from './types';
 import { ApiService } from './api.service';
 import * as util from 'util';
-import * as INFORMATIVE_EVENTS from './data/informativeEvents.json';
-import * as STAKEHOLDER_STAGES from './data/stakeholderStages.json';
-import * as DEFAULT_TEMPLATES from './data/defaultTemplates.json';
+import INFORMATIVE_EVENTS from './data/informativeEvents';
+import STAKEHOLDER_STAGES from './data/stakeholderStages';
+import DEFAULT_TEMPLATES from './data/defaultTemplates';
 
 @Injectable()
 export class ApagoService {
@@ -18,23 +18,31 @@ export class ApagoService {
     this.initServices();
   }
 
-  getTemplates() {
+  /** NOTE: This cannot be safely used for anything other than the initial workflow creation in the "/lakeside" route. */
+  _getInitialTemplateData() {
     return [
-      ...INFORMATIVE_EVENTS.flatMap((arr) =>
-        arr.events.map((val) => ({
-          name: val.label,
-          critical: false,
-          initialContent: DEFAULT_TEMPLATES[val.value],
-          email: false,
-          in_app: false,
-        }))
+      ...INFORMATIVE_EVENTS.flatMap((arr) => {
+        return arr.events.map((val) => {
+          return ({
+            internalId: val.value,
+            name: val.label,
+            critical: false,
+            initialContent: DEFAULT_TEMPLATES[val.value],
+            email: false,
+            in_app: false,
+            digest: val.digest ? { ...val.digest } : undefined
+          })
+        })
+      }
       ),
       ...STAKEHOLDER_STAGES.map((val) => ({
+        internalId: val.value,
         name: val.label,
         critical: true,
         initialContent: DEFAULT_TEMPLATES[val.value],
         email: true,
         in_app: true,
+        digest: val.digest ? { ...val.digest } : undefined
       })),
     ];
   }

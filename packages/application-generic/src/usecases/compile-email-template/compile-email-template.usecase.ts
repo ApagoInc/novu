@@ -47,7 +47,7 @@ export class CompileEmailTemplate {
 
       layoutContent = layout.content;
     } else if (isEditorMode && !command.layoutId) {
-      layoutContent = await this.getNovuLayoutUsecase.execute({});
+      layoutContent = await this.getNovuLayoutUsecase.execute({layoutName: 'OLDdefaultlayout.handlebars'});
     }
 
     const layoutVariables = layout?.variables || [];

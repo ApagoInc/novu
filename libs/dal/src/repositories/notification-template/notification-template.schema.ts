@@ -8,6 +8,7 @@ import { NotificationTemplateDBModel } from './notification-template.entity';
 const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
   {
     name: Schema.Types.String,
+    internalId: Schema.Types.String,
     description: Schema.Types.String,
     active: {
       type: Schema.Types.Boolean,
