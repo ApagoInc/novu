@@ -2,17 +2,17 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ApiClientData, User, informativeEvents, stakeholderStages } from './types';
 import { ApiService } from './api.service';
 import * as util from 'util';
-import INFORMATIVE_EVENTS from './data/informativeEvents';
-import STAKEHOLDER_STAGES from './data/stakeholderStages';
-import DEFAULT_TEMPLATES from './data/defaultTemplates';
+import informativeEventsData from './data/informativeEvents';
+import stakeholderStagesData from './data/stakeholderStages';
+import defaultTemplatesData from './data/defaultTemplates';
 
 @Injectable()
 export class ApagoService {
   queue: Array<{ data: ApiClientData; cb: (err: any, data: User | null) => void }> = [];
   apiServices: Array<ApiService> = [];
   apiServiceCount = 10;
-  informativeEvents: informativeEvents = INFORMATIVE_EVENTS;
-  stakeholderStages: stakeholderStages = STAKEHOLDER_STAGES;
+  informativeEvents: informativeEvents = informativeEventsData;
+  stakeholderStages: stakeholderStages = stakeholderStagesData;
 
   constructor() {
     this.initServices();
@@ -21,28 +21,27 @@ export class ApagoService {
   /** NOTE: This cannot be safely used for anything other than the initial workflow creation in the "/lakeside" route. */
   _getInitialTemplateData() {
     return [
-      ...INFORMATIVE_EVENTS.flatMap((arr) => {
+      ...informativeEventsData.flatMap((arr) => {
         return arr.events.map((val) => {
-          return ({
+          return {
             internalId: val.value,
             name: val.label,
             critical: false,
-            initialContent: DEFAULT_TEMPLATES[val.value],
+            initialContent: defaultTemplatesData[val.value],
             email: false,
             in_app: false,
-            digest: val.digest ? { ...val.digest } : undefined
-          })
-        })
-      }
-      ),
-      ...STAKEHOLDER_STAGES.map((val) => ({
+            digest: val.digest ? { ...val.digest } : undefined,
+          };
+        });
+      }),
+      ...stakeholderStagesData.map((val) => ({
         internalId: val.value,
         name: val.label,
         critical: true,
-        initialContent: DEFAULT_TEMPLATES[val.value],
+        initialContent: defaultTemplatesData[val.value],
         email: true,
         in_app: true,
-        digest: val.digest ? { ...val.digest } : undefined
+        digest: val.digest ? { ...val.digest } : undefined,
       })),
     ];
   }
