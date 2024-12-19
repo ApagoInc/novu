@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { useMantineColorScheme } from '@mantine/core';
 import { BuilderFieldOperator, FilterParts, FilterPartTypeEnum } from '@novu/shared';
 

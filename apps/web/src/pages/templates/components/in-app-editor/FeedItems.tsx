@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Popover, useMantineTheme, Grid, ColorScheme, createStyles } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import * as Sentry from '@sentry/react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { showNotification } from '@mantine/notifications';

@@ -1,5 +1,5 @@
 import { createStyles } from '@mantine/core';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import { colors } from '../../../../design-system';
 import { MadeByNovu } from '../../../../design-system/icons';

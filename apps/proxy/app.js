@@ -6,7 +6,8 @@ const https = require('https')
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const { readdirSync } = require('node:fs');
 const config = require('dotenv').config
-const cors = require('cors')
+const cors = require('cors');
+const path = require('node:path');
 
 // load .env
 config()
@@ -46,9 +47,12 @@ if (!(certVals.HTTPS_CERT_PATH && certVals.HTTPS_KEY_PATH)) {
   throw new Error('Please define both of the following in .env: HTTPS_KEY_PATH, HTTPS_CERT_PATH')
 }
 
+
+console.log('current wd', process.cwd())
+
 const creds = {
-  key: readFileSync(certVals.HTTPS_KEY_PATH),
-  cert: readFileSync(certVals.HTTPS_CERT_PATH)
+  key: readFileSync(path.resolve(__dirname, certVals.HTTPS_KEY_PATH)),
+  cert: readFileSync(path.resolve(__dirname, certVals.HTTPS_CERT_PATH))
 }
 
 const app = express()
@@ -108,9 +112,9 @@ app.use('/', socketProxy)
 //   origin: ['http://localhost:9000']
 // }))
 
-// localhost:4200 - webapp    - https://notifications.lscscout.com/web
-// localhost:3000 - api       - https://notifications.lscscout.com/api
-// localhost:3002 - websocket - https://notifications.lscscout.com/ws
+// localhost:4200 - webapp    - https://novu.apagocloud.net/web
+// localhost:3000 - api       - https://novu.apagocloud.net/api
+// localhost:3002 - websocket - https://novu.apagocloud.net/ws
 
 
 // Identical proxies to the webapp content, except that one is from the "/web" route and one is from requests to the root "/"
@@ -121,7 +125,7 @@ const webAppAccessors = ['/web', '/'].map(accessedFrom => createProxyMiddleware(
   // Requests will work when this is being served outside of Docker on http://localhost:4200
 
   // TODO - ok, for some reason, the NovuProvider on the LSP frontend insists on calling for the socket as follows:
-  // wss://notifications.lscscout.com:9000/socket.io/?EIO=4&transport=websocket
+  // wss://novu.apagocloud.net:9000/socket.io/?EIO=4&transport=websocket
 
   // This handler should never really be receiving any ws requests.
   // (Now that one is added upstream/above to look for /socket.io requests coming across "/")
@@ -201,7 +205,7 @@ app.use(
 // So, from the LSP frontend,
 // where REACT_APP_NOVU_SOCKET_URL="" -
 // It looks like it is instead then calling this URL:
-// wss://notifications.lscscout.com:9000/socket.io/?EIO=4&transport=websocket
+// wss://novu.apagocloud.net:9000/socket.io/?EIO=4&transport=websocket
 // So it's missing this one, at /ws.
 // Could it be stripping '/ws' out, thinking it's a protocol, trying to be clever?
 // ---

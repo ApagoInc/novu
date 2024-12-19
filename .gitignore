@@ -110,3 +110,5 @@ docker/.env
 **/*.pem/*
 **/*.pem/*
 *local-data/
+libs/dal/src/repositories/message/playground-1.mongodb.js
+lsp-notif-templates.json

@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 export function SeenAllBlock() {
   return <Wrapper>Yay! You have seen it all</Wrapper>;

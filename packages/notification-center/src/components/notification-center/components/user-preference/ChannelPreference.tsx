@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { LoadingOverlay, Switch } from '@mantine/core';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { css, cx } from '@emotion/css';
 
 import { useNovuTheme } from '../../../../hooks';

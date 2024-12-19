@@ -2,7 +2,7 @@ import React from 'react';
 import { Avatar as MAvatar, ActionIcon, Menu, createStyles, MantineTheme } from '@mantine/core';
 import { useHover } from '@mantine/hooks';
 import { css, cx } from '@emotion/css';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import {
   IMessage,
   ButtonTypeEnum,

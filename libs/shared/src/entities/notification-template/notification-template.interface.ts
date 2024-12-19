@@ -6,6 +6,7 @@ import { IWorkflowStepMetadata } from '../step';
 export interface INotificationTemplate {
   _id?: string;
   name: string;
+  internalId?: string;
   description?: string;
   _notificationGroupId: string;
   _parentId?: string;

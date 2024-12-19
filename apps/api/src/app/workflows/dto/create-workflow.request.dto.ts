@@ -65,5 +65,10 @@ export class CreateWorkflowRequestDto implements ICreateWorkflowDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsString()
+  internalId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   data?: NotificationTemplateCustomData;
 }

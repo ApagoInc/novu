@@ -1,5 +1,5 @@
 import { useMantineTheme } from '@mantine/core';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { CredentialsKeyEnum, IConfigCredentials, secureCredentials } from '@novu/shared';
 
 import { Input, PasswordInput, Switch, Textarea, Text, Tooltip } from '../../../design-system';

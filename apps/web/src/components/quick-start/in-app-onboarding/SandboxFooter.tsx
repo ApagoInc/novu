@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../constants/routes.enum';
 import { Button, colors, shadows } from '../../../design-system';

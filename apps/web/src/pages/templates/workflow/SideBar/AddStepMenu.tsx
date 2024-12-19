@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Stack, Title } from '@mantine/core';
 import { When } from '../../../../components/utils/When';
 import { colors, DragButton, Tooltip } from '../../../../design-system';

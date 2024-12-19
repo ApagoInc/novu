@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Popover as MantinePopover, PopoverProps, createStyles, MantineTheme } from '@mantine/core';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { css } from '@emotion/css';
 
 import { INovuTheme } from '../../../store/novu-theme.context';

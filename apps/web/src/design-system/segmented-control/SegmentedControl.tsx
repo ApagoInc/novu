@@ -8,7 +8,7 @@ import {
 } from '@mantine/core';
 import useStyles from './SegmentedControl.styles';
 import { colors } from '../config';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 interface ISegmentedControlProps {
   data: string[] | SegmentedControlItem[];

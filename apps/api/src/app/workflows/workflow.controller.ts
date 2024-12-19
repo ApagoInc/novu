@@ -47,7 +47,7 @@ export class WorkflowController {
     private getWorkflowUsecase: GetNotificationTemplate,
     private updateWorkflowByIdUsecase: UpdateNotificationTemplate,
     private deleteWorkflowByIdUsecase: DeleteNotificationTemplate,
-    private changeWorkflowActiveStatusUsecase: ChangeTemplateActiveStatus
+    private changeWorkflowActiveStatusUsecase: ChangeTemplateActiveStatus,
   ) {}
 
   @Get('')
@@ -157,6 +157,32 @@ export class WorkflowController {
     @Query() query: CreateWorkflowQuery,
     @Body() body: CreateWorkflowRequestDto
   ): Promise<WorkflowResponse> {
+
+    console.log('In POST /workflows, create workflow route (apago.controller.ts)')
+    console.log('got following params:')
+    try {
+      console.log(JSON.stringify({ user, query, body }))
+    } catch (err) {
+      console.log('Error:', err, '; Could not stringify the params! Direct console.log of each:')
+      console.log('user:', user)
+      console.log('query:', query)
+      console.log('body:', body)
+    }
+
+    const parensRe = new RegExp(/[()]/g)
+    const mostNonAlphaNumRe = new RegExp(/[\s-!$%^&*_+|~=`{}\[\]:";'<>?,.\/]/g)
+    const createInternalId = (name: string) => {
+      const id = String(name).toLocaleUpperCase().replace(parensRe, '').replace(mostNonAlphaNumRe, '_');
+      console.log(`Converted name ${name} to new internalId value "${id}"`)
+      return id;
+    }
+
+    // Use the passed internalId if one was passed.
+    // Else, convert the name to an identifier and use that. (i.e. "Component Checked In" would become "COMPONENT_CHECKED_IN")
+    const internalIdVal = body.internalId ? body.internalId : createInternalId(body.name)
+
+    console.log(`Setting workflow's internalId to "${internalIdVal}"`)
+
     return this.createWorkflowUsecase.execute(
       CreateNotificationTemplateCommand.create({
         organizationId: user.organizationId,
@@ -174,6 +200,7 @@ export class WorkflowController {
         blueprintId: body.blueprintId,
         data: body.data,
         __source: query?.__source,
+        internalId: internalIdVal
       })
     );
   }

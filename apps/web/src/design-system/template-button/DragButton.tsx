@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { UnstyledButton } from '@mantine/core';
 import React, { useState } from 'react';
 import { When } from '../../components/utils/When';

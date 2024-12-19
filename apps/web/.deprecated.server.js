@@ -11,9 +11,9 @@
 
 
 
-// // localhost:4200 - webapp    - https://notifications.lscscout.com/web
-// // localhost:3000 - api       - https://notifications.lscscout.com/api
-// // localhost:3002 - websocket - https://notifications.lscscout.com/ws
+// // localhost:4200 - webapp    - https://novu.apagocloud.net/web
+// // localhost:3000 - api       - https://novu.apagocloud.net/api
+// // localhost:3002 - websocket - https://novu.apagocloud.net/ws
 
 
 // // We use the `docker` variable to inform how we are locally addressing each of the proxy server's targets.

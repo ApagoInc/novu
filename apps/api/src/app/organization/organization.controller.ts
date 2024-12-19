@@ -14,7 +14,14 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { OrganizationEntity } from '@novu/dal';
-import { EmailBlockTypeEnum, IJwtPayload, ITemplateVariable, MemberRoleEnum, StepTypeEnum } from '@novu/shared';
+import {
+  DigestTypeEnum,
+  EmailBlockTypeEnum,
+  IJwtPayload,
+  ITemplateVariable,
+  MemberRoleEnum,
+  StepTypeEnum,
+} from '@novu/shared';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -105,42 +112,80 @@ export class OrganizationController {
       })
     );
 
-    for (const event of this.apagoService.getTemplates()) {
+    for (const event of this.apagoService._getInitialTemplateData()) {
+      const stepsForEventTemplate: NotificationStep[] = [
+        {
+          name: 'In-App',
+          active: true,
+          template: {
+            content: event.initialContent?.in_app || '',
+            type: StepTypeEnum.IN_APP,
+          },
+        },
+        {
+          name: 'Email',
+          active: true,
+          template: {
+            // TODO - add using sender name from env
+            senderName: 'Lakeside Prepress',
+            subject: event.name || 'Lakeside Prepress Email Notification',
+            content: [{ content: event.initialContent?.email || '', type: EmailBlockTypeEnum.TEXT }],
+            type: StepTypeEnum.EMAIL,
+            contentType: 'editor',
+          },
+        },
+      ];
 
+      if (event.digest) {
+        // Add the digest at the front of the workflow.
+        stepsForEventTemplate.unshift({
+          name: 'Digest',
+          active: true,
+          template: {
+            content: [{ content: '', type: EmailBlockTypeEnum.TEXT }],
+            contentType: 'editor',
+            senderName: '',
+            subject: '',
+            type: StepTypeEnum.DIGEST,
+          },
+          metadata: {
+            amount: event.digest.amount,
+            unit: event.digest.unit,
+            backoff: event.digest.backoff || false,
+            backoffAmount: event.digest.backoffAmount || undefined,
+            backoffUnit: event.digest.backoffUnit || undefined,
+            digestKey: 'digestKey',
+            // timed: { weekDays: [], monthDays: [] },
+            type: DigestTypeEnum.REGULAR,
+          },
+        });
+      }
 
-      // TODO - where these workflows are being created, we might(?) need to update email workflow creation again, apparently.
-
-
+      console.log('creating workflow, executing command with the following data:', {
+        internalId: event.internalId,
+        organizationId: organization._id,
+        userId: user._id,
+        environmentId: organization.devEnv,
+        name: event.name,
+        tags: [],
+        description: event.name,
+        steps: stepsForEventTemplate,
+        notificationGroupId: groups[0]._id,
+        active: true,
+        draft: false,
+        critical: event.critical,
+        preferenceSettings: { email: event.email, in_app: event.in_app },
+      });
       await this.createWorkflowUsecase.execute(
         CreateNotificationTemplateCommand.create({
+          internalId: event.internalId,
           organizationId: organization._id,
           userId: user._id,
           environmentId: organization.devEnv,
           name: event.name,
           tags: [],
           description: event.name,
-          steps: [
-            {
-              name: 'In-App',
-              active: true,
-              template: {
-                content: event.initialContent || '',
-                type: StepTypeEnum.IN_APP,
-              },
-            },
-            {
-              name: 'Email',
-              active: true,
-              template: {
-                // TODO - add using sender name from env
-                senderName: 'Lakeside Prepress',
-                subject: event.name || 'Lakeside Prepress Email Notification',
-                content: [{ content: event.initialContent || '', type: EmailBlockTypeEnum.TEXT }],
-                type: StepTypeEnum.EMAIL,
-                contentType: 'editor',
-              },
-            },
-          ],
+          steps: stepsForEventTemplate,
           notificationGroupId: groups[0]._id,
           active: true,
           draft: false,
@@ -149,6 +194,15 @@ export class OrganizationController {
         })
       );
     }
+
+    // Note: There is a minor sort of bug with retroactively adding new workflows to the app,
+    // if the workflows are added WHILE an implementation is up and running. (That is, if the workflows are not added to the system workflow through this initial
+    // build process)
+    // It appears that all newly retroactively added workflows (added during runtime) will have the following in the database:
+    // preferenceSettings: { email: true, in_app: true }
+    // And that seems to override any user subscription preferences. (Same as stakeholder events)
+    // In these cases, this must be updated in the novu admin dashboard in order to preferentially use any
+    // workflows that are created at runtime. (Without users just always being opted in to them)
 
     return organization;
   }

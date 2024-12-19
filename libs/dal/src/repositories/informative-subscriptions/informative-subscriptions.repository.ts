@@ -24,10 +24,11 @@ export class InformativeSubscriptionsRepository extends BaseRepository<
   }) {
     const subscriptions = await this.MongooseModel.find(query)
       .select('parts allTitles accountId _templateId')
-      .populate<{ template: { name: string } }>('template', 'name')
+      .populate<{ template: { name: string, internalId?: string } }>({ path: 'template', select: 'name internalId' })
+        // 'template', 'name')
       .populate<{ preferences: any }>({
         path: 'preferences',
-        match: { _subscriberId: query._subscriberId },
+        match: { _subscriberId: query._subscriberId, accountId: query.accountId },
         select: 'channels',
       })
       .lean();

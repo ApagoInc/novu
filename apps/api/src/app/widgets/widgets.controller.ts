@@ -336,6 +336,7 @@ export class WidgetsController {
   @Get('/preferences')
   async getSubscriberPreference(@SubscriberSession() subscriberSession: SubscriberEntity) {
     const command = GetSubscriberPreferenceCommand.create({
+      accountId: null,
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
@@ -351,7 +352,20 @@ export class WidgetsController {
     @Param('templateId') templateId: string,
     @Body() body: UpdateSubscriberPreferenceRequestDto
   ): Promise<UpdateSubscriberPreferenceResponseDto> {
+    // TODO -
+    // ... It may be that we are never using these endpoints to access preferences.
+    // Rather, preferences are being managed internally through other endpoints.
+    // The endpoints for informative and stakeholder edits...?
+
+    // TODO - is this a concern?
+    // Can we just fetch here and re-use a previously-assigned accountId?
+
+    // Or make accountId optional...?
+
+    // (Or does this section expose that there's a logical error in the current structure that will prohibit this change?)
+
     const command = UpdateSubscriberPreferenceCommand.create({
+      accountId: body.accountId,
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,

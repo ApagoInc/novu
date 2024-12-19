@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { colors } from '../../../design-system';
 
 export const WorkflowWrapper = styled.div<{ height: string }>`

@@ -1,5 +1,5 @@
 import { IsArray, IsDefined, IsString, IsIn, IsOptional, IsObject } from 'class-validator';
-import * as STAKEHOLDER_STAGES from '../data/stakeholderStages.json';
+import STAKEHOLDER_STAGES from '../data/stakeholderStages';
 
 const stages = STAKEHOLDER_STAGES.map((val) => val.value);
 

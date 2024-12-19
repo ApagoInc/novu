@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import { Buildings } from '../../../../design-system/icons';
 import { colors } from '../../../../design-system';

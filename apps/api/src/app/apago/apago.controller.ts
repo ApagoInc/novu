@@ -125,6 +125,9 @@ export class ApagoController {
     return { success: true };
   }
 
+  /**
+   * POST changes for a given user's informative notification subscriptions.
+   */
   @Post('/informative/:accountId/:userId')
   @ExternalApiAccessible()
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -190,7 +193,7 @@ export class ApagoController {
       });
     }
 
-    if (!user) throw new UnauthorizedException('User not found!');
+    if (!user) throw new UnauthorizedException('User not found.');
 
     if (userId !== subscriberSession.subscriberId) {
       //A user tries to make changes for another user so we check for permission
@@ -200,7 +203,7 @@ export class ApagoController {
         permissions: [],
       });
 
-      if (!isAdmin) throw new UnauthorizedException();
+      if (!isAdmin) throw new UnauthorizedException(`User must be an admin in order to make changes for a different Novu subscriber.`);
     }
 
     const subscriber = await this.createSubscriberUsecase.execute(
@@ -227,15 +230,21 @@ export class ApagoController {
       this.apagoService.informativeEvents.map(async (item) => {
         const events = await Promise.all(
           item.events.map(async (event) => {
-            const subscription = data.find((val) => val.template?.name == event.label);
+            console.log('mapping event', event.value, 'subscriptions...')
+            const subscription = data.find((val) => {
+
+              console.log(`checking val.template.internalId of "${val.template?.internalId}" to see if it matches event value of "${event.value}"`)
+              return val.template?.internalId === event.value
+            });
 
             if (!subscription) {
               const template = await this.getWorkflowUsecase.execute(
                 GetNotificationTemplateCommand.create({
                   environmentId: subscriberSession._environmentId,
                   organizationId: subscriberSession._organizationId,
-                  name: event?.label,
+                  // name: event?.label,
                   userId: subscriberSession.subscriberId,
+                  internalId: event.value
                 })
               );
 
@@ -256,6 +265,13 @@ export class ApagoController {
     return mapped;
   }
 
+  /**
+   * A route used to identify the active novu subscriber once they interact with the Scout FE.
+   * If not found, the user will be created.
+   * @param subscriberSession 
+   * @param accountId 
+   * @returns 
+   */
   @ExternalApiAccessible()
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/:accountId/identify')
@@ -280,13 +296,23 @@ export class ApagoController {
     );
   }
 
+  /**
+   * POST a novu informative notification "trigger". This fires a notification.
+   * @param user 
+   * @param body 
+   * @returns 
+   */
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Post('/trigger/informative')
   async triggerInformativeEvents(@UserSession() user: IJwtPayload, @Body() body: InformativeEventTriggerBodyDto) {
+
+    /** Tag the console messages for this trigger run */
+    const tag = `[${String(Date.now())}]`
+
     // We also support sending discrete notifications to just one or several recipients, IF that is requested here.
     const specialOptions = body.payload?.specialOptions;
-    console.log('body, and body.payload:', JSON.stringify(body), JSON.stringify(body.payload));
+    console.log(tag, 'body, and body.payload:', JSON.stringify(body), JSON.stringify(body.payload));
     const discrete =
       specialOptions &&
       specialOptions.discrete &&
@@ -298,6 +324,7 @@ export class ApagoController {
 
     // TODO - better validation on recipients
     console.log(
+      tag,
       'in /trigger/informative post - got the following values:',
       JSON.stringify({
         specialOptions,
@@ -320,9 +347,10 @@ export class ApagoController {
 
     const template = await this.getWorkflowUsecase.execute(
       GetNotificationTemplateCommand.create({
+        internalId: event.value,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        name: event.label,
+        // name: event.label,
         userId: user._id,
       })
     );

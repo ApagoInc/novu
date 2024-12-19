@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { createStyles, Popover } from '@mantine/core';
 import { colors, shadows } from '../../../design-system';
 import { Bell, User } from '../../../design-system/icons';

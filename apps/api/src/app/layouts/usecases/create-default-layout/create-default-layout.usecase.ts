@@ -1,6 +1,6 @@
 import { LayoutRepository } from '@novu/dal';
 import { Injectable } from '@nestjs/common';
-import { GetNovuLayout } from '@novu/application-generic';
+import { GetNovuLayout, GetNovuLayoutCommand } from '@novu/application-generic';
 
 import { CreateDefaultLayoutCommand } from './create-default-layout.command';
 import { SetDefaultLayoutUseCase } from '../set-default-layout';
@@ -23,7 +23,7 @@ export class CreateDefaultLayout {
         name: 'Default Layout',
         isDefault: true,
         identifier: 'novu-default-layout',
-        content: await this.getNovuLayout.execute({}),
+        content: await this.getNovuLayout.execute(GetNovuLayoutCommand.create({ layoutName: 'layout.handlebars' })),
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         description: 'The default layout created by Novu',

@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import { Cards, colors, Text } from '../../design-system';
 import { PageGradient, DigestGradient } from '../../design-system/icons';

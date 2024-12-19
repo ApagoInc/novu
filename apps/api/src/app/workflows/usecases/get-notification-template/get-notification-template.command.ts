@@ -14,4 +14,8 @@ export class GetNotificationTemplateCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   name?: string;
+
+  @IsOptional()
+  @IsString()
+  internalId?: string;
 }

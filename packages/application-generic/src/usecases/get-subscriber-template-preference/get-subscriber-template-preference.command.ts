@@ -8,4 +8,6 @@ export class GetSubscriberTemplatePreferenceCommand extends EnvironmentWithSubsc
   template: NotificationTemplateEntity;
 
   subscriber?: SubscriberEntity;
+
+  accountId: string | null;
 }

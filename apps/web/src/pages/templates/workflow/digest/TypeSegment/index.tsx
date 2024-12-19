@@ -7,7 +7,7 @@ import {
   Sx,
 } from '@mantine/core';
 import useStyles from './TypeSegment.styles';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { colors } from '../../../../../design-system';
 
 interface ISegmentedControlProps {

@@ -42,6 +42,12 @@ informativeSubscriptionsSchema.virtual('template', {
   justOne: true,
 });
 
+// TODO - justOne? Still?
+// Maybe so, because each preference has to have exactly ONE informativeSubscription object,
+// and these are LINKED by accountId?
+// (in our new setup)
+// TODO - So then,
+// do we need to also add a local/foreign field link for 'accountId'?
 informativeSubscriptionsSchema.virtual('preferences', {
   ref: 'SubscriberPreference',
   localField: '_templateId',

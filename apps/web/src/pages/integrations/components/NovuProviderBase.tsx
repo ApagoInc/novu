@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Stack, Text, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
 import { When } from '../../../components/utils/When';

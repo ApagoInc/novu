@@ -1,7 +1,7 @@
 import { Badge, ActionIcon, useMantineTheme, Group, Input } from '@mantine/core';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { format } from 'date-fns';
 
 import {

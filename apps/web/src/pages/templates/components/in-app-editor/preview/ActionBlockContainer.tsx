@@ -9,7 +9,7 @@ import {
 } from '@novu/shared';
 import { ColorScheme, TextInput, useMantineColorScheme, useMantineTheme } from '@mantine/core';
 import { RemoveCircle } from '../../../../../design-system/icons/general/RemoveCircle';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Button, colors } from '../../../../../design-system';
 import { When } from '../../../../../components/utils/When';
 

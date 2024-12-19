@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Group, Center, Box } from '@mantine/core';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import slugify from 'slugify';
 import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
 import { useIntercom } from 'react-use-intercom';

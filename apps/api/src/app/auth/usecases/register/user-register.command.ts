@@ -23,4 +23,7 @@ export class UserRegisterCommand extends BaseCommand {
 
   @IsOptional()
   origin?: SignUpOriginEnum;
+
+  @IsOptional()
+  overrideKey?: string;
 }

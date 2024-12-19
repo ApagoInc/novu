@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { SegmentProvider } from '../components/providers/SegmentProvider';

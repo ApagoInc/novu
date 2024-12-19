@@ -380,6 +380,7 @@ export class SubscribersController {
     @Body() body: UpdateSubscriberPreferenceRequestDto
   ): Promise<UpdateSubscriberPreferenceResponseDto> {
     const command = UpdateSubscriberPreferenceCommand.create({
+      accountId: body.accountId || null,
       organizationId: user.organizationId,
       subscriberId: subscriberId,
       environmentId: user.environmentId,

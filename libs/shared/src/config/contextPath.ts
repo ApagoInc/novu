@@ -34,7 +34,12 @@ export function getContextPath(component: NovuComponentEnum) {
       break;
     case NovuComponentEnum.WEB:
       if (env.FRONT_BASE_CONTEXT_PATH) {
+        console.log('in getContextsPath - adding the following to context path:', env.FRONT_BASE_CONTEXT_PATH);
         contextPath += env.FRONT_BASE_CONTEXT_PATH + '/';
+      } else {
+        const ctxPath = '/web';
+        console.log('in getContextPath - adding the following to context path:', ctxPath);
+        contextPath += ctxPath + '/';
       }
       break;
     case NovuComponentEnum.WIDGET:

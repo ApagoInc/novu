@@ -105,13 +105,13 @@ export class ApiService {
     try {
       const res = await this.instance.get(`/admin/user/${id}`);
 
-      Logger.debug('get user response');
+      Logger.log('get user response');
       // Logger.debug(res);
 
       const { Accounts, Roles } = res.data;
 
-      Logger.debug('Accounts, Roles:');
-      Logger.debug(Accounts, Roles);
+      Logger.log('Accounts, Roles:');
+      Logger.log(Accounts, Roles);
 
       const index = Accounts.indexOf(accountId);
 
@@ -126,8 +126,7 @@ export class ApiService {
 
       return res.data;
     } catch (error) {
-      Logger.error('Error in getUser:');
-      Logger.error(error);
+      Logger.error('Error in getUser:' + error);
       throw new UnauthorizedException({
         message: 'User does not have the required permissions to participate in Novu notifications.',
         reason: 'insufficient_permissions',

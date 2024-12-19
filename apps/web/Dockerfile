@@ -30,49 +30,60 @@ COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 
 # RUN --mount=type=cache,id=pnpm-store-web,target=/root/.pnpm-store\
-RUN echo 'Skipping the RUN --mount=type=cache, because it seems to hang/break the build every time.\n As it turns out, there is no speed benefit to caching if the caching attempt causes the build to hang indefinitely.'
+RUN echo 'Skipping the RUN --mount=type=cache, because it seems to hang/break the build every time.'
 
-CMD ["sleep", "infinity"]
 # Currently, the steps of `pnpm install` and `cd ./apps/web && npm run start:static:build:http-only`
 # are being ran inside the container manually, due to a tendency for the automatic version 
 # of this install to freeze.
 
-# RUN pnpm install || echo "ok, apparently pnpm install failed"
+ARG PROXY_HOST
+ARG FRONT_BASE_URL='${PROXY_HOST}/web'
+ENV PROXY_HOST=${PROXY_HOST}
+ENV FRONT_BASE_URL=${FRONT_BASE_URL}
+# ENV FRONT_BASE_CONTEXT_PATH=${FRONT_BASE_CONTEXT_PATH}
 
-# RUN cd /usr/src/app/apps/web 
+# Set these for the webapp build to use
+ENV SKIP_PREFLIGHT_CHECK=true
+ENV REACT_APP_ENVIRONMENT=local
+ENV BASE_ADDRESS=${PROXY_HOST}/web
+ENV REACT_APP_WS_URL=${PROXY_HOST}/ws
+ENV API_ROOT_URL=${PROXY_HOST}/api
+ENV REACT_APP_API_URL=${API_ROOT_URL}
+ENV FRONT_BASE_URL=${BASE_ADDRESS}
+ENV REACT_APP_PUBLIC_URL=${FRONT_BASE_URL}
 
-# CMD ["npm", "run", "start:dev"]
+RUN echo "value for PROXY_HOST:" ${PROXY_HOST}
+RUN echo "value for FRONT_BASE_URL:" ${FRONT_BASE_URL}
 
-# TODO - fix this once the Novu webapp issue can be resolved.
+# debug
+RUN echo "value for SKIP_PREFLIGHT_CHECK: ${SKIP_PREFLIGHT_CHECK}"
+RUN echo "value for REACT_APP_ENVIRONMENT: ${REACT_APP_ENVIRONMENT}"
+RUN echo "value for BASE_ADDRESS: ${BASE_ADDRESS}"
+RUN echo "value for REACT_APP_WS_URL: ${REACT_APP_WS_URL}"
+RUN echo "value for API_ROOT_URL: ${API_ROOT_URL}"
+RUN echo "value for REACT_APP_API_URL: ${REACT_APP_API_URL}"
+RUN echo "value for FRONT_BASE_URL: ${FRONT_BASE_URL}"
+RUN echo "value for REACT_APP_PUBLIC_URL: ${REACT_APP_PUBLIC_URL}"
+# TODO - Remove the above ENV directives? Since the .env file being built below is what is used for the webapp?
 
-# RUN pnpm install || echo "ok, apparently pnpm install failed"
-# --reporter=silent
+RUN pnpm install || echo "ok, apparently pnpm install failed"
 
-# RUN pnpm add @babel/core -w
+WORKDIR /usr/src/app/apps/web 
 
-# COPY [".eslintrc.js",".prettierrc",".prettierignore", "./"]
+# Set up the .env file for the build
+RUN printf "SKIP_PREFLIGHT_CHECK=true\n\
+REACT_APP_ENVIRONMENT=local\n\
+BASE_ADDRESS=${PROXY_HOST}/web\n\
+REACT_APP_WS_URL=${PROXY_HOST}/ws\n\
+API_ROOT_URL=${PROXY_HOST}/api\n\
+REACT_APP_API_URL=${API_ROOT_URL}\n\
+FRONT_BASE_URL=${BASE_ADDRESS}\n\
+REACT_APP_PUBLIC_URL=${FRONT_BASE_URL}\n" > .env
+
+RUN echo "value of .env file:"
+RUN echo cat .env
+
+# This command will build and then start the webapp
+CMD ["npm", "run", "start:docker"]
+
 # CMD ["sleep", "infinity"]
-
-
-#  I will try to run these in the container, at this point.
-
-# RUN NX_DAEMON=false pnpm build:web
-# end build stage
-
-# start production stage
-# FROM node:16-alpine
-
-# WORKDIR /app
-
-# RUN apk add --no-cache bash
-# RUN npm install -g pnpm@7.33.4 http-server --loglevel notice
-
-# COPY --from=builder /usr/src/app/apps/web/env.sh /app/env.sh
-# COPY --from=builder /usr/src/app/apps/web/.env /app/.env
-
-# COPY --from=builder /usr/src/app/apps/web/build /app/build
-# COPY --from=builder /usr/src/app/apps/web/public /app/public
-# COPY --from=builder /usr/src/app/apps/web/package.json /app/package.json
-
-# CMD [ "pnpm", "start:static:build:http-only" ]
-# end production stage

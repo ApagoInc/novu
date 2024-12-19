@@ -1,6 +1,6 @@
 import React from 'react';
 import { IMessageAction, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { cx, css } from '@emotion/css';
 
 import { NotificationButton } from './NotificationItemButton';

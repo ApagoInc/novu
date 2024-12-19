@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Button, colors } from '../../../design-system';
 
 export const FilterButton = styled(Button)`

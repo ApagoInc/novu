@@ -1,6 +1,6 @@
 import { Container, Grid, useMantineTheme } from '@mantine/core';
 import { format, parseISO } from 'date-fns';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 
 import { ExecutionDetailShowRaw } from './ExecutionDetailShowRaw';
 import { getColorByStatus, getLogoByType, getLogoByStatus } from './helpers';

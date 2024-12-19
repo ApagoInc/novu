@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import React, { CSSProperties } from 'react';
 import { Container } from '../../../design-system';
 import PageMeta from './PageMeta';

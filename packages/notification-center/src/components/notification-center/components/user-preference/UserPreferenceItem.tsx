@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { css, cx } from '@emotion/css';
 import { Accordion, Divider } from '@mantine/core';
 import type { IUserPreferenceSettings } from '@novu/client';

@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Skeleton, useMantineColorScheme } from '@mantine/core';
 import { useState } from 'react';
 

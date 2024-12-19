@@ -21,6 +21,8 @@ export class NotificationTemplateEntity {
 
   name: string;
 
+  internalId?: string;
+
   description: string;
 
   active: boolean;

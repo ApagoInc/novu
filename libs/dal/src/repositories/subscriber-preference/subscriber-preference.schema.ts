@@ -26,6 +26,10 @@ const subscriberPreferenceSchema = new Schema<SubscriberPreferenceDBModel>(
       ref: 'NotificationTemplate',
       index: true,
     },
+    accountId: {
+      type: Schema.Types.String,
+      required: true,
+    },
     enabled: {
       type: Schema.Types.Boolean,
       default: true,

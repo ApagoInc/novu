@@ -149,6 +149,7 @@ export class AuthController {
         lastName: body.lastName,
         organizationName: body.organizationName,
         origin: body.origin,
+        overrideKey: body.overrideKey,
       })
     );
   }

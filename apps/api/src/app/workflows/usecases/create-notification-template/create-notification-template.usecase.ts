@@ -17,6 +17,7 @@ import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../../../message-template/usecases';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { randomUUID } from 'crypto';
 
 /**
  * DEPRECATED:
@@ -128,6 +129,7 @@ export class CreateNotificationTemplate {
     }
 
     const savedTemplate = await this.notificationTemplateRepository.create({
+      internalId: command.internalId,
       _organizationId: command.organizationId,
       _creatorId: command.userId,
       _environmentId: command.environmentId,
@@ -179,6 +181,7 @@ export class CreateNotificationTemplate {
     const steps: NotificationStepEntity[] = await this.handleFeeds(command.steps as any, command);
 
     return CreateNotificationTemplateCommand.create({
+      internalId: randomUUID(),
       organizationId: command.organizationId,
       userId: command.userId,
       environmentId: command.environmentId,

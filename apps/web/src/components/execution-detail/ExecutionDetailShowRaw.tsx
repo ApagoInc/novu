@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Container, Group, useMantineColorScheme } from '@mantine/core';
 import { Prism } from '@mantine/prism';
 import { Button, colors, Text } from '../../design-system';

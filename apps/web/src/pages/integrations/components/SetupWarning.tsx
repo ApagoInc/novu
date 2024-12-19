@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Group } from '@mantine/core';
 
 import { When } from '../../../components/utils/When';

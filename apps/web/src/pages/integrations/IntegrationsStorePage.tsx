@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import styled from '@emotion/styled';
+import styled from '@emotion/styled/macro';
 import { Modal } from '@mantine/core';
 import { ChannelTypeEnum, EmailProviderIdEnum, InAppProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 
