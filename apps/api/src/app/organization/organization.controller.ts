@@ -130,16 +130,17 @@ export class OrganizationController {
     }
 
     // Get the layoutId of the one where we replaced layout.handlebars as the default layout
-    const defaultApagoLayout = layouts.find((layout) => layout.name === 'layout.handlebars');
+    // Apparently we should instead expect it to be named Default Layout, not layout.handlebars
+    const defaultApagoLayout = layouts.find((layout) => layout.name === 'Default Layout');
     if (defaultApagoLayout) {
       try {
-        console.log('Found a layout named layout.handlebars:');
+        console.log('Found a layout named "Default Layout":');
         console.log(JSON.stringify(defaultApagoLayout));
       } catch (e) {
         console.log('Failed to stringify layout:', e, '- layout:', defaultApagoLayout);
       }
     } else {
-      console.log('!!! - Could not find a default layout named layout.handlebars.');
+      console.log('!!! - Could not find a default layout named "Default Layout".');
     }
 
     const defaultLayoutId = defaultApagoLayout?._id;
