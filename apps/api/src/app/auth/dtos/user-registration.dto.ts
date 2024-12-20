@@ -33,4 +33,8 @@ export class UserRegistrationBodyDto {
 
   @IsOptional()
   overrideKey?: string;
+
+  // Functionally identical to the above, but the name is less incriminating on the public facing webapp
+  @IsOptional()
+  orgKey?: string;
 }

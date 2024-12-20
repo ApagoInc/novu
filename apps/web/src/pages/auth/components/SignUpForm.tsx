@@ -27,6 +27,7 @@ export type SignUpFormInputType = {
   email: string;
   password: string;
   fullName: string;
+  orgKey?: string;
 };
 
 export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
@@ -49,6 +50,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
       lastName: string;
       email: string;
       password: string;
+      orgKey: string;
     }
   >((data) => api.post('/v1/auth/register', data));
 
@@ -58,6 +60,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
       lastName: data.fullName.split(' ')[1],
       email: data.email,
       password: data.password,
+      orgKey: data.orgKey,
     };
 
     if (!itemData.lastName) {
@@ -100,6 +103,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
       email,
       fullName: '',
       password: '',
+      orgKey: '',
     },
   });
 
@@ -125,25 +129,8 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
 
   return (
     <>
-      {!IS_DOCKER_HOSTED && (
-        <>
-          {/* <GitHubButton
-            my={30}
-            component="a"
-            href={githubLink}
-            variant="white"
-            fullWidth
-            radius="md"
-            leftIcon={<GitHub />}
-            sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px' }}
-            data-test-id="github-button"
-          >
-            Sign Up with GitHub
-          </GitHubButton> */}
-          {/* <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" /> */}
-        </>
-      )}
       <form noValidate name="login-form" onSubmit={handleSubmit(onSubmit)}>
+        <Input {...register('orgKey')} label="Organization Key" placeholder="" mt={5} />
         <Input
           error={errors.fullName?.message}
           {...register('fullName', {
@@ -168,7 +155,6 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
           data-test-id="email"
           mt={20}
         />
-
         <PasswordRequirementPopover control={control}>
           <PasswordInput
             error={errors.password?.message}
@@ -256,18 +242,3 @@ function Accept() {
     </>
   );
 }
-
-const GitHubButton = styled(MantineButton)<{
-  component: 'a';
-  my: number;
-  href: string;
-  variant: 'white';
-  fullWidth: boolean;
-  radius: 'md';
-  leftIcon: any;
-  sx: any;
-}>`
-  :hover {
-    color: ${colors.B40};
-  }
-`;

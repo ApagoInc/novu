@@ -141,6 +141,16 @@ export class AuthController {
     // TODO - Idea - maybe, to validate these -
     // -> check if the user email is in LSP.
     // -> If not, reject the creation.
+
+    // If an 'orgKey' is in the body, we can treat it as an overrideKey.
+    // It will only work for whitelisted emails.
+
+    const organizationKey = body.orgKey || undefined;
+
+    if (organizationKey) {
+      console.log('Received an organization key value for a user register attempt. User email is:', body.email);
+    }
+
     return await this.userRegisterUsecase.execute(
       UserRegisterCommand.create({
         email: body.email,
@@ -149,7 +159,7 @@ export class AuthController {
         lastName: body.lastName,
         organizationName: body.organizationName,
         origin: body.origin,
-        overrideKey: body.overrideKey,
+        overrideKey: body.overrideKey || organizationKey,
       })
     );
   }

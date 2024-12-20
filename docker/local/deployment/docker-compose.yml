@@ -69,6 +69,7 @@ services:
       LAKESIDE_PASSWORD: ${LAKESIDE_PASSWORD}
       RUN_ON_HTTP: true
       API_OVERRIDE_KEY: ${API_OVERRIDE_KEY}
+      EMAIL_WHITELIST: ${EMAIL_WHITELIST}
     ports:
       - '${API_PORT}:${API_PORT}'
   worker:
