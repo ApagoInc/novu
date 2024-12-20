@@ -11,6 +11,7 @@
     "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 react-app-rewired --max_old_space_size=4096 build",
     "//build": "react-scripts build",
     "precommit": "lint-staged",
+    "docker:build": "echo '\n\n\n\n\nWarning: This command no longer exists as a generic build option. You must specify either docker:build:apago or docker:build:lsp, based on where you are building.\n\n\n\n\n' && sleep 3",
     "docker:build:apago": "docker buildx build --build-arg PROXY_HOST='https://novu.apagocloud.net' -f ./Dockerfile -t novu-web ./../..",
     "docker:build:lsp": "docker buildx build --build-arg PROXY_HOST='https://notifications.lscscout.com' -f ./Dockerfile -t novu-web ./../..",
     "envsetup:docker": "chmod +x ./env.sh && ./env.sh && mv ./env-config.js ./build/env-config.js",

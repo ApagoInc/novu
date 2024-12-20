@@ -41,12 +41,8 @@ export class UserRegister {
     const whitelistedEmails = emailWhitelist?.split(',');
 
     if (whitelistedEmails) {
-      console.log(
-        'Got email whitelist of',
-        whitelistedEmails?.length,
-        'emails:',
-        whitelistedEmails?.map((_email) => console.log('-', _email))
-      );
+      console.log('Got email whitelist of', whitelistedEmails?.length, 'emails:');
+      whitelistedEmails?.map((_email) => console.log('-', _email));
     }
 
     const emailCanRegister = whitelistedEmails?.includes(email);

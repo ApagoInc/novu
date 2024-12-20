@@ -155,7 +155,8 @@ export function MembersInvitePage() {
   };
 
   const generateInviteLink = (memberToken: string) => {
-    return `${window.location.origin.toString()}` + parseUrl(ROUTES.AUTH_INVITATION_TOKEN, { token: memberToken });
+    // TODO - test and see if this may fix the redirect bug in the webapp.
+    return `${window.location.origin.toString()}/web` + parseUrl(ROUTES.AUTH_INVITATION_TOKEN, { token: memberToken });
   };
 
   function getInviteMemberByLinkDiv(inviteHref: string, currentMember) {

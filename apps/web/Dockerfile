@@ -84,6 +84,10 @@ RUN echo "value of .env file:"
 RUN echo cat .env
 
 # This command will build and then start the webapp
-CMD ["npm", "run", "start:docker"]
-
+# CMD ["npm", "run", "start:docker"]
+# TODO -
+  # Currently, the webapp still has a redirect bug when 
+  # an attempt to load an invite link is made
+  # So, using the dev app until that is resolved:
+CMD ["npm", "run", "start:dev"]
 # CMD ["sleep", "infinity"]
