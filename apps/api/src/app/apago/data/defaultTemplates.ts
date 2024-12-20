@@ -119,8 +119,9 @@ const defaultTemplates = {
     email: '{{componentName}} page proof review has been completed by {{lastActorName}}<div>S2a</div>',
   },
   'approve-to-print-complete': {
-    in_app: '{{titleName}} - {{componentName}} has been approved to print by {{lastActorName}} S3a',
-    email: ' {{componentName}} has been approved to print by {{lastActorName}}<div>S3a</div>',
+    // Note: these use 'actorUserName' since they piggy-back off of the Component Proof Approved event
+    in_app: '{{titleName}} - {{componentName}} has been approved to print by {{actorUserName}} S3a',
+    email: ' {{componentName}} has been approved to print by {{actorUserName}}<div>S3a</div>',
   },
 };
 
