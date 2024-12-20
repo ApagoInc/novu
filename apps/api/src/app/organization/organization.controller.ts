@@ -56,7 +56,7 @@ import {
 import { GetNotificationGroups } from '../notification-groups/usecases/get-notification-groups/get-notification-groups.usecase';
 import { GetNotificationGroupsCommand } from '../notification-groups/usecases/get-notification-groups/get-notification-groups.command';
 import { ApagoService } from '../apago/apago.service';
-import { FindLayoutsCommand, FindLayoutsUseCase } from 'packages/application-generic/build/main';
+import { FindLayoutsCommand, FindLayoutsUseCase } from '@novu/application-generic';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
