@@ -8,8 +8,8 @@ const stakeholderStages = [
     // customLabel: "(Stakeholder1) - Resolve Preflight Issues",
     value: 'Preflight1_ApplyFix',
     digest: normalDigest({
-      digestAmount: 5,
-      digestUnit: DigestUnitEnum.SECONDS,
+      digestAmount: 1,
+      digestUnit: DigestUnitEnum.MINUTES,
     }),
   },
   {
@@ -19,8 +19,8 @@ const stakeholderStages = [
     value: 'Preflight1_Signoff',
     prior: 'Preflight1_ApplyFix',
     digest: normalDigest({
-      digestAmount: 5,
-      digestUnit: DigestUnitEnum.SECONDS,
+      digestAmount: 1,
+      digestUnit: DigestUnitEnum.MINUTES,
     }),
   },
   {
@@ -30,8 +30,8 @@ const stakeholderStages = [
     value: 'Preflight2_Signoff',
     prior: 'Preflight1_Signoff',
     digest: normalDigest({
-      digestAmount: 5,
-      digestUnit: DigestUnitEnum.SECONDS,
+      digestAmount: 1,
+      digestUnit: DigestUnitEnum.MINUTES,
     }),
   },
   {
@@ -40,8 +40,8 @@ const stakeholderStages = [
     // customLabel: "(Stakeholder1a) Resolve Preflight Complete",
     value: 'resolve-preflight-complete',
     digest: normalDigest({
-      digestAmount: 5,
-      digestUnit: DigestUnitEnum.SECONDS,
+      digestAmount: 1,
+      digestUnit: DigestUnitEnum.MINUTES,
     }),
   },
   {
@@ -50,8 +50,8 @@ const stakeholderStages = [
     // customLabel: "(Stakeholder2a) Approve Content Complete",
     value: 'approve-content-complete',
     digest: normalDigest({
-      digestAmount: 5,
-      digestUnit: DigestUnitEnum.SECONDS,
+      digestAmount: 1,
+      digestUnit: DigestUnitEnum.MINUTES,
     }),
   },
   {
@@ -60,8 +60,8 @@ const stakeholderStages = [
     // customLabel: "(Stakeholder3a) Approve to Print Complete",
     value: 'approve-to-print-complete',
     digest: normalDigest({
-      digestAmount: 5,
-      digestUnit: DigestUnitEnum.SECONDS,
+      digestAmount: 1,
+      digestUnit: DigestUnitEnum.MINUTES,
     }),
   },
 ];
