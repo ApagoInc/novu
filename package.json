@@ -47,6 +47,7 @@
     "start:docker:embed": "cd libs/embed && npm run start:docker",
     "start:docker:widget": "cross-env nx run-many --target=start:docker --projects=@novu/widget",
     "docker:build": "pnpm -r --if-present --parallel docker:build",
+    "predocker:build": "pnpm run x-build:application-generic",
     "build": "nx run-many --target=build --all",
     "prebuild": "nx run-many --target=prebuild --all",
     "build:api": "nx build @novu/api",

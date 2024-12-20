@@ -56,6 +56,7 @@ import {
 import { GetNotificationGroups } from '../notification-groups/usecases/get-notification-groups/get-notification-groups.usecase';
 import { GetNotificationGroupsCommand } from '../notification-groups/usecases/get-notification-groups/get-notification-groups.command';
 import { ApagoService } from '../apago/apago.service';
+import { FindLayoutsCommand, FindLayoutsUseCase } from 'packages/application-generic/build/main';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -74,7 +75,8 @@ export class OrganizationController {
     private renameOrganizationUsecase: RenameOrganization,
     private createWorkflowUsecase: CreateNotificationTemplate,
     private getNotificationGroupsUsecase: GetNotificationGroups,
-    private apagoService: ApagoService
+    private apagoService: ApagoService,
+    private findLayoutsUseCase: FindLayoutsUseCase
   ) {}
 
   @Post('/')
@@ -112,7 +114,63 @@ export class OrganizationController {
       })
     );
 
+    // Once the organization was created above, the layouts should now be created. So:
+    const layouts = await this.findLayoutsUseCase.execute(
+      FindLayoutsCommand.create({
+        environmentId: organization.devEnv,
+        organizationId: organization._id,
+      })
+    );
+
+    try {
+      console.log('Got the following layouts back from findLayouts in /lakeside call:');
+      console.log(JSON.stringify(layouts));
+    } catch (e) {
+      console.log('Failed to stringify layouts:', e, '- layouts:', layouts);
+    }
+
+    // Get the layoutId of the one where we replaced layout.handlebars as the default layout
+    const defaultApagoLayout = layouts.find((layout) => layout.name === 'layout.handlebars');
+    if (defaultApagoLayout) {
+      try {
+        console.log('Found a layout named layout.handlebars:');
+        console.log(JSON.stringify(defaultApagoLayout));
+      } catch (e) {
+        console.log('Failed to stringify layout:', e, '- layout:', defaultApagoLayout);
+      }
+    } else {
+      console.log('!!! - Could not find a default layout named layout.handlebars.');
+    }
+
+    const defaultLayoutId = defaultApagoLayout?._id;
+
+    if (defaultLayoutId) {
+      console.log('Got default layout ID to use for email templates as:', defaultLayoutId);
+    } else {
+      console.log('Could not get a default layout ID to set in the email templates.');
+    }
+
+    // Also get the trivial 'useradminlayout.handlebars' layout, for use in the 3 user admin events
+    const userAdminLayout = layouts.find((layout) => layout.name === 'useradminlayout.handlebars');
+    if (userAdminLayout) {
+      try {
+        console.log('Found a user admin layout named useradminlayout.handlebars:');
+        console.log(JSON.stringify(userAdminLayout));
+      } catch (e) {
+        console.log('Failed to stringify layout:', e, '- layout:', userAdminLayout);
+      }
+    } else {
+      console.log('!!! - Could not find a user admin layout named useradminlayout.handlebars.');
+    }
+    const userAdminLayoutId = userAdminLayout?._id;
+
     for (const event of this.apagoService._getInitialTemplateData()) {
+      const layoutIdSetting = event.internalId.startsWith('USER_')
+        ? userAdminLayoutId || null
+        : defaultLayoutId || null;
+
+      console.log('For event', event.name, ', got layoutId setting of:', layoutIdSetting);
+
       const stepsForEventTemplate: NotificationStep[] = [
         {
           name: 'In-App',
@@ -132,6 +190,7 @@ export class OrganizationController {
             content: [{ content: event.initialContent?.email || '', type: EmailBlockTypeEnum.TEXT }],
             type: StepTypeEnum.EMAIL,
             contentType: 'editor',
+            layoutId: layoutIdSetting,
           },
         },
       ];

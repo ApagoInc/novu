@@ -9,6 +9,7 @@ import { USE_CASES } from './usecases';
 import { WorkflowModule } from '../workflows/workflow.module';
 import { NotificationGroupsModule } from '../notification-groups/notification-groups.module';
 import { ApagoModule } from '../apago/apago.module';
+import { LayoutsModule } from '../layouts/layouts.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ApagoModule } from '../apago/apago.module';
     WorkflowModule,
     NotificationGroupsModule,
     ApagoModule,
+    LayoutsModule,
   ],
   controllers: [OrganizationController],
   providers: [...USE_CASES],

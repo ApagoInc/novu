@@ -166,11 +166,12 @@ services:
         HTTPS_CERT_OS_PATH: ${HTTPS_CERT_OS_PATH}
         HTTPS_KEY_OS_PATH: ${HTTPS_KEY_OS_PATH}
     image: nginx:1.27.3-alpine
-    volumes:
-      # Use this bind mount to monitor logs on the host machine, i.e. with fail2ban or similar
-      - type: bind
-        source: ${NGINX_LOG_MOUNT_HOST_DIR}
-        target: /var/log/nginx/
+    # volumes:
+      # Could use this bind mount to monitor logs on the host machine, i.e. with fail2ban or similar
+      # But this removes the log stream to docker compose, so that would have to be accepted or resolved somehow
+      # - type: bind
+        # source: ${NGINX_LOG_MOUNT_HOST_DIR}
+        # target: /var/log/nginx/
     ports:
     # host:container
     - "443:443"

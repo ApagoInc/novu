@@ -1,4 +1,4 @@
-import { GetLayoutUseCase, GetNovuLayout } from '@novu/application-generic';
+import { GetLayoutUseCase, GetNovuLayout, FindLayoutsUseCase } from '@novu/application-generic';
 
 import { CreateDefaultLayoutChangeUseCase } from './create-default-layout-change/create-default-layout-change.usecase';
 import { CheckLayoutIsUsedUseCase } from './check-layout-is-used/check-layout-is-used.use-case';
@@ -34,4 +34,5 @@ export const USE_CASES = [
   GetNovuLayout,
   SetDefaultLayoutUseCase,
   UpdateLayoutUseCase,
+  FindLayoutsUseCase,
 ];

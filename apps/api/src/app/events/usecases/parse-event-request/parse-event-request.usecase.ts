@@ -52,6 +52,13 @@ export class ParseEventRequest {
 
     await this.validateSubscriberIdProperty(mappedRecipients);
 
+    console.log(
+      'About to get template by environmentId',
+      command.environmentId,
+      'and triggerIdentifier (command.identifier) of:',
+      command.identifier
+    );
+
     const template = await this.getNotificationTemplateByTriggerIdentifier({
       environmentId: command.environmentId,
       triggerIdentifier: command.identifier,
