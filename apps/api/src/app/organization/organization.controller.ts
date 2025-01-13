@@ -206,8 +206,8 @@ export class OrganizationController {
           template: {
             // TODO - add using sender name from env
             senderName: 'Lakeside Prepress',
-            subject: event.name || 'Lakeside Prepress Email Notification',
-            content: [{ content: event.initialContent?.email || '', type: EmailBlockTypeEnum.TEXT }],
+            subject: event.initialContent?.email?.subject || event.name || 'Lakeside Prepress Email Notification',
+            content: [{ content: event.initialContent?.email?.content || '', type: EmailBlockTypeEnum.TEXT }],
             type: StepTypeEnum.EMAIL,
             contentType: 'editor',
             layoutId: layoutIdSetting,
