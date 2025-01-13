@@ -160,6 +160,8 @@ export class ApagoController {
       })
     );
 
+    // TODO - don't allow subscriptions to any events of type 'discrete'
+
     return this.setInformativeSubscriptions.execute(
       SetInformativeSubscriptionsCommand.create({
         environmentId: subscriberSession._environmentId,
@@ -203,7 +205,10 @@ export class ApagoController {
         permissions: [],
       });
 
-      if (!isAdmin) throw new UnauthorizedException(`User must be an admin in order to make changes for a different Novu subscriber.`);
+      if (!isAdmin)
+        throw new UnauthorizedException(
+          `User must be an admin in order to make changes for a different Novu subscriber.`
+        );
     }
 
     const subscriber = await this.createSubscriberUsecase.execute(
@@ -216,6 +221,11 @@ export class ApagoController {
         email: user.Email,
       })
     );
+
+    // TODO -
+    // Maybe right now, it's easiest to just:
+    // filter the download event category on the UI, and at the subscribe(POST, the route above) level.
+    // Given that since the event is 'discrete', it will never go out to anyone else who subscribes anyways.
 
     const data = await this.getInformativeSubscriptions.execute(
       GetInformativeSubscriptionsCommand.create({
@@ -230,11 +240,12 @@ export class ApagoController {
       this.apagoService.informativeEvents.map(async (item) => {
         const events = await Promise.all(
           item.events.map(async (event) => {
-            console.log('mapping event', event.value, 'subscriptions...')
+            console.log('mapping event', event.value, 'subscriptions...');
             const subscription = data.find((val) => {
-
-              console.log(`checking val.template.internalId of "${val.template?.internalId}" to see if it matches event value of "${event.value}"`)
-              return val.template?.internalId === event.value
+              console.log(
+                `checking val.template.internalId of "${val.template?.internalId}" to see if it matches event value of "${event.value}"`
+              );
+              return val.template?.internalId === event.value;
             });
 
             if (!subscription) {
@@ -244,7 +255,7 @@ export class ApagoController {
                   organizationId: subscriberSession._organizationId,
                   // name: event?.label,
                   userId: subscriberSession.subscriberId,
-                  internalId: event.value
+                  internalId: event.value,
                 })
               );
 
@@ -268,9 +279,9 @@ export class ApagoController {
   /**
    * A route used to identify the active novu subscriber once they interact with the Scout FE.
    * If not found, the user will be created.
-   * @param subscriberSession 
-   * @param accountId 
-   * @returns 
+   * @param subscriberSession
+   * @param accountId
+   * @returns
    */
   @ExternalApiAccessible()
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -298,17 +309,16 @@ export class ApagoController {
 
   /**
    * POST a novu informative notification "trigger". This fires a notification.
-   * @param user 
-   * @param body 
-   * @returns 
+   * @param user
+   * @param body
+   * @returns
    */
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Post('/trigger/informative')
   async triggerInformativeEvents(@UserSession() user: IJwtPayload, @Body() body: InformativeEventTriggerBodyDto) {
-
     /** Tag the console messages for this trigger run */
-    const tag = `[${String(Date.now())}]`
+    const tag = `[${String(Date.now())}]`;
 
     // We also support sending discrete notifications to just one or several recipients, IF that is requested here.
     const specialOptions = body.payload?.specialOptions;

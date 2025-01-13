@@ -165,8 +165,27 @@ export class OrganizationController {
     }
     const userAdminLayoutId = userAdminLayout?._id;
 
+    // Get the download email template layout, for use in the RTO component download event, and any future download events
+    const downloadLayout = layouts.find((layout) => layout.name === 'downloads_email_layout.handlebars');
+    if (downloadLayout) {
+      try {
+        console.log('Found a download layout named downloads_email_layout.handlebars:');
+        console.log(JSON.stringify(downloadLayout));
+      } catch (e) {
+        console.log('Failed to stringify layout:', e, '- layout:', downloadLayout);
+      }
+    } else {
+      console.log('!!! - Could not find a download layout named downloads_email_layout.handlebars.');
+    }
+    const downloadLayoutId = downloadLayout?._id;
+
+    // TODO - move this list of download events/template types
+    const downloadEvents = ['RTO_PROOF_DOWNLOAD_READY'];
+
     for (const event of this.apagoService._getInitialTemplateData()) {
-      const layoutIdSetting = event.internalId.startsWith('USER_')
+      const layoutIdSetting = downloadEvents.includes(event.internalId)
+        ? downloadLayoutId || null
+        : event.internalId.startsWith('USER_')
         ? userAdminLayoutId || null
         : defaultLayoutId || null;
 

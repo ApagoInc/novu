@@ -141,15 +141,6 @@ const informativeEvents = [
     ],
   },
   {
-    title: 'Download Events',
-    events: [
-      {
-        label: 'RTO Proof Download Ready',
-        value: 'RTO_PROOF_DOWNLOAD_READY',
-      },
-    ],
-  },
-  {
     title: 'Administrative Events',
     events: [
       {
@@ -166,6 +157,19 @@ const informativeEvents = [
         label: 'User Was Deleted',
         value: 'USER_WAS_DELETED',
         administrative: true,
+      },
+    ],
+  },
+  // These will never be displayed as subscribable because they are 'discrete', in the sense that they will only ever inform one particular person for a given notification.
+  // i.e. The user requesting a download will singularly be informed when the download is ready.
+  {
+    title: 'Discrete Events',
+    hidden: true,
+    events: [
+      {
+        discrete: true,
+        label: 'RTO Proof Download Ready',
+        value: 'RTO_PROOF_DOWNLOAD_READY',
       },
     ],
   },
