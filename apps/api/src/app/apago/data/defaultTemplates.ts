@@ -206,7 +206,7 @@ const defaultTemplates = {
     // Note: these use 'actorUserName' since they piggy-back off of the Component Proof Approved event
     in_app: '{{titleName}} - {{componentName}} has been approved to print by {{actorUserName}} S3a',
     email: {
-      content: ' {{componentName}} has been approved to print by {{actorUserName}}<div>S3a</div>',
+      content: '{{componentName}} has been approved to print by {{actorUserName}}<div>S3a</div>',
       subject: '',
     },
   },
