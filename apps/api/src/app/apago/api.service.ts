@@ -61,10 +61,10 @@ export class ApiService {
     );
 
     // Check the permissions of the editing user.
-    await this.getUser(data.userId, data.accountId, [...stakeholderEditorRequiredPerms]);
+    await this.getLakesideUser(data.userId, data.accountId, [...stakeholderEditorRequiredPerms]);
 
     // Having gotten here without erroring out, now get the *requested* user's user object, and make sure they have the permission to perform the action that will be added to their stakeholder status (`data.stage` is the permission required).
-    return await this.getUser(data.stakeholderId, data.accountId, [data.stage]);
+    return await this.getLakesideUser(data.stakeholderId, data.accountId, [data.stage]);
   }
 
   async getAccount(data: ApiClientData) {
@@ -72,7 +72,7 @@ export class ApiService {
     await this.login();
     await this.setAccount(data.accountId);
 
-    return await this.getUser(data.userId, data.accountId, data.permissions);
+    return await this.getLakesideUser(data.userId, data.accountId, data.permissions);
   }
 
   async setAccount(accountId: string) {
@@ -101,7 +101,7 @@ export class ApiService {
     return permissions;
   }
 
-  async getUser(id: string, accountId: string, permissions: Array<string>) {
+  async getLakesideUser(id: string, accountId: string, permissions: Array<string>) {
     try {
       const res = await this.instance.get(`/admin/user/${id}`);
 
@@ -126,7 +126,7 @@ export class ApiService {
 
       return res.data;
     } catch (error) {
-      Logger.error('Error in getUser:' + error);
+      Logger.error('Error in getLakesideUser:' + error);
       throw new UnauthorizedException({
         message: 'User does not have the required permissions to participate in Novu notifications.',
         reason: 'insufficient_permissions',
@@ -217,7 +217,7 @@ export class ApiService {
     }
   }
 
-  async getUsers() {
+  async getLakesideUsers() {
     const res = await this.instance.get(`/admin/users`);
 
     return res.data;
