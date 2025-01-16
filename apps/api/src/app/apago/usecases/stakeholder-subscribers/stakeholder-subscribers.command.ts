@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
 export class StakeholderSubscribersCommand extends EnvironmentCommand {
@@ -13,4 +13,8 @@ export class StakeholderSubscribersCommand extends EnvironmentCommand {
   @IsNotEmpty()
   @IsString()
   stage: string;
+
+  @IsOptional()
+  @IsBoolean()
+  unconfirmed: boolean;
 }

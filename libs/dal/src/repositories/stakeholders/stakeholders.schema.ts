@@ -26,6 +26,11 @@ const stakeholdersSchema = new Schema<StakeholdersDBModel>(
       ref: 'Environment',
       index: true,
     },
+    unconfirmed: {
+      type: Schema.Types.Boolean,
+      required: true,
+      default: false
+    }
   },
   schemaOptions
 );

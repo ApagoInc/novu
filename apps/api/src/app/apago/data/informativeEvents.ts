@@ -161,7 +161,8 @@ const informativeEvents = [
     ],
   },
   // These will never be displayed as subscribable because they are 'discrete', in the sense that they will only ever inform one particular person for a given notification.
-  // i.e. The user requesting a download will singularly be informed when the download is ready.
+  // The only reason they are still included here is that they use the 'informative' notifications portion of the code in order to send. These are technically 'informative' notifications that are unsubscribable.
+  // i.e. A user requesting an RTO proof download will receive a notification of this type. The user will be the only user informed when the download is ready.
   {
     title: 'Discrete Events',
     hidden: true,

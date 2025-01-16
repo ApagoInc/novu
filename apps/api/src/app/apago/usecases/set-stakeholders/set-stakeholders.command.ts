@@ -1,4 +1,4 @@
-import { IsArray, IsDefined, IsMongoId, IsNotEmpty, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsDefined, IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
 export class SetStakeholdersCommand extends EnvironmentCommand {
@@ -20,4 +20,8 @@ export class SetStakeholdersCommand extends EnvironmentCommand {
   @IsNotEmpty()
   @IsString()
   stage: string;
+
+  @IsOptional()
+  @IsBoolean()
+  unconfirmed?: boolean;
 }

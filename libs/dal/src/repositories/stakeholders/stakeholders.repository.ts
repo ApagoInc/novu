@@ -16,7 +16,14 @@ export class StakeholdersRepository extends BaseRepository<
     this.stakeholders = stakeholders;
   }
 
-  async getStakeholders(query: { _environmentId: string; _organizationId: string; jobId: string }) {
+  async getStakeholders(query:
+    {
+      _environmentId: string;
+      _organizationId: string;
+      jobId: string;
+      unconfirmed?: boolean;
+    }
+  ) {
     const stakeholders = await this.MongooseModel.aggregate([
       {
         $addFields: {
@@ -31,6 +38,10 @@ export class StakeholdersRepository extends BaseRepository<
           jobId: query.jobId,
           _environmentId: this.convertStringToObjectId(query._environmentId),
           _organizationId: this.convertStringToObjectId(query._organizationId),
+          // Unconfirmed will only be used here if it's passed
+          ...((typeof query.unconfirmed !== 'undefined' && typeof query.unconfirmed === 'boolean') ?
+            { unconfirmed: query.unconfirmed } :
+            {})
         },
       },
       {

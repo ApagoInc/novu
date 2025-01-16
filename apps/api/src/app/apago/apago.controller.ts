@@ -8,6 +8,7 @@ import {
   UnauthorizedException,
   NotFoundException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { SubscriberSession, UserSession } from '../shared/framework/user.decorator';
 import { AuthGuard } from '@nestjs/passport';
@@ -19,7 +20,7 @@ import { GetNotificationTemplateCommand } from '../workflows/usecases/get-notifi
 import { GetNotificationTemplate } from '../workflows/usecases/get-notification-template/get-notification-template.usecase';
 import slugify from 'slugify';
 import { IJwtPayload } from '@novu/shared';
-import { StakeholderBodyDto, StakeholderEventTriggerBodyDto, StakeholdersResponseDto } from './dtos/stakeholders.dto';
+import { StakeholderBatchUpdateBodyDto, StakeholderBodyDto, StakeholderEventTriggerBodyDto } from './dtos/stakeholders.dto';
 import { InformativeSubscriptionsDto, InformativeEventTriggerBodyDto } from './dtos/informative.dto';
 import { ParseEventRequest, ParseEventRequestCommand } from '../events/usecases/parse-event-request';
 import { ApiService } from './api.service';
@@ -36,6 +37,7 @@ import { GetStakeholders, GetStakeholdersCommand } from './usecases/get-stakehol
 import { SetStakeholders, SetStakeholdersCommand } from './usecases/set-stakeholders';
 import { StakeholderSubscribers, StakeholderSubscribersCommand } from './usecases/stakeholder-subscribers';
 import { InformativeSubscribers, InformativeSubscribersCommand } from './usecases/informative-subscribers';
+import { BatchUpdateStakeholdersForJobCommand, BatchUpdateStakeholdersForJob } from './usecases/batch-update-stakeholders-for-job';
 
 @Controller('/apago')
 export class ApagoController {
@@ -49,8 +51,9 @@ export class ApagoController {
     private getStakeholders: GetStakeholders,
     private setStakeholders: SetStakeholders,
     private stakeholderSubscribers: StakeholderSubscribers,
-    private informativeSubscribers: InformativeSubscribers
-  ) {}
+    private informativeSubscribers: InformativeSubscribers,
+    private batchUpdateStakeholdersForJob: BatchUpdateStakeholdersForJob
+  ) { }
 
   @Get('/stakeholders/:accountId/:jobId')
   @ExternalApiAccessible()
@@ -67,6 +70,13 @@ export class ApagoController {
     });
 
     if (user == null) throw new UnauthorizedException();
+
+    // We fetch stakeholders here regardless of if they are "unconfirmed", because we still display "unconfirmed" stakeholders and their settings on the UI.
+
+    // Because they will only ever be displayed during the confirmation of the job's stakeholders.
+    // The "unconfirmed" field addresses the need to temporarily suspend stakeholders for some job checkouts.
+    // When the job's confirmation is complete, any stakeholders that were both "unconfirmed" and left untouched on the UI - will be "confirmed" (they will be set to "unconfirmed: false")
+    // Any stakeholders that are updated on the UI during the confirm process - will be "confirmed" by any update made to their settings.
 
     return this.getStakeholders.execute(
       GetStakeholdersCommand.create({
@@ -110,6 +120,9 @@ export class ApagoController {
       })
     );
 
+    // This endpoint only ever updates for a SINGLE granular stakeholder subscription that is associated with a given stage and part(s).
+
+
     await this.setStakeholders.execute(
       SetStakeholdersCommand.create({
         organizationId: subscriberSession._organizationId,
@@ -119,6 +132,9 @@ export class ApagoController {
         parts: body.parts,
         subscriberId: subscriber._id,
         stage: body.stage,
+        unconfirmed: false
+        // The un-suspension of a stakeholder via saving an update is part of the way the 'unconfirmed' mechanism works.
+        // This is one of the only two ways a stakeholder subscription can be confirmed.
       })
     );
 
@@ -173,6 +189,63 @@ export class ApagoController {
       })
     );
   }
+
+
+  /**
+   * Apply a batch update to the stakeholders subscribed to a given job.
+   * (Currently, querying by and updating the setting of the "unconfirmed" field is the only batch update supported.)
+   * @param subscriberSession 
+   * @param body 
+   * @param jobId 
+   * @param accountId 
+   */
+  @Post('/stakeholders/:accountId/:jobId/batchupdate')
+  @ExternalApiAccessible()
+  @UseGuards(AuthGuard('subscriberJwt'))
+  async batchUpdateJobStakeholders(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: StakeholderBatchUpdateBodyDto,
+    @Param('jobId') jobId: string,
+    @Param('accountId') accountId: string
+  ) {
+    // Checks if the user can edit stakeholders
+    const userMakingUpdate = await this.apagoService.checkUserPermission({
+      accountId: accountId,
+      userId: subscriberSession.subscriberId,
+      permissions: ['Stakeholder_Edit']
+    })
+    if (!userMakingUpdate) throw new UnauthorizedException("User is not authorized to edit stakeholders.");
+
+    // Currently, querying by and updating the setting of "unconfirmed" is the only batch update supported.
+
+    const query = body.query || undefined
+    // If no query is passed, a blanket update will be performed on the 'unconfirmed' value for all stakeholders of this job. In any case, this should be inconsequential for toggling of the "unconfirmed" flag.
+
+    const update = body.update
+
+    if (!update) {
+      throw new BadRequestException('Must provide a batch update of the form {"unconfirmed": boolean}')
+    }
+
+    const batchJobUpdate = await this.batchUpdateStakeholdersForJob.execute(
+      BatchUpdateStakeholdersForJobCommand.create({
+        accountId: accountId,
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        jobId: jobId,
+        query: query,
+        update: update
+      }))
+
+    if (!batchJobUpdate) {
+      throw new InternalServerErrorException('Failed to batch update the stakeholders for the job under JobID ' + jobId + 'in account ' + accountId)
+    }
+    return {
+      success: true,
+      ...batchJobUpdate
+    }
+  }
+
 
   @Get('/informative/:accountId/:userId')
   @ExternalApiAccessible()
@@ -503,6 +576,7 @@ export class ApagoController {
           part: body.part || '',
           organizationId: user.organizationId,
           environmentId: user.environmentId,
+          unconfirmed: false
         })
       );
 
@@ -516,16 +590,16 @@ export class ApagoController {
         .filter(
           dedupeCompletionNotifs
             ? (val) => {
-                if (toList.includes(val)) {
-                  console.log(
-                    '- filtering user ID',
-                    val,
-                    'out from the users that will receive the stakeholder approve to print complete notification. User will only receive the original "Component Proof Approved" informative notification.'
-                  );
-                  return false;
-                }
-                return true;
+              if (toList.includes(val)) {
+                console.log(
+                  '- filtering user ID',
+                  val,
+                  'out from the users that will receive the stakeholder approve to print complete notification. User will only receive the original "Component Proof Approved" informative notification.'
+                );
+                return false;
               }
+              return true;
+            }
             : (val) => val
         );
 
@@ -569,6 +643,13 @@ export class ApagoController {
     ]);
   }
 
+  /**
+   * 
+   * Post a stakeholder notification to the appropriate stakeholders.
+   * @param user 
+   * @param body 
+   * @returns 
+   */
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Post('/trigger/stakeholder')
@@ -661,6 +742,7 @@ export class ApagoController {
         part: body.part,
         organizationId: user.organizationId,
         environmentId: user.environmentId,
+        unconfirmed: false,
       })
     );
 
@@ -674,14 +756,15 @@ export class ApagoController {
     const priorStageSubs =
       notifyForPrior && priorStage
         ? await this.stakeholderSubscribers.execute(
-            StakeholderSubscribersCommand.create({
-              stage: priorStage,
-              jobId: body.jobId,
-              part: body.part,
-              organizationId: user.organizationId,
-              environmentId: user.environmentId,
-            })
-          )
+          StakeholderSubscribersCommand.create({
+            stage: priorStage,
+            jobId: body.jobId,
+            part: body.part,
+            organizationId: user.organizationId,
+            environmentId: user.environmentId,
+            unconfirmed: false
+          })
+        )
         : undefined;
 
     // if deduping - filter members of the toList against this.
@@ -717,21 +800,21 @@ export class ApagoController {
     // but, if the prior stage data is defined here - we'll also be running that as part of the request.
     const priorStageCompletionP = priorStageToList
       ? this.parseEventRequest.execute(
-          ParseEventRequestCommand.create({
-            userId: user._id,
-            environmentId: user.environmentId,
-            organizationId: user.organizationId,
-            // TODO - the identifiers for these two MUST be kept as "<original stakeholder event identifier>-complete"
-            // TODO - fix how fragile the identifiers are here - (label?)
-            identifier: `${slugify(`${priorStageObj?.label || priorStage}-complete`, {
-              lower: true,
-              strict: true,
-            })}`,
-            payload: body.payload || {},
-            overrides: {},
-            to: priorStageToList,
-          })
-        )
+        ParseEventRequestCommand.create({
+          userId: user._id,
+          environmentId: user.environmentId,
+          organizationId: user.organizationId,
+          // TODO - the identifiers for these two MUST be kept as "<original stakeholder event identifier>-complete"
+          // TODO - fix how fragile the identifiers are here - (label?)
+          identifier: `${slugify(`${priorStageObj?.label || priorStage}-complete`, {
+            lower: true,
+            strict: true,
+          })}`,
+          payload: body.payload || {},
+          overrides: {},
+          to: priorStageToList,
+        })
+      )
       : Promise.resolve();
 
     return Promise.all([

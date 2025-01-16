@@ -45,3 +45,10 @@ export class StakeholderEventTriggerBodyDto {
   @IsObject()
   payload?: any;
 }
+
+export class StakeholderBatchUpdateBodyDto {
+  @IsOptional()
+  query?: { unconfirmed: boolean };
+  @IsDefined()
+  update: { unconfirmed: boolean };
+}
