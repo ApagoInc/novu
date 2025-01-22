@@ -38,6 +38,7 @@ import { SetStakeholders, SetStakeholdersCommand } from './usecases/set-stakehol
 import { StakeholderSubscribers, StakeholderSubscribersCommand } from './usecases/stakeholder-subscribers';
 import { InformativeSubscribers, InformativeSubscribersCommand } from './usecases/informative-subscribers';
 import { BatchUpdateStakeholdersForJobCommand, BatchUpdateStakeholdersForJob } from './usecases/batch-update-stakeholders-for-job';
+import { GetActiveStakeholdersForJob, GetActiveStakeholdersForJobCommand } from './usecases/get-active-stakeholders-for-job';
 
 @Controller('/apago')
 export class ApagoController {
@@ -52,7 +53,8 @@ export class ApagoController {
     private setStakeholders: SetStakeholders,
     private stakeholderSubscribers: StakeholderSubscribers,
     private informativeSubscribers: InformativeSubscribers,
-    private batchUpdateStakeholdersForJob: BatchUpdateStakeholdersForJob
+    private batchUpdateStakeholdersForJob: BatchUpdateStakeholdersForJob,
+    private getActiveStakeholdersForJob: GetActiveStakeholdersForJob
   ) { }
 
   @Get('/stakeholders/:accountId/:jobId')
@@ -87,6 +89,14 @@ export class ApagoController {
     );
   }
 
+  /**
+   * Edits a SINGLE stakeholder subscription to a single stage.
+   * @param subscriberSession 
+   * @param body 
+   * @param jobId 
+   * @param accountId 
+   * @returns 
+   */
   @Post('/stakeholders/:accountId/:jobId')
   @ExternalApiAccessible()
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -243,6 +253,49 @@ export class ApagoController {
     return {
       success: true,
       ...batchJobUpdate
+    }
+  }
+
+
+  /**
+ * Get all active stakeholders subscribed to a given job.
+ * "active" stakeholders are those who have ANY part value for a given stage.
+ * @param subscriberSession 
+ * @param body 
+ * @param jobId 
+ * @param accountId 
+ */
+  @Get('/stakeholders/:accountId/:jobId/active')
+  @ExternalApiAccessible()
+  @UseGuards(AuthGuard('subscriberJwt'))
+  async getActiveJobStakeholders(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('jobId') jobId: string,
+    @Param('accountId') accountId: string
+  ) {
+    // Checks if the user can view stakeholders
+    const userMakingQuery = await this.apagoService.checkUserPermission({
+      accountId: accountId,
+      userId: subscriberSession.subscriberId,
+      permissions: ['Stakeholder_View']
+    })
+    if (!userMakingQuery) throw new UnauthorizedException("User is not authorized to edit stakeholders.");
+
+    const allActiveStakeholdersForJob = await this.getActiveStakeholdersForJob.execute(
+      GetActiveStakeholdersForJobCommand.create({
+        environmentId: subscriberSession._environmentId,
+        organizationId: subscriberSession._organizationId,
+        accountId: accountId,
+        jobId: jobId,
+      })
+    )
+
+    if (!allActiveStakeholdersForJob) {
+      throw new InternalServerErrorException('Failed to get active stakeholders for the job under JobID ' + jobId + 'in account ' + accountId)
+    }
+
+    return {
+      count: allActiveStakeholdersForJob.length
     }
   }
 
