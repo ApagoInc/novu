@@ -36,6 +36,27 @@ export class SetStakeholders {
       // unconfirmed: command.unconfirmed
     };
 
+    // We will use this function to do different things, depending on the values we receive
+    // If there are no parts selected for this stage, there's no subscription. It should be deleted.
+    const shouldDelete = command.parts && command.parts.length === 0
+    if (shouldDelete) {
+      console.log('In execute for SetStakeholders command, got a command with parts of length 0, for the following baseCommand:', JSON.stringify(baseCommand), ' - if it exists, this subscription for this stage will be deleted.')
+
+      const existingSub = await this.stakeholdersRepository.findOne(
+        {
+          ...baseCommand,
+        }
+      )
+      if (existingSub) {
+        console.log("Found existing sub that will now be deleted.")
+        await this.stakeholdersRepository.delete({
+          ...baseCommand
+        })
+        return { deleted: true }
+      }
+      console.log('Failed to find existing sub. May now proceed to create one with zero parts for this stage.')
+    }
+
     // The below update first tries to update a matched existing stakeholder,
     // if one can be found that matches the above baseCommand...
     const stakeholder = await this.stakeholdersRepository.update(

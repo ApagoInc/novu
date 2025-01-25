@@ -133,7 +133,7 @@ export class ApagoController {
     // This endpoint only ever updates for a SINGLE granular stakeholder subscription that is associated with a given stage and part(s).
 
 
-    await this.setStakeholders.execute(
+    const updateResults = await this.setStakeholders.execute(
       SetStakeholdersCommand.create({
         organizationId: subscriberSession._organizationId,
         environmentId: subscriberSession._environmentId,
@@ -148,7 +148,10 @@ export class ApagoController {
       })
     );
 
-    return { success: true };
+    return {
+      success: true,
+      ...updateResults
+    };
   }
 
   /**
