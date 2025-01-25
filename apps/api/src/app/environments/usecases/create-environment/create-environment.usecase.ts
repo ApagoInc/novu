@@ -60,7 +60,10 @@ export class CreateEnvironment {
 
 
       const otherLayoutFiles = (() => {
-        const filesDir = `${__dirname}/templates/`
+        console.log('In otherLayoutFiles - got process.env.EMAIL_TEMPLATES_DIR_API_CONTAINER_PATH as:', process.env.EMAIL_TEMPLATES_DIR_API_CONTAINER_PATH)
+        const filesDir = process.env.EMAIL_TEMPLATES_DIR_API_CONTAINER_PATH || `${__dirname}/templates/`
+        // `${__dirname}/templates/`
+        console.log('[layout init] - going to check the following dir for Handlebars layout files:', filesDir)
         try {
           console.log(`About to look for other non-default layout files in the dir "${filesDir}"`)
           const lsFilesDir = readdirSync(filesDir)
@@ -74,7 +77,10 @@ export class CreateEnvironment {
           console.log('failed to get other layout files via reading the dir at', filesDir, '- error:', err)
           const filesByName = [
             'useradminlayout.handlebars',
-            'OLDdefaultlayout.handlebars'
+            'OLDdefaultlayout.handlebars',
+            "OLDNOVUlayout.handlebars",
+            "downloads_email_layout.handlebars ",
+            // "layout.handlebars",
           ]
           console.log('just using hardcoded name list instead for layouts:', filesByName.join(", "))
           return filesByName;
@@ -100,23 +106,24 @@ export class CreateEnvironment {
       //   variables: []
 
       for (const filename of otherLayoutFiles) {
-
-        console.log('Creating layout for file', filename)
         // Go ahead and create the others in that directory
-        await this.createLayoutUsecase.execute(
-          CreateLayoutCommand.create({
-            userId: command.userId,
-            name: filename,
-            isDefault: false,
-            identifier: `${filename}-template-${nanoid(6)}`,
-            content: await this.getNovuLayout.execute(GetNovuLayoutCommand.create({ layoutName: filename })),
-            environmentId: environment._id,
-            organizationId: command.organizationId,
-            description: '',
-          }))
-
+        try {
+          console.log('Creating layout for file', filename)
+          await this.createLayoutUsecase.execute(
+            CreateLayoutCommand.create({
+              userId: command.userId,
+              name: filename,
+              isDefault: false,
+              identifier: `${filename}-template-${nanoid(6)}`,
+              content: await this.getNovuLayout.execute(GetNovuLayoutCommand.create({ layoutName: filename })),
+              environmentId: environment._id,
+              organizationId: command.organizationId,
+              description: '',
+            }))
+        } catch (e) {
+          console.log("Error while attempting to create layout file:", filename, '- error:', e)
+        }
       }
-
 
     }
 

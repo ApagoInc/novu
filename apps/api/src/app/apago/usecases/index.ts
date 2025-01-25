@@ -11,6 +11,8 @@ import { GetStakeholders } from './get-stakeholders';
 import { SetStakeholders } from './set-stakeholders';
 import { StakeholderSubscribers } from './stakeholder-subscribers';
 import { InformativeSubscribers } from './informative-subscribers';
+import { BatchUpdateStakeholdersForJob } from './batch-update-stakeholders-for-job';
+import { GetActiveStakeholdersForJob } from './get-active-stakeholders-for-job';
 
 export const USE_CASES = [
   CreateSubscriber,
@@ -20,4 +22,6 @@ export const USE_CASES = [
   SetStakeholders,
   StakeholderSubscribers,
   InformativeSubscribers,
+  BatchUpdateStakeholdersForJob,
+  GetActiveStakeholdersForJob
 ];

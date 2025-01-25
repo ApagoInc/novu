@@ -44,18 +44,22 @@ stakeholdersSchema.virtual('subscriber', {
 
 // Using this mongoose post 'update' hook, 
 // when a stakeholder stage subscription is updated such that its "parts" values is of length 0 - we will delete it. 
-stakeholdersSchema.post('update', async function (doc) {
-  console.log('In stakeholdersSchema post "update" mongoose hook')
-  console.log('[stakeholdersSchema post "update" hook]', 'Got document with jobId of:', doc.jobId, ', stage of', doc.stage, ', and parts array of value', JSON.stringify(doc.parts))
-  // Where "doc" is the document that was just updated
-  if (doc.parts && doc.parts.length === 0) {
-    console.log('', 'Got a "parts" value of length 0. Deleting this stakeholder stage subscription!')
-    console.log('document object id "_id":', doc._id)
-    const mId = String(doc._id)
-    console.log('document object id "_id", as string, just in case:', mId)
-    const deletedDocument = await this.findByIdAndDelete(mId)
-    console.log('Successfully deleted the former stakeholder stage sub with no parts. deleted document ->', deletedDocument)
-  }
+stakeholdersSchema.post('updateMany', async function (docs) {
+  // TODO - update for updateMany, since this is what the call is ACTUALLY using.
+  // Should doc be docs? Figure out the function signature
+  console.log('In stakeholdersSchema post "update" mongoose hook - post hook for an updateMany that ran on a total of', docs.length, 'documents.')
+  docs?.map(async doc => {
+    console.log('[stakeholdersSchema post "update" hook]', 'Got document with jobId of:', doc.jobId, ', stage of', doc.stage, ', and parts array of value', JSON.stringify(doc.parts))
+    // Where "doc" is the document that was just updated
+    if (doc.parts && doc.parts.length === 0) {
+      console.log('', 'Got a "parts" value of length 0. Deleting this stakeholder stage subscription!')
+      console.log('document object id "_id":', doc._id)
+      const mId = String(doc._id)
+      console.log('document object id "_id", as string, just in case:', mId)
+      const deletedDocument = await this.findByIdAndDelete(mId)
+      console.log('Successfully deleted the former stakeholder stage sub with no parts. deleted document ->', deletedDocument)
+    }
+  })
 })
 
 stakeholdersSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });

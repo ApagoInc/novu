@@ -36,6 +36,18 @@ RUN cp src/.env.test dist/src/.env.test
 RUN cp src/.env.development dist/src/.env.development
 RUN cp src/.env.production dist/src/.env.production
 
+RUN mkdir -p /usr/src/app/apps/api/emailtemplates
+RUN echo "current WD: $PWD"
+
+RUN cp -r src/templates /usr/src/app/apps/api/emailtemplates
+# So now, the templates folder at runtime will be in /usr/src/app/apps/api/emailtemplates/templates
+
+RUN echo "Current ls of /usr/src/app/apps/api/emailtemplates/templates:"
+RUN contents=$(ls /usr/src/app/apps/api/emailtemplates/templates)
+RUN echo $contents
+
+
+
 WORKDIR /usr/src/app
 
 # ------- ASSETS BUILD ----------
@@ -66,6 +78,8 @@ RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
  --unsafe-perm
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
+
+RUN cp -r /usr/src/app/apps/api/emailtemplates /usr/src/app/packages/application-generic/build/main/usecases/get-novu-layout/templates/
 
 WORKDIR /usr/src/app/apps/api
 CMD [ "pm2-runtime","start", "dist/main.js" ]

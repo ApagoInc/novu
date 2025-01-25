@@ -214,4 +214,4 @@ const defaultTemplates = {
   },
 };
 
-module.exports = defaultTemplates;
+export default defaultTemplates;

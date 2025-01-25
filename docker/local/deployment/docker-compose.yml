@@ -38,6 +38,8 @@ services:
       options:
         max-size: '50m'
         max-file: '5'
+    env_file: 
+      - .env
     environment:
       NODE_ENV: ${NODE_ENV}
       API_ROOT_URL: ${API_ROOT_URL}
@@ -70,6 +72,7 @@ services:
       RUN_ON_HTTP: true
       API_OVERRIDE_KEY: ${API_OVERRIDE_KEY}
       EMAIL_WHITELIST: ${EMAIL_WHITELIST}
+      EMAIL_TEMPLATES_DIR_API_CONTAINER_PATH: ${EMAIL_TEMPLATES_DIR_API_CONTAINER_PATH}
     ports:
       - '${API_PORT}:${API_PORT}'
   worker:

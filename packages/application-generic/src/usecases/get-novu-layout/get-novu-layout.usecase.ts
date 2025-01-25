@@ -14,8 +14,9 @@ export class GetNovuLayout {
   }
 
   private async loadTemplateContent(name: string) {
-    const content = await readFile(`${__dirname}/templates/${name}`).catch((err => {
-      console.log('error reading file at location', `${__dirname}/templates/${name}`, '-', err)
+    const location = `${__dirname}/templates/emailtemplates/templates/${name}`
+    const content = await readFile(location).catch((err => {
+      console.log('error reading file at location', location, '-', err)
       return undefined;
     }))
     return content.toString();
