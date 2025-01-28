@@ -1,5 +1,5 @@
 import { DigestUnitEnum } from '@novu/shared';
-import { backoffFrequentDigest } from './digests';
+import { backoffFrequentDigest, normalDigest } from './digests';
 
 const informativeEvents = [
   {
@@ -28,11 +28,9 @@ const informativeEvents = [
         label: 'File(s) Uploaded',
         value: 'FILES_UPLOADED',
         has_parts: true,
-        digest: backoffFrequentDigest({
-          digestAmount: 30,
-          digestUnit: DigestUnitEnum.SECONDS,
-          backoffAmount: 1,
-          backoffUnit: DigestUnitEnum.MINUTES,
+        digest: normalDigest({
+          digestAmount: 6,
+          digestUnit: DigestUnitEnum.MINUTES,
         }),
       },
       {
