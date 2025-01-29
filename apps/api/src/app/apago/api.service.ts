@@ -3,6 +3,7 @@ import axios, { AxiosInstance } from 'axios';
 import { wrapper } from 'axios-cookiejar-support';
 import { CookieJar } from 'tough-cookie';
 import { ApiClientData } from './types';
+import stakeholderStages from './data/stakeholderStages';
 
 @Injectable()
 export class ApiService {
@@ -64,7 +65,12 @@ export class ApiService {
     await this.getLakesideUser(data.userId, data.accountId, [...stakeholderEditorRequiredPerms]);
 
     // Having gotten here without erroring out, now get the *requested* user's user object, and make sure they have the permission to perform the action that will be added to their stakeholder status (`data.stage` is the permission required).
-    return await this.getLakesideUser(data.stakeholderId, data.accountId, [data.stage]);
+
+    // Normally, we throw generic 401 exceptions from the getLakesideUser call.
+    // In the case of stakeholders, however, we want to instead identify which one stage, if any, failed subscription for the potential user.
+    // Then we will pass back a more helpful error message to the UI.
+    // We do this by indicating below that this perm check is a subscription attempt.
+    return await this.getLakesideUser(data.stakeholderId, data.accountId, [data.stage], { isSubscribeAttempt: true });
   }
 
   async getAccount(data: ApiClientData) {
@@ -101,7 +107,12 @@ export class ApiService {
     return permissions;
   }
 
-  async getLakesideUser(id: string, accountId: string, permissions: Array<string>) {
+  async getLakesideUser(
+    id: string,
+    accountId: string,
+    permissions: Array<string>,
+    opts?: { isSubscribeAttempt: boolean }
+  ) {
     try {
       const res = await this.instance.get(`/admin/user/${id}`);
 
@@ -127,6 +138,16 @@ export class ApiService {
       return res.data;
     } catch (error) {
       Logger.error('Error in getLakesideUser:' + error);
+      // In the case where signup for a single stage is attempted and it is an attempt to subscribe,
+      // return a better error message.
+      if (permissions.length === 1 && opts?.isSubscribeAttempt) {
+        throw new UnauthorizedException({
+          message: `User does not have the required permissions to subscribe to ${
+            stakeholderStages?.find((entry) => entry.value === permissions[0])?.label || permissions[0]
+          } events.`,
+          reason: 'insufficient_permissions',
+        });
+      }
       throw new UnauthorizedException({
         message: 'User does not have the required permissions to participate in Novu notifications.',
         reason: 'insufficient_permissions',

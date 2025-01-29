@@ -29,7 +29,7 @@ const informativeEvents = [
         value: 'FILES_UPLOADED',
         has_parts: true,
         digest: normalDigest({
-          digestAmount: 6,
+          digestAmount: 3,
           digestUnit: DigestUnitEnum.MINUTES,
         }),
       },
