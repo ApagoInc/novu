@@ -131,6 +131,7 @@ const informativeEvents = [
       {
         label: 'Component Checkout Complete',
         value: 'COMPONENT_CHECKOUT_COMPLETE',
+        has_parts: true,
       },
       {
         label: 'Title Checkout Complete',

@@ -12,11 +12,11 @@ import {
 import INFORMATİVE_EVENTS from '../data/informativeEvents';
 import { ChannelPreference } from '../../shared/dtos/channel-preference';
 
-const events = INFORMATİVE_EVENTS.flatMap((arr) => arr.events);
+const events = INFORMATİVE_EVENTS.flatMap((arr: any) => arr.events);
 
-const administrativeEvents = events.filter((val: any) => val.administrative).map((val) => val.value);
+const administrativeEvents = events.filter((val: any) => val.administrative).map((val: any) => val.value);
 
-const partEvents = events.filter((val) => val.has_parts).map((val) => val.value);
+const partEvents = events.filter((val: any) => val.has_parts).map((val: any) => val.value);
 
 export class InformativeSubscriptionsList {
   @IsDefined()
