@@ -137,12 +137,13 @@ const defaultTemplates = {
     },
   },
   RTO_PROOF_DOWNLOAD_READY: {
-    in_app: '[{{accountName}}] {{ISBN13}} {{CustomerReference}}, {{titleName}} - RTO proofs are now ready for download',
+    in_app:
+      '[{{accountName}}] {{ISBN13}} {{CustomerReference}}, {{titleName}} - RTO hi-res file is now ready for download',
     email: {
       content:
-        '[{{accountName}}] {{ISBN13}} {{CustomerReference}}, {{titleName}} - RTO proofs are now ready for download',
+        '[{{accountName}}] {{ISBN13}} {{CustomerReference}}, {{titleName}} - RTO hi-res file is ready for download',
       subject:
-        '[{{accountName}}] {{ISBN13}} {{CustomerReference}}, {{titleName}} - RTO proofs are now ready for download',
+        '[{{accountName}}] {{ISBN13}} {{CustomerReference}}, {{titleName}} - RTO hi-res file is ready for download',
     },
   },
   COMPONENT_CHECKED_IN: {
@@ -153,9 +154,10 @@ const defaultTemplates = {
     },
   },
   COMPONENT_CHECKOUT_COMPLETE: {
-    in_app: '{{titleName}} - {{componentName}} component checkout complete by {{actorUserName}}',
+    in_app:
+      '{{titleName}} - {{componentName}} component checkout complete. This component was checked out by {{actorUserName}}',
     email: {
-      content: '{{componentName}} component checkout complete by {{actorUserName}}',
+      content: '{{componentName}} component checkout complete. This component was checked out by {{actorUserName}}',
       subject: 'Component Checkout Complete - {{ISBN13}} {{CustomerReference}}, {{titleName}}, {{componentName}}',
     },
   },
@@ -168,25 +170,25 @@ const defaultTemplates = {
   },
   Preflight1_ApplyFix: {
     in_app:
-      '{{titleName}} - {{componentName}} has Preflight issues that need to be resolved (this could include rejected pages) S1',
+      '{{titleName}} - As a stakeholder, the {{componentName}} has Preflight issues that need to be resolved (this could include rejected pages).',
     email: {
       content:
-        '{{titleName}} - {{componentName}} component has Preflight issues that need to be resolved (this could include rejected pages).<div><span>Click the link below to go to the title, review the preflight issues, and resolve them.</span></div><div><br /></div><div>S1</div>',
+        '{{titleName}} - As a stakeholder, the {{componentName}} component has Preflight issues that need to be resolved (this could include rejected pages). Click the link below to go to the title, review the preflight issues, and resolve them.',
       subject: 'Preflight Issues Found - {{ISBN13}} {{CustomerReference}}, {{titleName}}, {{componentName}}',
     },
   },
   Preflight1_Signoff: {
-    in_app: '{{titleName}} - {{componentName}} component page proofs are ready to be reviewed S2',
+    in_app: '{{titleName}} - As a stakeholder, the {{componentName}} component page proofs are ready to be reviewed.',
     email: {
       content:
-        '{{titleName}} - {{componentName}} component page proofs are ready to be reviewed<div><br /></div><div>S2</div>',
+        '{{titleName}} - As a stakeholder, the {{componentName}} component page proofs are ready to be reviewed.',
       subject: 'Proofs Ready For Review - {{ISBN13}} {{CustomerReference}}, {{titleName}}, {{componentName}}',
     },
   },
   Preflight2_Signoff: {
-    in_app: '{{titleName}} - {{componentName}} component is ready to be approved to print. S3',
+    in_app: '{{titleName}} - As a stakeholder, the {{componentName}} component is ready to be approved to print.',
     email: {
-      content: '{{componentName}} component is ready to be approved to print.<div><span>S3</span></div>',
+      content: 'As a stakeholder, the {{componentName}} component is ready to be approved to print.',
       subject: 'Approve to Print - {{ISBN13}} {{CustomerReference}}, {{titleName}}, {{componentName}}',
     },
   },
