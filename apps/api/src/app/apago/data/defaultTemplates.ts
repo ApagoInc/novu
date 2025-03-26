@@ -89,7 +89,7 @@ const defaultTemplates = {
     in_app: '{{titleName}} - {{componentName}} component page proof(s) approved by {{actorUserName}}',
     email: {
       content:
-        '<span>Page proof(s) approved in {{componentName}} component by {{actorUserName}}.</span><div>Ordinal page position(s) approved: {{pageOrdinals}}</div><div>Number of pages approved: {{pageCount}}</div>',
+        '<span>Page proof(s) approved in {{componentName}} component by {{actorUserName}}.</span><div>Ordinal page position(s) approved: {{pageOrdinalsStr}}</div><div>Number of pages approved: {{pageCount}}</div>',
       subject: 'Page Proof(s) Approved - {{ISBN13}} {{CustomerReference}}, {{titleName}}, {{componentName}}',
     },
   },
@@ -97,7 +97,7 @@ const defaultTemplates = {
     in_app: '{{titleName}} - {{componentName}} component page proof(s) rejected by {{actorUserName}}',
     email: {
       content:
-        '<span>Page proof(s) rejected in {{componentName}} component by {{actorUserName}}.</span><div>Ordinal page position(s) rejected: {{pageOrdinals}}</div>',
+        '<span>Page proof(s) rejected in {{componentName}} component by {{actorUserName}}.</span><div>Ordinal page position(s) rejected: {{pageOrdinalsStr}}</div>',
       subject: 'Page Proof(s) Rejected - {{ISBN13}} {{CustomerReference}}, {{titleName}}, {{componentName}}',
     },
   },
@@ -141,9 +141,19 @@ const defaultTemplates = {
       '[{{accountName}}] {{ISBN13}} {{CustomerReference}}, {{titleName}} - RTO hi-res file is now ready for download',
     email: {
       content:
-        '[{{accountName}}] {{ISBN13}} {{CustomerReference}}, {{titleName}} - RTO hi-res file is ready for download',
+        '[{{accountName}}] {{ISBNDisplayValue}} {{CustomerReference}}, {{titleName}} - high-res file is ready for download',
       subject:
-        '[{{accountName}}] {{ISBN13}} {{CustomerReference}}, {{titleName}} - RTO hi-res file is ready for download',
+        '[{{accountName}}] {{ISBNDisplayValue}} {{CustomerReference}}, {{titleName}} - high-res file is ready for download',
+    },
+  },
+  DOWNLOADS_FAILED: {
+    in_app:
+      '[{{accountName}}] {{ISBN13}} {{CustomerReference}}, {{titleName}} - Something went wrong while trying to download the previously requested files.',
+    email: {
+      content:
+        '[{{accountName}}] {{ISBN13}} {{CustomerReference}}, {{titleName}} - Something went wrong while trying to download the files you previously requested. Please try again after a short time and/or contact your administrator for support.',
+      subject:
+        '[{{accountName}}] {{ISBN13}} {{CustomerReference}}, {{titleName}} - Failed to download previously requested files',
     },
   },
   COMPONENT_CHECKED_IN: {

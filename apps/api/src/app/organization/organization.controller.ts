@@ -179,11 +179,29 @@ export class OrganizationController {
     }
     const downloadLayoutId = downloadLayout?._id;
 
+    // Also get the download error layout.
+    const dlErrorLayout = layouts.find((layout) => layout.name === 'downloads_failed_email_layout.handlebars');
+    if (dlErrorLayout) {
+      try {
+        console.log('Found a "downloads failed" layout named downloads_failed_email_layout.handlebars:');
+        console.log(JSON.stringify(dlErrorLayout));
+      } catch (e) {
+        console.log('Failed to stringify layout:', e, '- layout:', dlErrorLayout);
+      }
+    } else {
+      console.log('!!! - Could not find a "downloads failed" layout named downloads_failed_email_layout.handlebars.');
+    }
+    const dlFailedLayoutId = dlErrorLayout?._id;
+
     // TODO - move this list of download events/template types
     const downloadEvents = ['RTO_PROOF_DOWNLOAD_READY'];
 
+    const dlErrorEvents = ['DOWNLOADS_FAILED'];
+
     for (const event of this.apagoService._getInitialTemplateData()) {
-      const layoutIdSetting = downloadEvents.includes(event.internalId)
+      const layoutIdSetting = dlErrorEvents.includes(event.internalId)
+        ? dlFailedLayoutId || null
+        : downloadEvents.includes(event.internalId)
         ? downloadLayoutId || null
         : event.internalId.startsWith('USER_')
         ? userAdminLayoutId || null
@@ -191,10 +209,26 @@ export class OrganizationController {
 
       console.log('For event', event.name, ', got layoutId setting of:', layoutIdSetting);
 
+      // get if the event's in_app active/inactive status has been manually specified (i.e., to make an event's   in_app notification inactive at startup).
+      const inAppStatus =
+        (event as any).specialOptions?.in_app && typeof (event as any).specialOptions?.in_app?.active === 'boolean'
+          ? (event as any).specialOptions.in_app.active
+          : undefined;
+
+      // debug
+      if (typeof inAppStatus !== 'undefined') {
+        console.log(
+          '[debug] - inAppStatus was not undefined for the event',
+          event.internalId,
+          '- Had a value of:',
+          String(inAppStatus)
+        );
+      }
+
       const stepsForEventTemplate: NotificationStep[] = [
         {
           name: 'In-App',
-          active: true,
+          active: typeof inAppStatus !== 'undefined' ? inAppStatus : true,
           template: {
             content: event.initialContent?.in_app || '',
             type: StepTypeEnum.IN_APP,
@@ -205,7 +239,7 @@ export class OrganizationController {
           active: true,
           template: {
             // TODO - add using sender name from env
-            senderName: 'Lakeside Prepress',
+            senderName: 'Lakeside Scout Notifications',
             subject: event.initialContent?.email?.subject || event.name || 'Lakeside Prepress Email Notification',
             content: [{ content: event.initialContent?.email?.content || '', type: EmailBlockTypeEnum.TEXT }],
             type: StepTypeEnum.EMAIL,

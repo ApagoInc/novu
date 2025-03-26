@@ -363,22 +363,44 @@ a:hover, a:visited, a:active, a:link {
     <td>{{{CustomerReference}}}</td>
   </tr>
   {{/if}}
-  {{#if titleName}}
   <tr>
     <th>Title:</th>
     <td>{{{titleName}}}</td>
   </tr>
-  {{/if}}
   {{#if optionalDisplays.componentName}}
   <tr>
     <th>Component:</th>
     <td>{{{componentName}}}</td>
   </tr>
   {{/if}}
+  {{#if componentNameList}}
+  <tr>
+    <th>Requested for:</th>
+    <td>{{{componentNameList}}}</td>
+  </tr>
+  {{/if}}
+  {{!-- {{#if error}}
+  <tr>
+    <th>Error Message:</th>
+    <td>{{{error}}}</td>
+  </tr>
+  {{/if}} --}}
 </table>
-                                        <br>
-									    <a href="{{{hrefSliceA}}}{{{subscriber.subscriberId}}}{{{hrefSliceB}}}" class="btn-primary" itemprop="url"><span style="color: #fff !important; font-size: 12px;">Click here for details</span></a>
-
+                                        {{!-- <br>
+                                        <div class="download-content-container" style="width: 100%;">
+                                            <p style="width: 100%; text-align: center;">Please use the following links to download your files.</p>
+                                            {{!-- <br> --}}
+                                            {{!--<h2 style="width: 100%; text-align: center;">Download Links</h2>--}}
+                                            {{!--<br><br>--}}
+                                            {{!--<div class="download-links-container" style="width: 100%; display: flex; flex-flow: row wrap; justify-content: space-around;">--}}
+                                            {{!--componentLinks--}}
+                                            {{!--{{#each componentLinks}}--}}
+                                            {{!-- TODO - Add expiration to each, or just one at the bottom, or...? --}}
+                                            {{!--<a href="{{{this.downloadHref}}}" class="btn-primary" itemprop="url"><span style="color: #fff !important; font-size: 12px;">{{{this.name}}}</span></a>--}}
+                                            {{!--{{/each}}--}}
+                                            {{!--<a href="{{{hrefSliceA}}}{{{subscriber.subscriberId}}}{{{hrefSliceB}}}" class="btn-primary" itemprop="url"><span style="color: #fff !important; font-size: 12px;">Click here for details</span></a>--}}
+                                        {{!--    </div>
+                                        </div> --}}
 									</td>
 								</tr>
 							</div>

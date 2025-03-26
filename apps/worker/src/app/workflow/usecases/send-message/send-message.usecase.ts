@@ -216,11 +216,6 @@ export class SendMessage {
       environmentId: job._environmentId,
     });
 
-    // TODO - will we need to come back here and actually also limit this by account ID?
-    // By way of something like:
-    // job.payload.accountId?
-    // Hm.
-
     if (!template) throw new PlatformException(`Notification template ${job._templateId} is not found`);
 
     if (template.critical || this.isActionStep(job)) {
@@ -233,8 +228,17 @@ export class SendMessage {
     });
     if (!subscriber) throw new PlatformException('Subscriber not found with id ' + job._subscriberId);
 
+    const jobPayloadAccountId = job.payload?.accountId;
+    console.log(
+      'For job:',
+      job._id,
+      job.identifier,
+      '- obtained the following for account ID under job.payload.accountId:',
+      jobPayloadAccountId || '(could not get account ID from job.payload: ' + job.payload
+    );
+
     const cmdInput = {
-      accountId: null,
+      accountId: String(jobPayloadAccountId) || null,
       organizationId: job._organizationId,
       subscriberId: subscriber.subscriberId,
       environmentId: job._environmentId,

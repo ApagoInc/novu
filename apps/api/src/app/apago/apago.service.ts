@@ -28,7 +28,7 @@ export class ApagoService {
           // It is true that 'discrete' notifications still currently get posted through the informative notification endpoints, so...
 
           // Any "discrete" informative events need to be set to { critical: true, email: true, in_app: true } (the same settings as stakeholder notifications)
-          const isDiscrete = val.discrete && val.discrete === true
+          const isDiscrete = val.discrete && val.discrete === true;
           return {
             internalId: val.value,
             name: val.label,
@@ -37,7 +37,8 @@ export class ApagoService {
             email: isDiscrete || false,
             in_app: isDiscrete || false,
             digest: val.digest ? { ...val.digest } : undefined,
-            ...(isDiscrete ? { discrete: true } : {})
+            ...(isDiscrete ? { discrete: true } : {}),
+            specialOptions: val.specialOptions ? { ...val.specialOptions } : undefined,
           };
         });
       }),

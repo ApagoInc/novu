@@ -363,10 +363,12 @@ a:hover, a:visited, a:active, a:link {
     <td>{{{CustomerReference}}}</td>
   </tr>
   {{/if}}
+    {{#if titleName}}
   <tr>
     <th>Title:</th>
     <td>{{{titleName}}}</td>
   </tr>
+  {{/if}}
   {{#if optionalDisplays.componentName}}
   <tr>
     <th>Component:</th>

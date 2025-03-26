@@ -168,8 +168,24 @@ const informativeEvents = [
     events: [
       {
         discrete: true,
-        label: 'RTO Proof Download Ready',
+        label: 'High-Res Download Ready',
+        // 'RTO Proof Download Ready',
         value: 'RTO_PROOF_DOWNLOAD_READY',
+        specialOptions: {
+          in_app: {
+            active: false,
+          },
+        },
+      },
+      {
+        discrete: true,
+        label: 'Download(s) Failed',
+        value: 'DOWNLOADS_FAILED',
+        specialOptions: {
+          in_app: {
+            active: false,
+          },
+        },
       },
     ],
   },

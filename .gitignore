@@ -99,6 +99,8 @@ fabric.properties
 
 .env
 docker/.env
+!.env.sample
+.env*
 .vercel
 
 .pnpm-store/
