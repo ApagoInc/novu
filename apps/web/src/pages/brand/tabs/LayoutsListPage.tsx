@@ -1,4 +1,4 @@
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { ActionIcon, useMantineTheme } from '@mantine/core';
 import type { ILayoutEntity } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';

@@ -1,4 +1,4 @@
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import React from 'react';
 
 import { Button, Text } from '../../../../design-system';

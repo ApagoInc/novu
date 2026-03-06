@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { Divider, Button as MantineButton, Center } from '@mantine/core';

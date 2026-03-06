@@ -1,6 +1,6 @@
 import { Handle, Position } from 'react-flow-renderer';
 import { createStyles, NumberInput, Loader } from '@mantine/core';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 
 import { NodeStepWithPopover } from './NodeStepWithPopover';
 import { CountdownTimer, DigestAction } from '../../../design-system/icons';

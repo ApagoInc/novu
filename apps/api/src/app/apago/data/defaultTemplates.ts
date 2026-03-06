@@ -178,6 +178,13 @@ const defaultTemplates = {
       subject: 'Title Checkout Complete - {{ISBN13}} {{CustomerReference}}, {{titleName}}',
     },
   },
+  DELIVERY_TO_FTP: {
+    in_app: "{{titleName}} - Title was delivered to server. This delivery was requested by user {{actorUserName}}",
+    email: {
+      content: '<div><span>Title was delivered to server. This delivery was requested by user {{actorUserName}}.</span></div>',
+      subject: 'User-requested Delivery to FTP Server - {{ISBN13}} {{CustomerReference}}, {{titleName}} {{userDeliveryDestination}}, {{userDeliveryCustomerName}}'
+    }
+  },
   Preflight1_ApplyFix: {
     in_app:
       '{{titleName}} - As a stakeholder, the {{componentName}} has Preflight issues that need to be resolved (this could include rejected pages).',

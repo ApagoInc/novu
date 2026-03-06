@@ -15,7 +15,7 @@ import {
   IOrganizationEntity,
   ProvidersIdEnum,
 } from '@novu/shared';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
 
 import { Button, colors, Input, shadows, Switch, Text } from '../../../../design-system';

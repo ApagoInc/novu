@@ -1,5 +1,5 @@
 import { IConfigCredentials } from '@novu/shared';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { Group, useMantineColorScheme } from '@mantine/core';
 
 import { Button, colors, shadows } from '../../../design-system';

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { TextAlignEnum } from '@novu/shared';
 
 import { colors } from '../../../../design-system';

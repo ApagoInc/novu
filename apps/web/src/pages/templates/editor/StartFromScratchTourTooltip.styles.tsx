@@ -1,4 +1,4 @@
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { colors, DotsNavigation } from '../../../design-system';
 
 export const TooltipContainer = styled.div<{

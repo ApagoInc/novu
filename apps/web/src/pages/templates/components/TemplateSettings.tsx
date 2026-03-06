@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Group } from '@mantine/core';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 
 import { Button, colors } from '../../../design-system';
 import { NotificationSettingsForm } from './notification-setting-form/NotificationSettingsForm';

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { Title, Text, Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import { useMutation } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';

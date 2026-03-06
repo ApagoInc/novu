@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { cx, css } from '@emotion/css';
 import { IMessage, ButtonTypeEnum } from '@novu/shared';
 import InfiniteScroll from 'react-infinite-scroll-component';

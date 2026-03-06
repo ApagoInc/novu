@@ -1,4 +1,4 @@
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 
 import { colors, Text } from '../../../design-system';
 import { ReactLogo, AngularLogo, JavaScriptLogo, VueLogo, IframeLogo } from '../../../design-system/icons';

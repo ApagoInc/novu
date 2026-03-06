@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { Group, Image, Space, Stack, Tabs, TabsValue, useMantineColorScheme } from '@mantine/core';
 import {
   ChannelTypeEnum,

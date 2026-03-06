@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { Accordion, Box, Center, Loader, useMantineTheme } from '@mantine/core';
 
 import { colors } from '../../../design-system';

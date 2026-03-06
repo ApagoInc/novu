@@ -1,4 +1,4 @@
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { Group, Overlay } from '@mantine/core';
 import { colors, shadows, Text } from '../../../design-system';
 import InAppSandboxWorkflow from './InAppSandboxWorkflow';

@@ -1,4 +1,4 @@
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { ActionIcon, createStyles, Drawer, Loader, MantineTheme, Stack } from '@mantine/core';
 import { ReactNode } from 'react';
 import { HEADER_HEIGHT } from '../../components/layout/constants';

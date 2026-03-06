@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Popover, createStyles } from '@mantine/core';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { useFormContext } from 'react-hook-form';
 
 import { Text } from '../typography/text/Text';

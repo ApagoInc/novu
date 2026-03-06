@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 
 export function WidgetShell({ children }: { children: JSX.Element }) {
   const WrapperComponent = inIframe() ? TransparentShell : MockPreviewShell;

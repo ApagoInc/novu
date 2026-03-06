@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { ActionIcon } from '@mantine/core';
 
 import { useNotifications, useNovuTheme, useTranslations } from '../../../../../hooks';

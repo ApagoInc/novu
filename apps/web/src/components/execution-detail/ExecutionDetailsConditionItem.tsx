@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { Group, Stack } from '@mantine/core';
 import { ICondition } from '@novu/shared';
 import { colors, Text, Tooltip } from '../../design-system';

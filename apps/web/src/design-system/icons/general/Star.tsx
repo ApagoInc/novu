@@ -1,5 +1,5 @@
 /* eslint-disable */
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { colors } from '../../config';
 
 const StarHolder = styled.div`

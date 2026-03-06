@@ -1,6 +1,6 @@
 import { useEffect, useState, useReducer } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { showNotification } from '@mantine/notifications';
 import { useClipboard } from '@mantine/hooks';

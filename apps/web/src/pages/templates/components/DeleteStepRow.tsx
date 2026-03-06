@@ -2,7 +2,7 @@ import { StepTypeEnum } from '@novu/shared';
 import { useEnvController } from '../../../hooks';
 import { useOutletContext, useParams } from 'react-router-dom';
 import { Button, colors } from '../../../design-system';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { Trash } from '../../../design-system/icons';
 import { Group } from '@mantine/core';
 import { When } from '../../../components/utils/When';

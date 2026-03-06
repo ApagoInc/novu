@@ -2,7 +2,7 @@ import { ActionIcon, Group, Radio, Text } from '@mantine/core';
 import { useEffect, useMemo } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { ChannelTypeEnum, ICreateIntegrationBodyDto, InAppProviderIdEnum, providers } from '@novu/shared';
 
 import { Button, colors, NameInput, Sidebar } from '../../../../design-system';

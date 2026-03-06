@@ -137,6 +137,13 @@ const informativeEvents = [
         label: 'Title Checkout Complete',
         value: 'TITLE_CHECKOUT_COMPLETE',
       },
+      {
+        label: "Delivery to FTP",
+        value: "DELIVERY_TO_FTP",
+        // Note:  Conditionally triggers an internal-only event to notify external users about this event happening",
+        // Uses same template (or similar).
+
+      }
     ],
   },
   {

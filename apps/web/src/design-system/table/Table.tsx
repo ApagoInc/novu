@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { Skeleton, TableProps, Table as MantineTable, Pagination, Button } from '@mantine/core';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import {
   useTable,
   Column,

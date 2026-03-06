@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActionIcon } from '@mantine/core';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { cx, css } from '@emotion/css';
 
 import { colors, ColorScheme } from '../../shared/config/colors';

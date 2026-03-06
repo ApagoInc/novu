@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 
 import { colors } from '../../../design-system';
 

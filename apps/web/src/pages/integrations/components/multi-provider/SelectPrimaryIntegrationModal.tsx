@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Modal, useMantineTheme } from '@mantine/core';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import type { Row } from 'react-table';
 import { ChannelTypeEnum } from '@novu/shared';
 

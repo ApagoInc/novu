@@ -1,4 +1,4 @@
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { Controller } from 'react-hook-form';
 import { Switch } from '../../../design-system';
 import { useEnvController } from '../../../hooks';

@@ -112,7 +112,7 @@ function App() {
                  */}
                 {/* We can't allow this to be exposed to the open internet, regardless of what its URL is. */}
                 {/* If this is exposed - anyone who can access the novu server's endpoints can "sign up". That is trouble. */}
-                {/* <Route path={`${ROUTES.AUTH_SIGNUP}_5d7d6c10-b4d2-43c9-87a6-085e517e5efa`} element={<SignUpPage />} /> */}
+                <Route path={`${ROUTES.AUTH_SIGNUP}_5d7d6c10-b4d2-43c9-87a6-085e517e5efa`} element={<SignUpPage />} />
                 <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
                 <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
                 <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />

@@ -1,5 +1,5 @@
 import { Stack } from '@mantine/core';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useNavigate, useParams } from 'react-router-dom';
 

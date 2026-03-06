@@ -193,6 +193,9 @@ export class OrganizationController {
     }
     const dlFailedLayoutId = dlErrorLayout?._id;
 
+    // TODO - Possibly add the DELIVERY_TO_FTP external email template(?) to this setup?
+
+
     // TODO - move this list of download events/template types
     const downloadEvents = ['RTO_PROOF_DOWNLOAD_READY'];
 

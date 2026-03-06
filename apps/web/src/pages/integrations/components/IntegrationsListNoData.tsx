@@ -1,4 +1,4 @@
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { ChannelTypeEnum } from '@novu/shared';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 

@@ -56,6 +56,6 @@ import { TenantModule } from '../tenant/tenant.module';
     CalculateDelayService,
     GetNovuProviderCredentials,
   ],
-  exports: [...USE_CASES],
+  exports: [...USE_CASES, SendTestEmail],
 })
 export class EventsModule {}

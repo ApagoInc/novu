@@ -1,4 +1,4 @@
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 
 import { Text } from '../../design-system';
 import { getCurlTriggerSnippet } from '../../pages/templates/components/TriggerSnippetTabs';

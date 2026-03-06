@@ -11,7 +11,7 @@ import {
   SelectItem,
   Loader,
 } from '@mantine/core';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import useStyles from './Select.styles';
 import { inputStyles } from '../config/inputs.styles';
 import { ArrowDown } from '../icons';

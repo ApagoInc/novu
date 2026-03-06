@@ -11,7 +11,9 @@ import { EventsModule } from '../events/events.module';
 import { USE_CASES } from './usecases';
 
 @Module({
-  imports: [EventsModule, SubscribersModule, TopicsModule, forwardRef(() => AuthModule), SharedModule, WorkflowModule],
+  imports: [
+    EventsModule, SubscribersModule, TopicsModule, forwardRef(() => AuthModule), SharedModule, WorkflowModule
+  ],
   controllers: [ApagoController],
   providers: [ApagoService, ApiService, ...USE_CASES],
   exports: [ApagoService],

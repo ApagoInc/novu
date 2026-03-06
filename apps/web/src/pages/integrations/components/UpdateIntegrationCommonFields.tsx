@@ -1,5 +1,5 @@
 import { Controller, useFormContext } from 'react-hook-form';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { useClipboard } from '@mantine/hooks';
 
 import { Input, Switch } from '../../../design-system';

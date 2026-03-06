@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { Outlet } from 'react-router-dom';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 
 import { ThemeProvider } from '../../design-system/ThemeProvider';
 import { HeaderNav } from './components/HeaderNav';

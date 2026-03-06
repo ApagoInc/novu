@@ -1,6 +1,6 @@
 import React, { useMemo, useLayoutEffect } from 'react';
 import { Tabs as MantineTabs } from '@mantine/core';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 
 import { NotificationsListTab } from './NotificationsListTab';
 import { UnseenBadge } from './UnseenBadge';

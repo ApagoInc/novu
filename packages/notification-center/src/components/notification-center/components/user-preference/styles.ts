@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 
 import { IThemeUserPreferences } from '../../../../store/novu-theme.context';
 

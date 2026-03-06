@@ -17,7 +17,7 @@ import { OnBoardingAnalyticsEnum } from '../../../pages/quick-start/consts';
 import { useSegment } from '../../providers/SegmentProvider';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
 import { NodeStep } from '../../workflow';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 
 const getOpacity = (id: string, hoveredHintId?: string, sequence?: { opacity: number }): number => {
   if (hoveredHintId) {

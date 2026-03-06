@@ -1,4 +1,4 @@
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { Group, Stack, Title, UnstyledButton } from '@mantine/core';
 import { colors } from '@novu/notification-center';
 import * as capitalize from 'lodash.capitalize';

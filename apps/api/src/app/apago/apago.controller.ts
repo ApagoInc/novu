@@ -15,7 +15,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApagoService } from './apago.service';
 import { SubscriberEntity } from '@novu/dal';
-import { CreateSubscriber, CreateSubscriberCommand } from '@novu/application-generic';
+import { CreateSubscriber, CreateSubscriberCommand, SendTestEmail } from '@novu/application-generic';
 import { GetNotificationTemplateCommand } from '../workflows/usecases/get-notification-template/get-notification-template.command';
 import { GetNotificationTemplate } from '../workflows/usecases/get-notification-template/get-notification-template.usecase';
 import slugify from 'slugify';
@@ -49,6 +49,12 @@ import {
   GetActiveStakeholdersForJob,
   GetActiveStakeholdersForJobCommand,
 } from './usecases/get-active-stakeholders-for-job';
+import validator from 'validator'
+import { accessSync, readFileSync } from 'fs';
+// NOTE: Novu initially mangled this export silently when it was just 'import path from 'path''
+import * as path from 'path';
+import { access } from 'fs/promises';
+const { isEmail } = validator
 
 @Controller('/apago')
 export class ApagoController {
@@ -64,7 +70,8 @@ export class ApagoController {
     private stakeholderSubscribers: StakeholderSubscribers,
     private informativeSubscribers: InformativeSubscribers,
     private batchUpdateStakeholdersForJob: BatchUpdateStakeholdersForJob,
-    private getActiveStakeholdersForJob: GetActiveStakeholdersForJob
+    private getActiveStakeholdersForJob: GetActiveStakeholdersForJob,
+    private sendExternalEmail: SendTestEmail
   ) {}
 
   @Get('/stakeholders/:accountId/:jobId')
@@ -621,9 +628,17 @@ export class ApagoController {
     );
 
     // There is one rare additional case, where we also want to inform a relevant group of stakeholders about one of these events.
-    // If a "COMPONENT_PROOF_APPROVED" event happens, we need to notify the stakeholders for that job and part(s).
+    //
     // Currently, the above is the only case where a special trigger promise will be added to the `specialTriggers` array.
+    /**
+     * Can contain one of 2 possible special trigger cases:
+     * - If a "COMPONENT_PROOF_APPROVED" *informative* event happens, we also need to notify the *stakeholders* for
+     * that job and part(s). 
+     * - If a "DELIVERY_TO_FTP" event includes some external email addresses to notify, we need to send notification emails to those.
+     */
     const specialTriggers: Promise<any>[] = [];
+
+    // special trigger case 1:
     if (body.event === 'COMPONENT_PROOF_APPROVED') {
       console.log(
         'Got a COMPONENT_PROOF_APPROVED event. Going to also notify all stakeholders for job',
@@ -698,6 +713,137 @@ export class ApagoController {
       );
     }
 
+
+    // special trigger case 2:
+
+    // Not a trigger - we'll just call it w/ the triggers.
+    // Use a separate template.
+
+    // externalEmails
+
+
+    // TODO - trying to figure the best way to do this.
+
+    // 1 - use the 'test email' end point but send the same content as the HTML template for delivery to FTP events
+
+    // perhaps can call the send test email - 
+    // OR, we may have to find a way to make it happen as an 'event', maybe with a special flag in the event request.
+
+    // if (validatedEmails.length > 0) {
+    //   console.log(`Adding special trigger for ${body.event} event - external email address emails trigger`)
+    //   specialTriggers.push(
+    //     this.parseEventRequest.execute(
+    //       ParseEventRequestCommand.create({
+    //         userId: user._id,
+    //         environmentId: user.environmentId,
+    //         organizationId: user.organizationId,
+    //         identifier: `${slugify('DELIVERY_TO_FTP', {
+    //           lower: true,
+    //           strict: true,
+    //         })}`,
+    //         payload: body.payload || {},
+    //         overrides: {},
+
+    //         // TODO - I suppose we have to add then remove afterwards) each external email as an ad-hoc 'subscriber' in place.
+    //         // Make sure that doesn't break for users who already * have * a subscriber email in Novu, and are yet requested here (even if it doesn't make sense, it can happen.)
+    //         to: [],
+    //       })
+    //     )
+    //   )
+    // }
+
+    const externalEmailAddresses = body.event === 'DELIVERY_TO_FTP' ? [...(body.payload?.externalEmails || [])] : []
+
+    const validExternalEmails: string[] = []
+    // validate emails
+    for (const email of externalEmailAddresses) {
+      if (isEmail(email)) {
+        validExternalEmails.push(email)
+      } else {
+        console.warn(`Received invalid external email address: "${email}". Skipping this one.`)
+      }
+    }
+
+    const shouldSendExternalEmails = validExternalEmails.length > 0
+
+
+
+    // TODO - perhaps we need to still expose the 'template' for external emails on the Novu platform somehow.
+
+    // Maybe just make it the template for an otherwise not-used event, "DELIVERY_TO_FTP_EXTERNAL_EMAIL", 
+    // or something
+
+    const templateToUseFname = 'EXTERNAL_delivery_to_ftp_layout.handlebars'
+
+    // see if we can get that one first
+    const paths = [
+      templateToUseFname, 'EXTERNAL_email_layout.handlebars'
+    ]
+
+    // get the special template
+    const templatesDir = process.env.EMAIL_TEMPLATES_DIR_API_CONTAINER_PATH || ""
+
+    let templateStr: string;
+    for (const fpath of paths) {
+      try {
+        templateStr = readFileSync(
+          path.join(templatesDir, fpath),
+          'utf-8'
+        );
+        if (templateStr) {
+          console.log(`Read email template at ${fpath} successfully`)
+          break;
+        }
+      } catch (err) {
+        console.log(`Could not read email template at ${fpath}`)
+      }
+    }
+
+
+
+
+
+
+    // TODO - error handling, validation refinement? + dynamically acquire subject? (or...?)
+
+
+
+    // TODO - How much should we filter the payload?
+
+    // Or should we any...?
+    const filteredExternalEmailPayload = {
+      // Title: body.payload?.Title,
+      // "ISBN10": body.payload?.ISBN10,
+      // "ISBN13": body.payload?.ISBN13
+      // and what else?
+      ...body.payload
+    }
+
+    // Any necessary excludes?
+
+
+
+
+    const externalEmailSendP = () => shouldSendExternalEmails ? this.sendExternalEmail.execute(
+      {
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        contentType: 'customHtml',
+        content: templateStr,
+        subject: 'Lakeside Prepress - Delivery to FTP',
+        // TODO - Update where subject pulls from? Probably update where template comes from, too?
+        payload: filteredExternalEmailPayload,
+        to: validExternalEmails,
+        // layoutId: // TODO - or could get the layout here, probably.
+      }
+    ) : undefined
+
+
+
+
+    // TODO - remove the specialTriggers addition for DELIVERY_TO_FTP - instead, use this easy event way of doing it
+
     return Promise.all([
       this.parseEventRequest.execute(
         ParseEventRequestCommand.create({
@@ -711,6 +857,8 @@ export class ApagoController {
         })
       ),
       ...specialTriggers,
+      // TODO refine if needed
+      ...(shouldSendExternalEmails ? [externalEmailSendP()] : [])
     ]);
   }
 

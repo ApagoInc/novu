@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { Skeleton, useMantineTheme } from '@mantine/core';
 
 import { getActivityStats } from '../../../api/activity';

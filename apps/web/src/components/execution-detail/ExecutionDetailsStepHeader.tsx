@@ -1,6 +1,6 @@
 import { Container, Grid } from '@mantine/core';
 import { format, parseISO } from 'date-fns';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { StepTypeEnum, DelayTypeEnum, JobStatusEnum } from '@novu/shared';
 
 import { ExecutionDetailsWebhookFeedback } from './ExecutionDetailsWebhookFeedback';

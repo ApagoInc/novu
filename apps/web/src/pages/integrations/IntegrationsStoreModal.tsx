@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { Grid, Group, Modal, ActionIcon, createStyles, MantineTheme, Drawer } from '@mantine/core';
 import { ChannelTypeEnum, EmailProviderIdEnum, InAppProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 

@@ -1,6 +1,6 @@
 import { Dispatch } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { Grid } from '@mantine/core';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 

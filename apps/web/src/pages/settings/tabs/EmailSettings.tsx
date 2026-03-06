@@ -1,5 +1,5 @@
 import { useClipboard } from '@mantine/hooks';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import Card from '../../../components/layout/components/Card';
 import { ActionIcon, Center, Input as MantineInput } from '@mantine/core';

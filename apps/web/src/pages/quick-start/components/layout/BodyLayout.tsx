@@ -1,6 +1,6 @@
 import React from 'react';
 import { Grid, Timeline } from '@mantine/core';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
 
 import { colors } from '../../../../design-system';

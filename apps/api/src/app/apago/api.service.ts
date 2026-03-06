@@ -18,6 +18,8 @@ export class ApiService {
       throw new InternalServerErrorException(
         `Server environment does not have the required LAKESIDE_API value defined.Must define LAKESIDE_API, LAKESIDE_EMAIL, and LAKESIDE_PASSWORD.`
       );
+
+      // TODO - add a stub connection test here? Save future silent failure trouble/issues?
     }
     if (process.env.LAKESIDE_API && process.env.LAKESIDE_EMAIL) {
       console.log(

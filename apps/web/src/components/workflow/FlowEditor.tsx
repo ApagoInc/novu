@@ -15,7 +15,7 @@ import ReactFlow, {
   useReactFlow,
 } from 'react-flow-renderer';
 import { useMantineColorScheme } from '@mantine/core';
-import styled from '@emotion/styled/macro';
+import styled from '@emotion/styled';
 import { v4 as uuid4 } from 'uuid';
 import cloneDeep from 'lodash.clonedeep';
 import { StepTypeEnum } from '@novu/shared';

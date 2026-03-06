@@ -101,6 +101,26 @@ fabric.properties
 docker/.env
 !.env.sample
 .env*
+
+# Caveat for build of worker docker container
+# TODO - Make caveats for the other apps' required build .env's, for whatever reason...
+# These aren't used, to my knowledge, but it's possible removing them could break the build.
+!apps/api/src/.example.env
+!apps/api/src/.env.test
+!apps/api/src/.env.development
+!apps/api/src/.env.production
+
+!apps/worker/src/.example.env
+!apps/worker/src/.env.test
+!apps/worker/src/.env.development
+!apps/worker/src/.env.production
+
+!apps/ws/src/.example.env
+!apps/ws/src/.env.test
+!apps/ws/src/.env.development
+!apps/ws/src/.env.production
+
+
 .vercel
 
 .pnpm-store/
