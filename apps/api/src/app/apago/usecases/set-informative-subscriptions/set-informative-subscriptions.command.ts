@@ -26,6 +26,7 @@ export class SetInformativeSubscriptionsCommand extends EnvironmentCommand {
   @IsArray()
   list: InformativeSubscriptionsList[];
 
+  // TODO - this field has a typo, but correcting it could introduce regressions. If corrected, perform careful regression checks.
   @IsDefined()
   externalSubsciberId: string;
 }

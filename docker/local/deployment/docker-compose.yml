@@ -156,6 +156,10 @@ services:
       FRONT_BASE_CONTEXT_PATH: ${FRONT_BASE_CONTEXT_PATH}
     ports:
       - 4200:4200
+    volumes:
+       - /home/ec2-user/novu/apps/web:/usr/src/app/apps/web
+       - /usr/src/app/apps/web/node_modules
+  
   proxy:
     container_name: proxy
     build:

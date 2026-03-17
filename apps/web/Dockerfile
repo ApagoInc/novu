@@ -83,11 +83,28 @@ REACT_APP_PUBLIC_URL=${FRONT_BASE_URL}\n" > .env
 RUN echo "value of .env file:"
 RUN echo cat .env
 
+RUN echo "pwd of current loc" 
+RUN echo pwd
+RUN sleep 3
+RUN echo "Running trytofixbuild.sh..."
+RUN bash ./trytofixbuild.sh
+RUN echo "Ran trytofixbuild.sh."
+
+
+
+# But this is the dev app.
+# RUN ["pnpm", "run", "start"];
 # This command will build and then start the webapp
 # CMD ["npm", "run", "start:docker"]
 # TODO -
+
+  
   # Currently, the webapp still has a redirect bug when 
   # an attempt to load an invite link is made
   # So, using the dev app until that is resolved:
-CMD ["npm", "run", "start:dev"]
-# CMD ["sleep", "infinity"]
+# CMD ["npm", "run", "start:dev"]
+# "start:docker"]
+#  "start:dev"]
+# CMD [""]
+CMD ["sleep", "infinity"]
+# TODO - add PM2 or something for in-container webapp management, since we have to start it manually?

@@ -140,6 +140,7 @@ const informativeEvents = [
       {
         label: "Delivery to FTP",
         value: "DELIVERY_TO_FTP",
+        has_parts: true,
         // Note:  Conditionally triggers an internal-only event to notify external users about this event happening",
         // Uses same template (or similar).
 

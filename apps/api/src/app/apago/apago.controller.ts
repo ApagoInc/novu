@@ -50,12 +50,11 @@ import {
   GetActiveStakeholdersForJobCommand,
 } from './usecases/get-active-stakeholders-for-job';
 import validator from 'validator'
-import { accessSync, readFileSync } from 'fs';
+import Handlebars from 'handlebars';
 // NOTE: Novu initially mangled this export silently when it was just 'import path from 'path''
-import * as path from 'path';
-import { access } from 'fs/promises';
+// import * as path from 'path';
 const { isEmail } = validator
-
+import { Types } from 'mongoose';
 @Controller('/apago')
 export class ApagoController {
   constructor(
@@ -72,7 +71,7 @@ export class ApagoController {
     private batchUpdateStakeholdersForJob: BatchUpdateStakeholdersForJob,
     private getActiveStakeholdersForJob: GetActiveStakeholdersForJob,
     private sendExternalEmail: SendTestEmail
-  ) {}
+  ) { }
 
   @Get('/stakeholders/:accountId/:jobId')
   @ExternalApiAccessible()
@@ -518,7 +517,7 @@ export class ApagoController {
 
     if (!template) throw new NotFoundException(`Template for event ${body.event} not found!`);
 
-    const subscribers = await this.informativeSubscribers.execute(
+    const subscribers = (await this.informativeSubscribers.execute(
       InformativeSubscribersCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -526,7 +525,10 @@ export class ApagoController {
         accountId: body.accountId,
         part: body.part,
       })
-    );
+    )
+    )
+      .filter((item) => item?.subscriber?.subscriberId);
+
 
     const jobAssociatedAccounts: { [acct in 'parentAcct' | 'bookAcct' | 'tepAcct']?: string } | undefined =
       body.payload.jobAssociatedAccounts;
@@ -634,7 +636,6 @@ export class ApagoController {
      * Can contain one of 2 possible special trigger cases:
      * - If a "COMPONENT_PROOF_APPROVED" *informative* event happens, we also need to notify the *stakeholders* for
      * that job and part(s). 
-     * - If a "DELIVERY_TO_FTP" event includes some external email addresses to notify, we need to send notification emails to those.
      */
     const specialTriggers: Promise<any>[] = [];
 
@@ -713,45 +714,6 @@ export class ApagoController {
       );
     }
 
-
-    // special trigger case 2:
-
-    // Not a trigger - we'll just call it w/ the triggers.
-    // Use a separate template.
-
-    // externalEmails
-
-
-    // TODO - trying to figure the best way to do this.
-
-    // 1 - use the 'test email' end point but send the same content as the HTML template for delivery to FTP events
-
-    // perhaps can call the send test email - 
-    // OR, we may have to find a way to make it happen as an 'event', maybe with a special flag in the event request.
-
-    // if (validatedEmails.length > 0) {
-    //   console.log(`Adding special trigger for ${body.event} event - external email address emails trigger`)
-    //   specialTriggers.push(
-    //     this.parseEventRequest.execute(
-    //       ParseEventRequestCommand.create({
-    //         userId: user._id,
-    //         environmentId: user.environmentId,
-    //         organizationId: user.organizationId,
-    //         identifier: `${slugify('DELIVERY_TO_FTP', {
-    //           lower: true,
-    //           strict: true,
-    //         })}`,
-    //         payload: body.payload || {},
-    //         overrides: {},
-
-    //         // TODO - I suppose we have to add then remove afterwards) each external email as an ad-hoc 'subscriber' in place.
-    //         // Make sure that doesn't break for users who already * have * a subscriber email in Novu, and are yet requested here (even if it doesn't make sense, it can happen.)
-    //         to: [],
-    //       })
-    //     )
-    //   )
-    // }
-
     const externalEmailAddresses = body.event === 'DELIVERY_TO_FTP' ? [...(body.payload?.externalEmails || [])] : []
 
     const validExternalEmails: string[] = []
@@ -766,83 +728,75 @@ export class ApagoController {
 
     const shouldSendExternalEmails = validExternalEmails.length > 0
 
+    if (shouldSendExternalEmails) {
+      // 1. get the layout HTML
+      const repo = (this.createSubscriberUsecase as any).subscriberRepository;
+      const layoutId = template.steps.find(s => s.template?.type === 'email')?.template?._layoutId;
+      const layoutDoc = layoutId ? await repo._model.db
+        .collection('layouts')
+        .findOne({ _id: new Types.ObjectId(layoutId) }) : null;
+
+      console.log(`(debug)[POST /trigger/informative - external email handling] value for layoutDoc: ${layoutDoc}`)
+      // 2. get the email step content blocks
+      const emailStep = template.steps.find(s => s.template?.type === 'email');
+      const contentBlocks = emailStep?.template?.content;
+      const subject = emailStep?.template?.subject || 'Delivery to FTP';
+
+      console.log(
+        `(debug)[POST /trigger/informative - external email handling] values for email prep sections:`,
+        [
+          emailStep,
+          contentBlocks,
+          subject
+        ].map(val => {
+          try {
+            return JSON.stringify({ val });
+          } catch (err) {
+            console.log('could not stringify value:', val, "- error was:", err);
+            return val;
+          }
+        }).join(", \n")
+      )
 
 
-    // TODO - perhaps we need to still expose the 'template' for external emails on the Novu platform somehow.
+      if (layoutDoc?.content && contentBlocks) {
+        // build the body HTML from content blocks
+        const bodyHtml = Array.isArray(contentBlocks)
+          ? contentBlocks.map(block => block.content).join('')
+          : contentBlocks;
 
-    // Maybe just make it the template for an otherwise not-used event, "DELIVERY_TO_FTP_EXTERNAL_EMAIL", 
-    // or something
+        // render Handlebars variables in both layout and body
+        const renderedBody = Handlebars.compile(bodyHtml)(body.payload);
+        const renderedSubject = Handlebars.compile(subject)(body.payload);
+        const fullHtml = Handlebars.compile(layoutDoc.content)({
+          ...body.payload,
+          body: renderedBody
+        });
 
-    const templateToUseFname = 'EXTERNAL_delivery_to_ftp_layout.handlebars'
+        // send the external emails
 
-    // see if we can get that one first
-    const paths = [
-      templateToUseFname, 'EXTERNAL_email_layout.handlebars'
-    ]
+        console.log(
+          `(debug)[POST /trigger/informative - external email handling] renderedSubject: ${renderedSubject}`
+        )
+        console.log(
+          `(debug)[POST /trigger/informative - external email handling] fullHtml: ${fullHtml}`
+        )
 
-    // get the special template
-    const templatesDir = process.env.EMAIL_TEMPLATES_DIR_API_CONTAINER_PATH || ""
+        await this.sendExternalEmail.execute({
+          userId: user._id,
+          environmentId: user.environmentId,
+          organizationId: user.organizationId,
+          contentType: 'customHtml',
+          content: fullHtml,
+          subject: renderedSubject,
+          payload: body.payload,
+          to: validExternalEmails,
+          // TODO - Are we concerned with external email recipients being able to see one another on the addressees list?
+        });
 
-    let templateStr: string;
-    for (const fpath of paths) {
-      try {
-        templateStr = readFileSync(
-          path.join(templatesDir, fpath),
-          'utf-8'
-        );
-        if (templateStr) {
-          console.log(`Read email template at ${fpath} successfully`)
-          break;
-        }
-      } catch (err) {
-        console.log(`Could not read email template at ${fpath}`)
+        console.log(`(debug)[POST /trigger/informative - external email handling] Sent external delivery email to ${validExternalEmails.join(', ')}`);
       }
     }
-
-
-
-
-
-
-    // TODO - error handling, validation refinement? + dynamically acquire subject? (or...?)
-
-
-
-    // TODO - How much should we filter the payload?
-
-    // Or should we any...?
-    const filteredExternalEmailPayload = {
-      // Title: body.payload?.Title,
-      // "ISBN10": body.payload?.ISBN10,
-      // "ISBN13": body.payload?.ISBN13
-      // and what else?
-      ...body.payload
-    }
-
-    // Any necessary excludes?
-
-
-
-
-    const externalEmailSendP = () => shouldSendExternalEmails ? this.sendExternalEmail.execute(
-      {
-        userId: user._id,
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        contentType: 'customHtml',
-        content: templateStr,
-        subject: 'Lakeside Prepress - Delivery to FTP',
-        // TODO - Update where subject pulls from? Probably update where template comes from, too?
-        payload: filteredExternalEmailPayload,
-        to: validExternalEmails,
-        // layoutId: // TODO - or could get the layout here, probably.
-      }
-    ) : undefined
-
-
-
-
-    // TODO - remove the specialTriggers addition for DELIVERY_TO_FTP - instead, use this easy event way of doing it
 
     return Promise.all([
       this.parseEventRequest.execute(
@@ -853,13 +807,13 @@ export class ApagoController {
           identifier: template.triggers[0].identifier,
           payload: body.payload || {},
           overrides: {},
-          to: toList,
+          to: [
+            ...toList,
+          ]
         })
       ),
-      ...specialTriggers,
-      // TODO refine if needed
-      ...(shouldSendExternalEmails ? [externalEmailSendP()] : [])
-    ]);
+      ...specialTriggers
+    ])
   }
 
   /**
@@ -954,7 +908,7 @@ export class ApagoController {
 
     // Maybe we ensure it is by making sure the LSP API passes a flag telling us that it did just change - i.e, was just now completed. (if that's not duplicate info.)
 
-    const subscribers = await this.stakeholderSubscribers.execute(
+    const subscribers = (await this.stakeholderSubscribers.execute(
       StakeholderSubscribersCommand.create({
         stage: body.stage,
         jobId: body.jobId,
@@ -963,7 +917,10 @@ export class ApagoController {
         environmentId: user.environmentId,
         unconfirmed: false,
       })
-    );
+    )
+    )
+      .filter((item) => item?.subscriber?.subscriberId);
+
 
     // Subscribers that should receive the normal stakeholder notification
     const toList = subscribers.map((item) => item.subscriber.subscriberId);
